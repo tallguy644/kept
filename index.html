@@ -36,8 +36,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px
   .wrap{max-width:1180px;padding-block:32px 56px}
   header{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
   #app{display:grid;grid-template-columns:minmax(0,460px) minmax(0,1fr);column-gap:32px;row-gap:24px;align-items:start;
-    grid-template-areas:"sync sync" "form stand" "form days"}
-  .syncbar{grid-area:sync} .a-form{grid-area:form} .a-stand{grid-area:stand} .a-days{grid-area:days}
+    grid-template-areas:"sync sync" "form stand" "form cmp" "form days"}
+  .syncbar{grid-area:sync} .a-form{grid-area:form} .a-stand{grid-area:stand} .a-days{grid-area:days} .a-cmp{grid-area:cmp}
   .a-days .log{max-height:calc(100vh - 120px);overflow-y:auto}
   .sign{grid-template-columns:repeat(3,1fr)}
   .sign .big strong{font-size:3rem}
@@ -121,6 +121,41 @@ button:disabled{opacity:.6;cursor:default}
 .empty{padding:22px 16px;color:var(--muted);text-align:center}
 .chip{display:inline-block;font-size:.75rem;font-weight:600;padding:1px 8px;border-radius:99px;border:1px solid currentColor;margin-right:6px}
 @media (prefers-reduced-motion:no-preference){button{transition:background .15s,color .15s}}
+
+/* Customize panel */
+.cust{display:flex;flex-direction:column;gap:18px}
+.cust-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.cust-head h3{margin:0;font-family:var(--display);font-size:1.5rem}
+.cust-head button{flex:0 0 auto}
+.cust-grp{display:flex;flex-direction:column;gap:8px}
+.cust-grp.two{flex-direction:row;gap:16px;flex-wrap:wrap}
+.lbl{font-size:.82rem;font-weight:600;color:var(--muted);letter-spacing:.03em}
+.hint{margin:0;font-size:.85rem;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;width:max-content;max-width:100%}
+.seg button{border:0;border-radius:0;padding:8px 14px;font-size:.9rem}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.swatches{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.sw{width:40px;height:40px;border-radius:50%;padding:0;border:2px solid var(--line);background:var(--c)}
+.sw[aria-pressed="true"]{outline:3px solid var(--fg);outline-offset:2px}
+.sw.custom{position:relative;overflow:hidden;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)}
+.sw.custom input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;padding:0;border:0}
+.pick{display:flex;flex-direction:column;gap:6px}
+.pick input{width:64px;height:40px;padding:2px;cursor:pointer}
+.order{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.order li{display:flex;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid var(--line)}
+.order li:first-child{border-top:0}
+.order li.off .nm{color:var(--muted);text-decoration:line-through}
+.order .nm{flex:1;font-weight:600;min-width:0}
+.order button{padding:4px 10px;font-size:1rem;line-height:1}
+.order label{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)}
+.order input[type=checkbox]{width:20px;height:20px;padding:0}
+.sec.off{display:none!important}
+@media (min-width:960px){
+  #app.custom-layout{grid-template-areas:none!important;grid-auto-flow:row}
+  #app.custom-layout>.syncbar{grid-column:1/-1;grid-row:1}
+  #app.custom-layout.one{grid-template-columns:minmax(0,1fr)}
+}
 </style>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}.foot{text-align:center;font-size:.82rem;color:var(--muted);padding:0 16px 32px}</style>
 </head><body>
@@ -130,10 +165,34 @@ button:disabled{opacity:.6;cursor:default}
     <p class="sub">Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.</p>
   </header>
 
-  <div id="app">
-    <div class="syncbar"><span id="syncText"></span><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" id="gdBtn" hidden>Connect Google Drive</button><a class="btn" id="gdSheet" hidden target="_blank" rel="noopener" style="padding:5px 10px;font-size:.82rem">Open my Google Sheet</a><button type="button" id="gdRestore" hidden>Restore from Drive</button><button type="button" id="driveBtn">Back up to Google Drive</button><button type="button" id="exportBtn">Export to Excel / Sheets</button><label class="btn" for="importFile" style="padding:5px 10px;font-size:.82rem">Restore backup</label><input type="file" id="importFile" accept=".json,application/json" hidden></span></div>
+  <section class="card cust" id="cust" hidden aria-labelledby="custTitle">
+    <div class="cust-head"><h3 id="custTitle">Customize</h3><button type="button" class="primary" id="custDone">Done</button></div>
+    <div class="cust-grp">
+      <span class="lbl">Appearance</span>
+      <div class="seg" role="group" aria-label="Appearance">
+        <button type="button" data-mode="system">Match phone</button><button type="button" data-mode="light">Light</button><button type="button" data-mode="dark">Dark</button>
+      </div>
+    </div>
+    <div class="cust-grp">
+      <span class="lbl">Main color</span>
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <div class="cust-grp two">
+      <label class="pick"><span class="lbl">Lyft color</span><input type="color" id="lyftColor"></label>
+      <label class="pick"><span class="lbl">Uber color</span><input type="color" id="uberColor"></label>
+    </div>
+    <div class="cust-grp">
+      <span class="lbl">Layout</span>
+      <p class="hint">Use the arrows to reorder. Turn off anything you don't need. On a computer, the first section sits on the left.</p>
+      <ol class="order" id="order"></ol>
+    </div>
+    <button type="button" class="skip" id="custReset">Reset to original look</button>
+  </section>
 
-    <section class="a-form">
+  <div id="app">
+    <div class="syncbar"><span id="syncText"></span><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" id="custBtn">Customize</button><button type="button" id="gdBtn" hidden>Connect Google Drive</button><a class="btn" id="gdSheet" hidden target="_blank" rel="noopener" style="padding:5px 10px;font-size:.82rem">Open my Google Sheet</a><button type="button" id="gdRestore" hidden>Restore from Drive</button><button type="button" id="driveBtn">Back up to Google Drive</button><button type="button" id="exportBtn">Export to Excel / Sheets</button><label class="btn" for="importFile" style="padding:5px 10px;font-size:.82rem">Restore backup</label><input type="file" id="importFile" accept=".json,application/json" hidden></span></div>
+
+    <section class="a-form sec" data-sec="form">
       <h2 id="formTitle">Log a day</h2>
       <form id="f" class="card" autocomplete="off">
         <div class="field full"><label for="date">Date</label><input id="date" type="date" required></div>
@@ -166,7 +225,7 @@ button:disabled{opacity:.6;cursor:default}
       </form>
     </section>
 
-    <section class="a-stand">
+    <section class="a-stand sec" data-sec="stand">
       <h2>Where you stand</h2>
       <div class="tabs" role="group" aria-label="Period">
         <button type="button" data-p="week" aria-pressed="true">This week</button>
@@ -175,10 +234,14 @@ button:disabled{opacity:.6;cursor:default}
         <button type="button" data-p="all" aria-pressed="false">All time</button>
       </div>
       <div class="sign num" id="sum"></div>
+    </section>
+
+    <section class="a-cmp sec" data-sec="cmp">
+      <h2>Lyft vs Uber</h2>
       <div class="card cmp"><table id="cmp"></table></div>
     </section>
 
-    <section class="a-days">
+    <section class="a-days sec" data-sec="days">
       <h2>Days</h2>
       <div class="log" id="log"></div>
     </section>
@@ -326,7 +389,7 @@ function csvText(){
     s.lh?r2(s.le/s.lh):'',s.uh?r2(s.ue/s.uh):'',s.lr?r2(s.le/s.lr):'',s.ur?r2(s.ue/s.ur):'',r2(kept(s)),s.dtype||'',s.ddate||'',s.ld||'',s.ud||'']));
   return rows.map(r=>r.map(csvCell).join(',')).join('\n');
 }
-const backupText=()=>JSON.stringify({app:'shift-ledger',saved:new Date().toISOString(),shifts:data.shifts});
+const backupText=()=>JSON.stringify({app:'shift-ledger',saved:new Date().toISOString(),shifts:data.shifts,prefs:typeof prefs!=='undefined'?prefs:undefined});
 $('exportBtn').onclick=async()=>{
   try{ await saveFile('shift-ledger-'+todayStr()+'.csv',csvText(),'text/csv',false);
     setSync('Exported. Open the .csv in Excel or Google Sheets.',''); }
@@ -342,7 +405,7 @@ $('driveBtn').onclick=async()=>{
 $('importFile').onchange=async e=>{
   const f=e.target.files[0]; if(!f) return;
   try{ const d=JSON.parse(await f.text()); if(!Array.isArray(d.shifts)) throw 0;
-    const m=new Map(data.shifts.map(x=>[x.id,x])); d.shifts.forEach(x=>m.set(x.id,x));
+    const m=new Map(data.shifts.map(x=>[x.id,x])); d.shifts.forEach(x=>m.set(x.id,x)); if(d.prefs&&typeof applyPrefs==='function'){ prefs={...DEF,...d.prefs}; savePrefs(); applyPrefs(); }
     data.shifts=[...m.values()]; save(); render();
     setSync('Backup restored: '+d.shifts.length+' day'+(d.shifts.length===1?'':'s')+'.','');
   }catch(err){ setSync('That file isn\'t a Shift Ledger backup. Pick the .json file from "Back up to Google Drive".','warn'); }
@@ -405,7 +468,7 @@ $('gdRestore').onclick=()=>{
   if(!gdState.fileId){ setSync('No Drive backup found yet.','off'); return; }
   gdToken(false).then(async()=>{
     const d=await (await gdFetch('https://www.googleapis.com/drive/v3/files/'+gdState.fileId+'?alt=media')).json();
-    const m=new Map(data.shifts.map(x=>[x.id,x])); (d.shifts||[]).forEach(x=>m.set(x.id,x));
+    const m=new Map(data.shifts.map(x=>[x.id,x])); (d.shifts||[]).forEach(x=>m.set(x.id,x)); if(d.prefs){ prefs={...DEF,...d.prefs}; savePrefs(); applyPrefs(); }
     data.shifts=[...m.values()]; save(); render(); setSync('Restored '+(d.shifts||[]).length+' days from Google Drive.','');
   }).catch(gdFail);
 };
@@ -416,6 +479,87 @@ if(GOOGLE_CLIENT_ID){
     error_callback:e=>{ const p=gdPending; gdPending=null; p&&p.rej(e); } }); gdStatus(); };
   document.head.appendChild(sc);
 }
+
+
+/* ---------- Customization: colors, theme, layout (saved on this device) ---------- */
+const PK=KEY+'-prefs';
+const SECS={form:'Log a day',stand:'Where you stand',cmp:'Lyft vs Uber',days:'Days'};
+const PRESETS=[['Road green','#1c6b47'],['Ocean','#1f5fa8'],['Grape','#6b3fa0'],['Sunset','#c4511f'],['Cherry','#b3263a'],['Gold','#a77a00'],['Teal','#127a7a'],['Slate','#3f4a5a']];
+const DEF={mode:'system',accent:'#1c6b47',lyft:'',uber:'',order:['form','stand','cmp','days'],hidden:[]};
+let prefs={...DEF}; try{ prefs={...DEF,...JSON.parse(localStorage.getItem(PK)||'{}')}; }catch(e){}
+const savePrefs=()=>{ try{ localStorage.setItem(PK,JSON.stringify(prefs)); }catch(e){} };
+
+const hex2rgb=h=>{ h=h.replace('#',''); return [0,2,4].map(i=>parseInt(h.substr(i,2),16)); };
+const rgb2hex=a=>'#'+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+const lum=h=>{ const c=hex2rgb(h).map(v=>{ v/=255; return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4); }); return .2126*c[0]+.7152*c[1]+.0722*c[2]; };
+const contrast=(a,b)=>{ const x=lum(a),y=lum(b); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05); };
+const mix=(h,t,amt)=>{ const a=hex2rgb(h),b=hex2rgb(t); return rgb2hex(a.map((v,i)=>v+(b[i]-v)*amt)); };
+// Nudge a color until it reads on the background (needed for user-picked colors in both themes)
+function readable(c,bg,min){ let x=c; const tgt=lum(bg)>.5?'#000000':'#ffffff'; for(let i=0;i<12&&contrast(x,bg)<min;i++) x=mix(x,tgt,.15); return x; }
+function isDark(){ const t=document.documentElement.getAttribute('data-theme'); return t?t==='dark':matchMedia('(prefers-color-scheme: dark)').matches; }
+
+function applyPrefs(){
+  const root=document.documentElement;
+  if(prefs.mode==='system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme',prefs.mode);
+  const dark=isDark(), bg=dark?'#151917':'#f3f4f2', surf=dark?'#1e2421':'#ffffff';
+  let acc=prefs.accent||DEF.accent; if(dark) acc=mix(acc,'#ffffff',.25);
+  acc=readable(acc,bg,3);
+  root.style.setProperty('--accent',acc);
+  root.style.setProperty('--accent-fg', contrast(acc,'#ffffff')>=contrast(acc,'#111111')?'#ffffff':'#111111');
+  root.style.setProperty('--good',readable(acc,surf,3));
+  if(prefs.lyft) root.style.setProperty('--lyft',readable(prefs.lyft,surf,3)); else root.style.removeProperty('--lyft');
+  if(prefs.uber) root.style.setProperty('--uber',readable(prefs.uber,surf,3)); else root.style.removeProperty('--uber');
+  const tm=document.querySelector('meta[name=theme-color]'); if(tm) tm.content=acc;
+  // layout
+  const app=$('app'), order=prefs.order.filter(k=>SECS[k]).concat(Object.keys(SECS).filter(k=>!prefs.order.includes(k)));
+  const visible=order.filter(k=>!prefs.hidden.includes(k));
+  const custom=JSON.stringify(order)!==JSON.stringify(DEF.order)||prefs.hidden.length>0;
+  app.classList.toggle('custom-layout',custom); app.classList.toggle('one',visible.length<2);
+  order.forEach((k,i)=>{ const el=document.querySelector(`.sec[data-sec="${k}"]`); if(!el) return;
+    el.classList.toggle('off',prefs.hidden.includes(k)); el.style.order=i+1;
+    if(custom&&innerWidth>=960){ const vi=visible.indexOf(k);
+      el.style.gridColumn = visible.length<2 ? '1' : (vi===0?'1':'2');
+      el.style.gridRow = vi===0 ? `2 / span ${Math.max(1,visible.length-1)}` : String(1+vi);
+    } else { el.style.gridColumn=''; el.style.gridRow=''; } });
+  $('app').querySelector('.syncbar').style.order=0;
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',applyPrefs);
+addEventListener('resize',()=>{ clearTimeout(applyPrefs.t); applyPrefs.t=setTimeout(applyPrefs,150); });
+
+function drawCust(){
+  document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===prefs.mode));
+  const sw=$('swatches'); sw.innerHTML='';
+  let matched=false;
+  PRESETS.forEach(([name,c])=>{ const b=document.createElement('button'); b.type='button'; b.className='sw'; b.style.setProperty('--c',c);
+    b.title=name; b.setAttribute('aria-label',name); const on=c.toLowerCase()===String(prefs.accent).toLowerCase(); matched=matched||on;
+    b.setAttribute('aria-pressed',on); b.onclick=()=>{ prefs.accent=c; savePrefs(); applyPrefs(); drawCust(); }; sw.appendChild(b); });
+  const cb=document.createElement('label'); cb.className='sw custom'; cb.title='Pick any color'; cb.setAttribute('aria-pressed',!matched);
+  if(!matched) cb.style.background=prefs.accent;
+  const ci=document.createElement('input'); ci.type='color'; ci.value=prefs.accent; ci.setAttribute('aria-label','Pick any color');
+  ci.oninput=()=>{ prefs.accent=ci.value; savePrefs(); applyPrefs(); cb.style.background=ci.value; };
+  ci.onchange=drawCust; cb.appendChild(ci); sw.appendChild(cb);
+  const cs=getComputedStyle(document.documentElement);
+  $('lyftColor').value=prefs.lyft||rgbish(cs.getPropertyValue('--lyft'))||'#c2187a';
+  $('uberColor').value=prefs.uber||rgbish(cs.getPropertyValue('--uber'))||'#1d2320';
+  const ol=$('order'); ol.innerHTML='';
+  const order=prefs.order.filter(k=>SECS[k]).concat(Object.keys(SECS).filter(k=>!prefs.order.includes(k)));
+  order.forEach((k,i)=>{ const li=document.createElement('li'); if(prefs.hidden.includes(k)) li.className='off';
+    li.innerHTML=`<span class="nm"></span><label><input type="checkbox" ${prefs.hidden.includes(k)?'':'checked'}> Show</label><button type="button" aria-label="Move up" ${i?'':'disabled'}>↑</button><button type="button" aria-label="Move down" ${i<order.length-1?'':'disabled'}>↓</button>`;
+    li.querySelector('.nm').textContent=SECS[k];
+    const [up,down]=li.querySelectorAll('button');
+    const mv=d=>{ const o=order.slice(); [o[i],o[i+d]]=[o[i+d],o[i]]; prefs.order=o; savePrefs(); applyPrefs(); drawCust(); ol.querySelectorAll('li')[i+d].querySelectorAll('button')[d<0?0:1].focus(); };
+    up.onclick=()=>mv(-1); down.onclick=()=>mv(1);
+    li.querySelector('input').onchange=e=>{ prefs.hidden=e.target.checked?prefs.hidden.filter(x=>x!==k):[...prefs.hidden,k]; savePrefs(); applyPrefs(); drawCust(); };
+    ol.appendChild(li); });
+}
+function rgbish(v){ v=String(v||'').trim(); return /^#[0-9a-f]{6}$/i.test(v)?v:''; }
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{ prefs.mode=b.dataset.mode; savePrefs(); applyPrefs(); drawCust(); });
+$('lyftColor').oninput=e=>{ prefs.lyft=e.target.value; savePrefs(); applyPrefs(); };
+$('uberColor').oninput=e=>{ prefs.uber=e.target.value; savePrefs(); applyPrefs(); };
+$('custBtn').onclick=()=>{ drawCust(); $('cust').hidden=false; $('cust').scrollIntoView({behavior:'smooth',block:'start'}); };
+$('custDone').onclick=()=>{ $('cust').hidden=true; $('custBtn').focus(); };
+$('custReset').onclick=()=>{ prefs={...DEF,order:[...DEF.order],hidden:[]}; savePrefs(); applyPrefs(); drawCust(); };
+applyPrefs();
 
 load(); resetForm(); render();
 try{ localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t');
