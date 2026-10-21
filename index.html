@@ -39,7 +39,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px
     grid-template-areas:"sync sync" "form stand" "form cmp" "form days"}
   .syncbar{grid-area:sync} .a-form{grid-area:form} .a-stand{grid-area:stand} .a-days{grid-area:days} .a-cmp{grid-area:cmp}
   .a-days .log{max-height:calc(100vh - 120px);overflow-y:auto}
-  .sign{grid-template-columns:repeat(3,1fr)}
+  .sign{grid-template-columns:repeat(4,1fr)}
   .sign .big strong{font-size:3rem}
 }
 h1{font-family:var(--display);font-weight:700;font-size:2rem;letter-spacing:.01em;margin:0;text-wrap:balance}
@@ -204,6 +204,7 @@ button:disabled{opacity:.6;cursor:default}
           <div class="pcol lyft">
             <h3>Lyft</h3>
             <div class="field"><label for="le">Earnings</label><div class="inp pre"><span>$</span><input id="le" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
+            <div class="field"><label for="lt">Tips</label><div class="inp pre"><span>$</span><input id="lt" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
             <div class="field"><label for="lr">Rides</label><input id="lr" type="number" inputmode="numeric" step="1" min="0" placeholder="0"></div>
             <div class="field"><label for="lh">Hours</label><div class="inp suf"><input id="lh" type="number" inputmode="decimal" step="0.25" min="0" placeholder="0"><span class="r">hr</span></div></div>
             <div class="field"><label for="ld">Deposit amount</label><div class="inp pre"><span>$</span><input id="ld" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
@@ -212,6 +213,7 @@ button:disabled{opacity:.6;cursor:default}
           <div class="pcol uber">
             <h3>Uber</h3>
             <div class="field"><label for="ue">Earnings</label><div class="inp pre"><span>$</span><input id="ue" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
+            <div class="field"><label for="ut">Tips</label><div class="inp pre"><span>$</span><input id="ut" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
             <div class="field"><label for="ur">Rides</label><input id="ur" type="number" inputmode="numeric" step="1" min="0" placeholder="0"></div>
             <div class="field"><label for="uh">Hours</label><div class="inp suf"><input id="uh" type="number" inputmode="decimal" step="0.25" min="0" placeholder="0"><span class="r">hr</span></div></div>
             <div class="field"><label for="ud">Deposit amount</label><div class="inp pre"><span>$</span><input id="ud" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
@@ -264,7 +266,8 @@ const r2 = n => Math.round(n*100)/100;
 const newId = p => p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 
 // Day math
-const made = s => s.le + s.ue + s.bonus;
+const made = s => s.le + s.ue + (s.lt||0) + (s.ut||0) + s.bonus;
+const lpay = s => s.le + (s.lt||0), upay = s => s.ue + (s.ut||0);
 const kept = s => made(s) - s.gas;
 const hrs  = s => s.lh + s.uh;
 
@@ -299,23 +302,26 @@ function alertMsg(el,t){ el.className='msg err'; el.textContent=t; }
 function render(){
   const days=data.shifts.slice().sort((a,b)=>b.date.localeCompare(a.date)||(b.row||0)-(a.row||0));
   const p=days.filter(s=>inPeriod(s.date));
-  const T=p.reduce((a,s)=>{ for(const k of ['le','ue','lh','uh','lr','ur','gas','miles','bonus','ld','ud']) a[k]+=s[k]||0; return a; },
-    {le:0,ue:0,lh:0,uh:0,lr:0,ur:0,gas:0,miles:0,bonus:0,ld:0,ud:0});
-  const M=T.le+T.ue+T.bonus, K=M-T.gas, H=T.lh+T.uh, R=T.lr+T.ur;
+  const T=p.reduce((a,s)=>{ for(const k of ['le','ue','lt','ut','lh','uh','lr','ur','gas','miles','bonus','ld','ud']) a[k]+=s[k]||0; return a; },
+    {le:0,ue:0,lt:0,ut:0,lh:0,uh:0,lr:0,ur:0,gas:0,miles:0,bonus:0,ld:0,ud:0});
+  const LP=T.le+T.lt, UP=T.ue+T.ut, M=LP+UP+T.bonus, K=M-T.gas, H=T.lh+T.uh, R=T.lr+T.ur;
   $('sum').innerHTML=`
     <div class="big"><small>Kept after gas · ${p.length} day${p.length===1?'':'s'}</small><strong>${money(K)}</strong></div>
     <div><small>Made</small><strong>${money(M)}</strong></div>
+    <div><small>Tips</small><strong>${money(T.lt+T.ut)}</strong></div>
     <div><small>Gas</small><strong>${money(T.gas)}</strong></div>
     <div><small>Bonus / other</small><strong>${money(T.bonus)}</strong></div>
     <div><small>Miles</small><strong>${T.miles.toLocaleString(LOC,{maximumFractionDigits:1})}</strong></div>
     <div><small>Kept per mile</small><strong>${per(K,T.miles)}</strong></div>
-    <div><small>Kept per hour</small><strong>${per(K,H)}</strong></div>`;
+    <div><small>Kept per hour</small><strong>${per(K,H)}</strong></div>
+    <div><small>Rides</small><strong>${R.toLocaleString()}</strong></div>`;
   const rowsC=[
     ['Earnings',T.le,T.ue,money],
+    ['Tips',T.lt,T.ut,money],
     ['Hours',T.lh,T.uh,v=>v.toLocaleString(LOC,{maximumFractionDigits:2})],
-    ['Hourly wage',T.lh?T.le/T.lh:null,T.uh?T.ue/T.uh:null,money,true],
+    ['Hourly wage',T.lh?LP/T.lh:null,T.uh?UP/T.uh:null,money,true],
     ['Rides',T.lr,T.ur,v=>v.toLocaleString()],
-    ['Amount per ride',T.lr?T.le/T.lr:null,T.ur?T.ue/T.ur:null,money,true],
+    ['Amount per ride',T.lr?LP/T.lr:null,T.ur?UP/T.ur:null,money,true],
     ['Deposits',T.ld,T.ud,money],
   ];
   $('cmp').innerHTML='<thead><tr><th></th><th class="l">Lyft</th><th class="u">Uber</th></tr></thead><tbody>'+
@@ -331,8 +337,8 @@ function render(){
         <div class="x"><button type="button" data-a="edit">Edit</button><button type="button" data-a="del">Delete</button></div>`;
       r.querySelector('.d').textContent=fmtDate(s.date);
       const [m1,m2]=r.querySelectorAll('.meta');
-      const pl=(cls,name,e,rides,h)=> (e||rides||h) ? `<b class="${cls}">${name}</b> ${money(e)}${rides?` · ${rides} rides`:''}${h?` · ${h} hr`:''}` : '';
-      m1.innerHTML=[pl('l','Lyft',s.le,s.lr,s.lh),pl('u','Uber',s.ue,s.ur,s.uh)].filter(Boolean).join('<br>')||'No platform earnings';
+      const pl=(cls,name,e,t,rides,h)=> (e||t||rides||h) ? `<b class="${cls}">${name}</b> ${money(e)}${t?` + ${money(t)} tips`:''}${rides?` · ${rides} rides`:''}${h?` · ${h} hr`:''}` : '';
+      m1.innerHTML=[pl('l','Lyft',s.le,s.lt,s.lr,s.lh),pl('u','Uber',s.ue,s.ut,s.ur,s.uh)].filter(Boolean).join('<br>')||'No platform earnings';
       m2.textContent=[money(s.gas)+' gas', s.miles+' mi', s.bonus?money(s.bonus)+' bonus':''].filter(Boolean).join(' · ');
       if(s.ld||s.ud){ const m3=document.createElement('div'); m3.className='meta num'; m3.textContent='Deposited '+[s.ld?'Lyft '+money(s.ld):'',s.ud?'Uber '+money(s.ud):''].filter(Boolean).join(' · ')+(s.dtype?' ('+s.dtype+')':'')+(s.ddate&&s.ddate!==s.date?' on '+fmtDate(s.ddate):''); m2.after(m3); }
       r.querySelector('[data-a=edit]').onclick=()=>startEdit(s);
@@ -344,12 +350,12 @@ function render(){
 }
 
 /* ---------- day form ---------- */
-const F=['le','ue','lh','uh','lr','ur','gas','miles','bonus','ld','ud'];
+const F=['le','ue','lt','ut','lh','uh','lr','ur','gas','miles','bonus','ld','ud'];
 function readForm(){ const s={date:$('date').value,dtype:$('dtype').value.trim(),ddate:$('ddate').value}; F.forEach(k=>s[k]=num($(k).value)); return s; }
 function updatePreview(){
   const s=readForm(); $('pv').textContent=money(kept(s));
   const c=(e,h,r)=>[h?money(e/h)+'/hr':'', r?money(e/r)+'/ride':''].filter(Boolean).join(' · ');
-  $('lcalc').textContent=c(s.le,s.lh,s.lr); $('ucalc').textContent=c(s.ue,s.uh,s.ur);
+  $('lcalc').textContent=c(lpay(s),s.lh,s.lr); $('ucalc').textContent=c(upay(s),s.uh,s.ur);
 }
 F.forEach(k=>$(k).addEventListener('input',updatePreview));
 function resetForm(){
@@ -366,7 +372,7 @@ $('f').addEventListener('submit',async e=>{
   e.preventDefault();
   const s={...readForm(), id: editing||newId('s')};
   if(!s.date){ alertMsg($('msg'),'Pick a date for this day.'); return; }
-  if(!s.le&&!s.ue&&!s.bonus&&!s.gas&&!s.miles&&!s.ld&&!s.ud){ alertMsg($('msg'),'Enter at least your earnings, gas or miles.'); return; }
+  if(!s.le&&!s.ue&&!s.lt&&!s.ut&&!s.bonus&&!s.gas&&!s.miles&&!s.ld&&!s.ud){ alertMsg($('msg'),'Enter at least your earnings, gas or miles.'); return; }
   $('saveBtn').disabled=true; $('msg').className='msg'; $('msg').textContent=mode==='sheets'?'Saving to your sheet…':'';
   try{ const was=editing; const pr=persist('shifts',s); gdAuto(); await pr; resetForm(); $('msg').textContent=was?'Day updated.':'Saved. You kept '+money(kept(s))+'.'; }
   catch(err){ alertMsg($('msg'),mode==='sheets'?errText(err):'Couldn\'t save. Try again in a moment.'); }
@@ -388,9 +394,9 @@ async function saveFile(name,text,type,preferShare){
 }
 const csvCell=v=>{ const t=String(v??''); return /[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t; };
 function csvText(){
-  const H=['Date','Earnings - Lyft','Earnings - Uber','Hours - Lyft','Hours - Uber','Rides - Lyft','Rides - Uber','Gas','Total Miles','Bonus/Other','Hourly Wage - Lyft','Hourly Wage - Uber','Amt per Ride - Lyft','Amt per Ride - Uber','Kept After Gas','Deposit Type','Deposit Date','Deposit Amount - Lyft','Deposit Amount - Uber'];
+  const H=['Date','Earnings - Lyft','Earnings - Uber','Hours - Lyft','Hours - Uber','Rides - Lyft','Rides - Uber','Gas','Total Miles','Bonus/Other','Hourly Wage - Lyft','Hourly Wage - Uber','Amt per Ride - Lyft','Amt per Ride - Uber','Kept After Gas','Deposit Type','Deposit Date','Deposit Amount - Lyft','Deposit Amount - Uber','Tips - Lyft','Tips - Uber'];
   const rows=[H].concat(data.shifts.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(s=>[s.date,s.le,s.ue,s.lh||'',s.uh||'',s.lr||'',s.ur||'',s.gas,s.miles,s.bonus||'',
-    s.lh?r2(s.le/s.lh):'',s.uh?r2(s.ue/s.uh):'',s.lr?r2(s.le/s.lr):'',s.ur?r2(s.ue/s.ur):'',r2(kept(s)),s.dtype||'',s.ddate||'',s.ld||'',s.ud||'']));
+    s.lh?r2(lpay(s)/s.lh):'',s.uh?r2(upay(s)/s.uh):'',s.lr?r2(lpay(s)/s.lr):'',s.ur?r2(upay(s)/s.ur):'',r2(kept(s)),s.dtype||'',s.ddate||'',s.ld||'',s.ud||'',s.lt||'',s.ut||'']));
   return rows.map(r=>r.map(csvCell).join(',')).join('\n');
 }
 const backupText=()=>JSON.stringify({app:'shift-ledger',saved:new Date().toISOString(),shifts:data.shifts,prefs:typeof prefs!=='undefined'?prefs:undefined});
@@ -570,6 +576,7 @@ const LANGS={en:'English',es:'Español',pt:'Português',fr:'Français',ru:'Ру�
 // Each language: S = exact phrases (keyed by the English text), P = sentence templates, W = small words used inside mixed text
 const I18N={
 es:{S:{
+'Tips':'Propinas',
 'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':'Lyft y Uber, lado a lado. Registra tu día y ve cuánto te quedó. Todo se guarda en este dispositivo.',
 'Customize':'Personalizar','Connect Google Drive':'Conectar Google Drive','Open my Google Sheet':'Abrir mi hoja de Google','Restore from Drive':'Restaurar desde Drive','Back up to Google Drive':'Respaldar en Google Drive','Export to Excel / Sheets':'Exportar a Excel / Sheets','Restore backup':'Restaurar respaldo','Sync to Drive now':'Sincronizar con Drive ahora',
 'Log a day':'Registrar un día','Edit day':'Editar día','Date':'Fecha','Earnings':'Ganancias','Rides':'Viajes','Hours':'Horas','Deposit amount':'Monto del depósito','Gas':'Gasolina','Total miles':'Millas totales','Bonus earned / other':'Bonos / otros ingresos','Deposit type':'Tipo de depósito','Deposit date':'Fecha del depósito','e.g. Express Pay':'ej. Express Pay','You kept':'Te quedó','Save day':'Guardar día','Save changes':'Guardar cambios','Cancel':'Cancelar',
@@ -596,9 +603,10 @@ es:{S:{
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Ese archivo no es un respaldo de Kept. Elige el archivo .json de "Respaldar en Google Drive".',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Este navegador está bloqueando el almacenamiento, así que no se guardarán los datos. Usa una ventana normal (no privada).'},
 P:{kept:'Neto después de gasolina · {n} {days}',saved:'Guardado. Te quedó {x}.',restored:'Respaldo restaurado: {n} {days}.',restoredDrive:'Se restauraron {n} {days} desde Google Drive.',last:'Guardado en este dispositivo. Último respaldo: {d}.'},
-W:{day:'día',days:'días',rides:'{n} viajes',hr:'h',mi:'mi',gas:'gasolina',bonus:'bono',deposited:'Depositado',on:' el ',ride:'viaje'}},
+W:{tips:'propinas',day:'día',days:'días',rides:'{n} viajes',hr:'h',mi:'mi',gas:'gasolina',bonus:'bono',deposited:'Depositado',on:' el ',ride:'viaje'}},
 
 pt:{S:{
+'Tips':'Gorjetas',
 'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':'Lyft e Uber lado a lado. Registre o dia e veja quanto sobrou. Tudo fica salvo neste aparelho.',
 'Customize':'Personalizar','Connect Google Drive':'Conectar ao Google Drive','Open my Google Sheet':'Abrir minha planilha Google','Restore from Drive':'Restaurar do Drive','Back up to Google Drive':'Fazer backup no Google Drive','Export to Excel / Sheets':'Exportar para Excel / Sheets','Restore backup':'Restaurar backup','Sync to Drive now':'Sincronizar com o Drive agora',
 'Log a day':'Registrar um dia','Edit day':'Editar dia','Date':'Data','Earnings':'Ganhos','Rides':'Corridas','Hours':'Horas','Deposit amount':'Valor do depósito','Gas':'Combustível','Total miles':'Milhas totais','Bonus earned / other':'Bônus / outros ganhos','Deposit type':'Tipo de depósito','Deposit date':'Data do depósito','e.g. Express Pay':'ex.: Express Pay','You kept':'Sobrou','Save day':'Salvar dia','Save changes':'Salvar alterações','Cancel':'Cancelar',
@@ -625,9 +633,10 @@ pt:{S:{
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Esse arquivo não é um backup do Kept. Escolha o arquivo .json de "Fazer backup no Google Drive".',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Este navegador está bloqueando o armazenamento, então os dados não serão salvos. Use uma janela normal (não anônima).'},
 P:{kept:'Líquido após combustível · {n} {days}',saved:'Salvo. Sobrou {x}.',restored:'Backup restaurado: {n} {days}.',restoredDrive:'{n} {days} restaurados do Google Drive.',last:'Salvo neste aparelho. Último backup: {d}.'},
-W:{day:'dia',days:'dias',rides:'{n} corridas',hr:'h',mi:'mi',gas:'combustível',bonus:'bônus',deposited:'Depositado',on:' em ',ride:'corrida'}},
+W:{tips:'gorjetas',day:'dia',days:'dias',rides:'{n} corridas',hr:'h',mi:'mi',gas:'combustível',bonus:'bônus',deposited:'Depositado',on:' em ',ride:'corrida'}},
 
 fr:{S:{
+'Tips':'Pourboires',
 'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':"Lyft et Uber côte à côte. Notez votre journée et voyez ce qu'il vous reste. Tout reste sur cet appareil.",
 'Customize':'Personnaliser','Connect Google Drive':'Connecter Google Drive','Open my Google Sheet':'Ouvrir ma feuille Google','Restore from Drive':'Restaurer depuis Drive','Back up to Google Drive':'Sauvegarder sur Google Drive','Export to Excel / Sheets':'Exporter vers Excel / Sheets','Restore backup':'Restaurer une sauvegarde','Sync to Drive now':'Synchroniser avec Drive',
 'Log a day':'Noter une journée','Edit day':'Modifier la journée','Date':'Date','Earnings':'Gains','Rides':'Courses','Hours':'Heures','Deposit amount':'Montant du virement','Gas':'Essence','Total miles':'Miles au total','Bonus earned / other':'Bonus / autres revenus','Deposit type':'Type de virement','Deposit date':'Date du virement','e.g. Express Pay':'ex. Express Pay','You kept':'Il vous reste','Save day':'Enregistrer la journée','Save changes':'Enregistrer','Cancel':'Annuler',
@@ -654,9 +663,10 @@ fr:{S:{
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":"Ce fichier n'est pas une sauvegarde Kept. Choisissez le fichier .json créé par « Sauvegarder sur Google Drive ».",
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Ce navigateur bloque le stockage : vos données ne seront pas conservées. Utilisez une fenêtre normale (non privée).'},
 P:{kept:'Net après essence · {n} {days}',saved:'Enregistré. Il vous reste {x}.',restored:'Sauvegarde restaurée : {n} {days}.',restoredDrive:'{n} {days} restaurées depuis Google Drive.',last:'Enregistré sur cet appareil. Dernière sauvegarde : {d}.'},
-W:{day:'journée',days:'journées',rides:'{n} courses',hr:'h',mi:'mi',gas:'essence',bonus:'bonus',deposited:'Viré',on:' le ',ride:'course'}},
+W:{tips:'pourboires',day:'journée',days:'journées',rides:'{n} courses',hr:'h',mi:'mi',gas:'essence',bonus:'bonus',deposited:'Viré',on:' le ',ride:'course'}},
 
 ru:{S:{
+'Tips':'Чаевые',
 'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':'Lyft и Uber рядом. Записывайте день и смотрите, сколько осталось. Всё хранится на этом устройстве.',
 'Customize':'Настроить','Connect Google Drive':'Подключить Google Диск','Open my Google Sheet':'Открыть мою Google Таблицу','Restore from Drive':'Восстановить с Диска','Back up to Google Drive':'Копия в Google Диск','Export to Excel / Sheets':'Экспорт в Excel / Таблицы','Restore backup':'Восстановить из копии','Sync to Drive now':'Синхронизировать с Диском',
 'Log a day':'Записать день','Edit day':'Изменить день','Date':'Дата','Earnings':'Заработок','Rides':'Поездки','Hours':'Часы','Deposit amount':'Сумма выплаты','Gas':'Бензин','Total miles':'Всего миль','Bonus earned / other':'Бонусы / другое','Deposit type':'Тип выплаты','Deposit date':'Дата выплаты','e.g. Express Pay':'напр. Express Pay','You kept':'Осталось','Save day':'Сохранить день','Save changes':'Сохранить изменения','Cancel':'Отмена',
@@ -683,9 +693,10 @@ ru:{S:{
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Этот файл не является копией Kept. Выберите файл .json, созданный кнопкой «Копия в Google Диск».',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Браузер блокирует хранилище, поэтому данные не сохранятся. Откройте обычное (не приватное) окно.'},
 P:{kept:'Чистыми после бензина · дней: {n}',saved:'Сохранено. Осталось {x}.',restored:'Копия восстановлена, дней: {n}.',restoredDrive:'Восстановлено с Google Диска, дней: {n}.',last:'Сохранено на этом устройстве. Последняя копия: {d}.'},
-W:{day:'день',days:'дней',rides:'поездок: {n}',hr:'ч',mi:'миль',gas:'бензин',bonus:'бонус',deposited:'Выплачено',on:', ',ride:'поездка'}},
+W:{tips:'чаевых',day:'день',days:'дней',rides:'поездок: {n}',hr:'ч',mi:'миль',gas:'бензин',bonus:'бонус',deposited:'Выплачено',on:', ',ride:'поездка'}},
 
 zh:{S:{
+'Tips':'小费',
 'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':'Lyft 和 Uber 并排对比。记录每天的数据，看看你实际赚了多少。所有数据都保存在这台设备上。',
 'Customize':'自定义','Connect Google Drive':'连接 Google 云端硬盘','Open my Google Sheet':'打开我的 Google 表格','Restore from Drive':'从云端硬盘恢复','Back up to Google Drive':'备份到 Google 云端硬盘','Export to Excel / Sheets':'导出到 Excel / 表格','Restore backup':'恢复备份','Sync to Drive now':'立即同步到云端硬盘',
 'Log a day':'记录一天','Edit day':'编辑这一天','Date':'日期','Earnings':'收入','Rides':'单数','Hours':'小时','Deposit amount':'到账金额','Gas':'油费','Total miles':'总里程（英里）','Bonus earned / other':'奖励 / 其他收入','Deposit type':'到账方式','Deposit date':'到账日期','e.g. Express Pay':'例如 Express Pay','You kept':'净收入','Save day':'保存','Save changes':'保存修改','Cancel':'取消',
@@ -712,9 +723,10 @@ zh:{S:{
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'这个文件不是 Kept 备份。请选择“备份到 Google 云端硬盘”生成的 .json 文件。',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'此浏览器阻止了存储，数据不会被保存。请使用普通（非无痕）窗口。'},
 P:{kept:'扣除油费后净收入 · {n} 天',saved:'已保存。净收入 {x}。',restored:'已恢复备份：{n} 天。',restoredDrive:'已从 Google 云端硬盘恢复 {n} 天的记录。',last:'已保存在此设备上。上次备份：{d}。'},
-W:{day:'天',days:'天',rides:'{n} 单',hr:'小时',mi:'英里',gas:'油费',bonus:'奖励',deposited:'到账',on:' · ',ride:'单'}},
+W:{tips:'小费',day:'天',days:'天',rides:'{n} 单',hr:'小时',mi:'英里',gas:'油费',bonus:'奖励',deposited:'到账',on:' · ',ride:'单'}},
 
 vi:{S:{
+'Tips':'Tiền tip',
 'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':'Lyft và Uber cạnh nhau. Ghi lại mỗi ngày và xem bạn thực sự giữ lại bao nhiêu. Mọi dữ liệu nằm trên thiết bị này.',
 'Customize':'Tùy chỉnh','Connect Google Drive':'Kết nối Google Drive','Open my Google Sheet':'Mở Google Trang tính của tôi','Restore from Drive':'Khôi phục từ Drive','Back up to Google Drive':'Sao lưu lên Google Drive','Export to Excel / Sheets':'Xuất sang Excel / Trang tính','Restore backup':'Khôi phục bản sao lưu','Sync to Drive now':'Đồng bộ với Drive ngay',
 'Log a day':'Ghi một ngày','Edit day':'Sửa ngày','Date':'Ngày','Earnings':'Thu nhập','Rides':'Số chuyến','Hours':'Số giờ','Deposit amount':'Số tiền rút về','Gas':'Xăng','Total miles':'Tổng số dặm','Bonus earned / other':'Thưởng / thu nhập khác','Deposit type':'Hình thức rút tiền','Deposit date':'Ngày tiền về','e.g. Express Pay':'vd. Express Pay','You kept':'Còn lại','Save day':'Lưu ngày','Save changes':'Lưu thay đổi','Cancel':'Hủy',
@@ -741,7 +753,7 @@ vi:{S:{
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Tệp này không phải bản sao lưu Kept. Hãy chọn tệp .json từ "Sao lưu lên Google Drive".',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Trình duyệt này đang chặn bộ nhớ nên dữ liệu sẽ không được lưu. Hãy dùng cửa sổ thường (không ẩn danh).'},
 P:{kept:'Còn lại sau xăng · {n} ngày',saved:'Đã lưu. Còn lại {x}.',restored:'Đã khôi phục: {n} ngày.',restoredDrive:'Đã khôi phục {n} ngày từ Google Drive.',last:'Đã lưu trên thiết bị này. Lần sao lưu gần nhất: {d}.'},
-W:{day:'ngày',days:'ngày',rides:'{n} chuyến',hr:'giờ',mi:'dặm',gas:'xăng',bonus:'thưởng',deposited:'Đã rút',on:' ngày ',ride:'chuyến'}}
+W:{tips:'tiền tip',day:'ngày',days:'ngày',rides:'{n} chuyến',hr:'giờ',mi:'dặm',gas:'xăng',bonus:'thưởng',deposited:'Đã rút',on:' ngày ',ride:'chuyến'}}
 };
 
 function pickLang(){
@@ -768,6 +780,7 @@ function trMixed(t){   // numbers mixed with words, e.g. "$30.00 gas · 100 mi"
   const W=L.W; let o=t;
   o=o.replace(/(\d[\d,.]*) rides\b/g,(_,n)=>fill(W.rides,{n}));
   o=o.replace(/(\d[\d,.]*) hr\b/g,(_,n)=>n+' '+W.hr).replace(/(\d[\d,.]*) mi\b/g,(_,n)=>n+' '+W.mi);
+  o=o.replace(/(\d) tips\b/g,(_,d)=>d+' '+W.tips);
   o=o.replace(/(\d) gas\b/g,(_,d)=>d+' '+W.gas).replace(/(\d) bonus\b/g,(_,d)=>d+' '+W.bonus);
   o=o.replace(/\/mi\b/g,'/'+W.mi).replace(/\/hr\b/g,'/'+W.hr).replace(/\/ride\b/g,'/'+W.ride);
   if(/^Deposited /.test(o)) o=o.replace(/^Deposited /,W.deposited+' ').replace(/ on (?=\S)/,W.on);
