@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Shift Ledger</title>
+<title>Kept</title>
 <meta name="theme-color" content="#1c6b47">
 <meta name="description" content="Daily tracker for Lyft and Uber drivers.">
 <link rel="manifest" href="manifest.webmanifest">
@@ -161,7 +161,7 @@ button:disabled{opacity:.6;cursor:default}
 </head><body>
 <div class="wrap">
   <header>
-    <h1>Shift Ledger</h1>
+    <h1>Kept</h1>
     <p class="sub">Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.</p>
   </header>
 
@@ -412,7 +412,7 @@ $('importFile').onchange=async e=>{
     const m=new Map(data.shifts.map(x=>[x.id,x])); d.shifts.forEach(x=>m.set(x.id,x)); if(d.prefs&&typeof applyPrefs==='function'){ prefs={...DEF,...d.prefs}; savePrefs(); applyPrefs(); }
     data.shifts=[...m.values()]; save(); render();
     setSync('Backup restored: '+d.shifts.length+' day'+(d.shifts.length===1?'':'s')+'.','');
-  }catch(err){ setSync('That file isn\'t a Shift Ledger backup. Pick the .json file from "Back up to Google Drive".','warn'); }
+  }catch(err){ setSync('That file isn\'t a Kept backup. Pick the .json file from "Back up to Google Drive".','warn'); }
   e.target.value='';
 };
 
@@ -444,7 +444,7 @@ async function gdUpload(){
     catch(e){ if(e.status===404) id=null; else throw e; } }
   if(!id){
     const fd=new FormData();
-    fd.append('metadata',new Blob([JSON.stringify({name:'Shift Ledger backup.json',mimeType:'application/json'})],{type:'application/json'}));
+    fd.append('metadata',new Blob([JSON.stringify({name:'Kept backup.json',mimeType:'application/json'})],{type:'application/json'}));
     fd.append('file',new Blob([body],{type:'application/json'}));
     id=(await (await gdFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',body:fd})).json()).id;
   }
@@ -452,14 +452,14 @@ async function gdUpload(){
   await gdSheetSync();
   gdState.last=todayStr(); gdSave(); gdStatus();
 }
-// Keeps a "Shift Ledger" Google Sheet in the user's Drive, rewritten from the app's data (one-way: app -> sheet).
+// Keeps a "Kept" Google Sheet in the user's Drive, rewritten from the app's data (one-way: app -> sheet).
 async function gdSheetSync(){
   const csv=csvText(); let id=gdState.sheetId;
   if(id){ try{ await gdFetch('https://www.googleapis.com/upload/drive/v3/files/'+id+'?uploadType=media',{method:'PATCH',headers:{'Content-Type':'text/csv'},body:csv}); }
     catch(e){ if(e.status===404) id=null; else throw e; } }
   if(!id){
     const fd=new FormData();
-    fd.append('metadata',new Blob([JSON.stringify({name:'Shift Ledger',mimeType:'application/vnd.google-apps.spreadsheet'})],{type:'application/json'}));
+    fd.append('metadata',new Blob([JSON.stringify({name:'Kept',mimeType:'application/vnd.google-apps.spreadsheet'})],{type:'application/json'}));
     fd.append('file',new Blob([csv],{type:'text/csv'}));
     id=(await (await gdFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',body:fd})).json()).id;
   }
@@ -593,7 +593,7 @@ es:{S:{
 "Couldn't export from this browser. Try Chrome.":'No se pudo exportar desde este navegador. Prueba con Chrome.',"Couldn't back up from this browser. Try Chrome.":'No se pudo respaldar desde este navegador. Prueba con Chrome.',
 "Backup sent. If you picked Drive, it's in your Google Drive now.":'Respaldo enviado. Si elegiste Drive, ya está en tu Google Drive.',
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Respaldo guardado. Para tenerlo en Google Drive, sube el archivo .json de tus Descargas a drive.google.com.',
-"That file isn't a Shift Ledger backup. Pick the .json file from \"Back up to Google Drive\".":'Ese archivo no es un respaldo de Shift Ledger. Elige el archivo .json de "Respaldar en Google Drive".',
+"That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Ese archivo no es un respaldo de Kept. Elige el archivo .json de "Respaldar en Google Drive".',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Este navegador está bloqueando el almacenamiento, así que no se guardarán los datos. Usa una ventana normal (no privada).'},
 P:{kept:'Neto después de gasolina · {n} {days}',saved:'Guardado. Te quedó {x}.',restored:'Respaldo restaurado: {n} {days}.',restoredDrive:'Se restauraron {n} {days} desde Google Drive.',last:'Guardado en este dispositivo. Último respaldo: {d}.'},
 W:{day:'día',days:'días',rides:'{n} viajes',hr:'h',mi:'mi',gas:'gasolina',bonus:'bono',deposited:'Depositado',on:' el ',ride:'viaje'}},
@@ -622,7 +622,7 @@ pt:{S:{
 "Couldn't export from this browser. Try Chrome.":'Não foi possível exportar neste navegador. Tente o Chrome.',"Couldn't back up from this browser. Try Chrome.":'Não foi possível fazer backup neste navegador. Tente o Chrome.',
 "Backup sent. If you picked Drive, it's in your Google Drive now.":'Backup enviado. Se você escolheu o Drive, ele já está no seu Google Drive.',
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Backup salvo. Para guardá-lo no Google Drive, envie o arquivo .json da pasta Downloads para drive.google.com.',
-"That file isn't a Shift Ledger backup. Pick the .json file from \"Back up to Google Drive\".":'Esse arquivo não é um backup do Shift Ledger. Escolha o arquivo .json de "Fazer backup no Google Drive".',
+"That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Esse arquivo não é um backup do Kept. Escolha o arquivo .json de "Fazer backup no Google Drive".',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Este navegador está bloqueando o armazenamento, então os dados não serão salvos. Use uma janela normal (não anônima).'},
 P:{kept:'Líquido após combustível · {n} {days}',saved:'Salvo. Sobrou {x}.',restored:'Backup restaurado: {n} {days}.',restoredDrive:'{n} {days} restaurados do Google Drive.',last:'Salvo neste aparelho. Último backup: {d}.'},
 W:{day:'dia',days:'dias',rides:'{n} corridas',hr:'h',mi:'mi',gas:'combustível',bonus:'bônus',deposited:'Depositado',on:' em ',ride:'corrida'}},
@@ -651,7 +651,7 @@ fr:{S:{
 "Couldn't export from this browser. Try Chrome.":'Export impossible depuis ce navigateur. Essayez Chrome.',"Couldn't back up from this browser. Try Chrome.":'Sauvegarde impossible depuis ce navigateur. Essayez Chrome.',
 "Backup sent. If you picked Drive, it's in your Google Drive now.":'Sauvegarde envoyée. Si vous avez choisi Drive, elle est maintenant dans votre Google Drive.',
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Sauvegarde enregistrée. Pour la garder sur Google Drive, importez le fichier .json de vos Téléchargements sur drive.google.com.',
-"That file isn't a Shift Ledger backup. Pick the .json file from \"Back up to Google Drive\".":"Ce fichier n'est pas une sauvegarde Shift Ledger. Choisissez le fichier .json créé par « Sauvegarder sur Google Drive ».",
+"That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":"Ce fichier n'est pas une sauvegarde Kept. Choisissez le fichier .json créé par « Sauvegarder sur Google Drive ».",
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Ce navigateur bloque le stockage : vos données ne seront pas conservées. Utilisez une fenêtre normale (non privée).'},
 P:{kept:'Net après essence · {n} {days}',saved:'Enregistré. Il vous reste {x}.',restored:'Sauvegarde restaurée : {n} {days}.',restoredDrive:'{n} {days} restaurées depuis Google Drive.',last:'Enregistré sur cet appareil. Dernière sauvegarde : {d}.'},
 W:{day:'journée',days:'journées',rides:'{n} courses',hr:'h',mi:'mi',gas:'essence',bonus:'bonus',deposited:'Viré',on:' le ',ride:'course'}},
@@ -680,7 +680,7 @@ ru:{S:{
 "Couldn't export from this browser. Try Chrome.":'Не удалось экспортировать в этом браузере. Попробуйте Chrome.',"Couldn't back up from this browser. Try Chrome.":'Не удалось создать копию в этом браузере. Попробуйте Chrome.',
 "Backup sent. If you picked Drive, it's in your Google Drive now.":'Копия отправлена. Если вы выбрали Диск, она уже в вашем Google Диске.',
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Копия сохранена. Чтобы хранить её в Google Диске, загрузите файл .json из папки «Загрузки» на drive.google.com.',
-"That file isn't a Shift Ledger backup. Pick the .json file from \"Back up to Google Drive\".":'Этот файл не является копией Shift Ledger. Выберите файл .json, созданный кнопкой «Копия в Google Диск».',
+"That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Этот файл не является копией Kept. Выберите файл .json, созданный кнопкой «Копия в Google Диск».',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Браузер блокирует хранилище, поэтому данные не сохранятся. Откройте обычное (не приватное) окно.'},
 P:{kept:'Чистыми после бензина · дней: {n}',saved:'Сохранено. Осталось {x}.',restored:'Копия восстановлена, дней: {n}.',restoredDrive:'Восстановлено с Google Диска, дней: {n}.',last:'Сохранено на этом устройстве. Последняя копия: {d}.'},
 W:{day:'день',days:'дней',rides:'поездок: {n}',hr:'ч',mi:'миль',gas:'бензин',bonus:'бонус',deposited:'Выплачено',on:', ',ride:'поездка'}},
@@ -709,7 +709,7 @@ zh:{S:{
 "Couldn't export from this browser. Try Chrome.":'此浏览器无法导出，请使用 Chrome。',"Couldn't back up from this browser. Try Chrome.":'此浏览器无法备份，请使用 Chrome。',
 "Backup sent. If you picked Drive, it's in your Google Drive now.":'备份已发送。如果你选择了云端硬盘，它现在就在你的 Google 云端硬盘中。',
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'备份已保存。要保存到 Google 云端硬盘，请把“下载”中的 .json 文件上传到 drive.google.com。',
-"That file isn't a Shift Ledger backup. Pick the .json file from \"Back up to Google Drive\".":'这个文件不是 Shift Ledger 备份。请选择“备份到 Google 云端硬盘”生成的 .json 文件。',
+"That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'这个文件不是 Kept 备份。请选择“备份到 Google 云端硬盘”生成的 .json 文件。',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'此浏览器阻止了存储，数据不会被保存。请使用普通（非无痕）窗口。'},
 P:{kept:'扣除油费后净收入 · {n} 天',saved:'已保存。净收入 {x}。',restored:'已恢复备份：{n} 天。',restoredDrive:'已从 Google 云端硬盘恢复 {n} 天的记录。',last:'已保存在此设备上。上次备份：{d}。'},
 W:{day:'天',days:'天',rides:'{n} 单',hr:'小时',mi:'英里',gas:'油费',bonus:'奖励',deposited:'到账',on:' · ',ride:'单'}},
@@ -738,7 +738,7 @@ vi:{S:{
 "Couldn't export from this browser. Try Chrome.":'Không xuất được trên trình duyệt này. Hãy thử Chrome.',"Couldn't back up from this browser. Try Chrome.":'Không sao lưu được trên trình duyệt này. Hãy thử Chrome.',
 "Backup sent. If you picked Drive, it's in your Google Drive now.":'Đã gửi bản sao lưu. Nếu bạn chọn Drive, nó đã nằm trong Google Drive của bạn.',
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Đã lưu bản sao lưu. Để giữ trên Google Drive, hãy tải tệp .json trong mục Tải xuống lên drive.google.com.',
-"That file isn't a Shift Ledger backup. Pick the .json file from \"Back up to Google Drive\".":'Tệp này không phải bản sao lưu Shift Ledger. Hãy chọn tệp .json từ "Sao lưu lên Google Drive".',
+"That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Tệp này không phải bản sao lưu Kept. Hãy chọn tệp .json từ "Sao lưu lên Google Drive".',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Trình duyệt này đang chặn bộ nhớ nên dữ liệu sẽ không được lưu. Hãy dùng cửa sổ thường (không ẩn danh).'},
 P:{kept:'Còn lại sau xăng · {n} ngày',saved:'Đã lưu. Còn lại {x}.',restored:'Đã khôi phục: {n} ngày.',restoredDrive:'Đã khôi phục {n} ngày từ Google Drive.',last:'Đã lưu trên thiết bị này. Lần sao lưu gần nhất: {d}.'},
 W:{day:'ngày',days:'ngày',rides:'{n} chuyến',hr:'giờ',mi:'dặm',gas:'xăng',bonus:'thưởng',deposited:'Đã rút',on:' ngày ',ride:'chuyến'}}
@@ -796,7 +796,7 @@ if(L){
     else if(m.type==='attributes') trNode(m.target);
     else m.addedNodes.forEach(trNode);
   } }).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['placeholder','aria-label','title']});
-  const tm=document.querySelector('title'); if(tm) document.title='Shift Ledger';
+  const tm=document.querySelector('title'); if(tm) document.title='Kept';
 }
 
 // Language picker in Customize
