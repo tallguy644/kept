@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Shift Ledger</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Standalone copy. Layout: one narrow column — first-run Google Sheets setup, then the day's entry (Lyft and Uber side by side), totals, platform comparison, shift log, and deposits. Road-sign green on asphalt. */
+:root{
+  --bg:#f3f4f2; --surface:#ffffff; --fg:#1d2320; --muted:#5d6762; --line:#d9ddd9;
+  --accent:#1c6b47; --accent-fg:#ffffff; --good:#1c6b47; --bad:#b4442b; --warn:#a86b0b;
+  --lyft:#c2187a; --uber:#1d2320;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#151917; --surface:#1e2421; --fg:#e8ece9; --muted:#9aa49f; --line:#2f3733;
+  --accent:#3fae7a; --accent-fg:#0d1511; --good:#4fc08b; --bad:#e8775c; --warn:#e0a33c;
+  --lyft:#f06bb5; --uber:#e8ece9; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#151917; --surface:#1e2421; --fg:#e8ece9; --muted:#9aa49f; --line:#2f3733;
+  --accent:#3fae7a; --accent-fg:#0d1511; --good:#4fc08b; --bad:#e8775c; --warn:#e0a33c;
+  --lyft:#f06bb5; --uber:#e8ece9; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45}
+.wrap{max-width:600px;margin:0 auto;padding-block:20px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:22px}
+#app{display:flex;flex-direction:column;gap:22px;min-width:0}
+#app>*{min-width:0}
+#setup{max-width:560px;width:100%;align-self:center}
+@media (min-width:960px){
+  .wrap{max-width:1180px;padding-block:32px 56px}
+  header{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+  #app{display:grid;grid-template-columns:minmax(0,460px) minmax(0,1fr);column-gap:32px;row-gap:24px;align-items:start;
+    grid-template-areas:"sync sync" "form stand" "form days" "dep days"}
+  .syncbar{grid-area:sync} .a-form{grid-area:form} .a-stand{grid-area:stand} .a-days{grid-area:days} .a-dep{grid-area:dep}
+  .a-days .log{max-height:calc(100vh - 120px);overflow-y:auto}
+  .sign{grid-template-columns:repeat(3,1fr)}
+  .sign .big strong{font-size:3rem}
+}
+h1{font-family:var(--display);font-weight:700;font-size:2rem;letter-spacing:.01em;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:2px 0 0;font-size:.95rem}
+h2{font-family:var(--display);font-weight:600;font-size:1.05rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+h2 span{letter-spacing:.02em;text-transform:none;font-family:var(--body);font-weight:600;font-size:.9rem;color:var(--fg)}
+.num{font-variant-numeric:tabular-nums}
+a{color:var(--accent)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+form{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field.full{grid-column:1/-1}
+label{font-size:.82rem;font-weight:600;color:var(--muted);letter-spacing:.03em}
+.inp{position:relative}
+.inp span{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.inp span.r{left:auto;right:11px}
+input,select{width:100%;font:inherit;font-size:1.05rem;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font-variant-numeric:tabular-nums}
+.inp.pre input{padding-left:24px}
+.inp.suf input{padding-right:40px}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.plat{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pcol{display:flex;flex-direction:column;gap:10px;min-width:0;border-top:3px solid var(--pc);padding-top:10px}
+.pcol h3{margin:0;font-family:var(--display);font-size:1.25rem;font-weight:700;color:var(--pc)}
+.pcol.lyft{--pc:var(--lyft)} .pcol.uber{--pc:var(--uber)}
+.pcol .calc{font-size:.82rem;color:var(--muted);min-height:1.2em}
+.preview{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;border-top:1px dashed var(--line);padding-top:10px;gap:8px;flex-wrap:wrap}
+.preview b{font-family:var(--display);font-size:1.6rem}
+.actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+button,.btn{font:inherit;font-weight:600;border-radius:8px;padding:11px 16px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--fg);text-decoration:none;text-align:center;display:inline-block}
+button.primary,.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);flex:1}
+button:disabled{opacity:.6;cursor:default}
+.msg{grid-column:1/-1;font-size:.88rem;color:var(--muted);min-height:1.2em;margin:0}
+.msg.err{color:var(--bad)}
+
+.setup{display:flex;flex-direction:column;gap:14px}
+.setup h3{font-family:var(--display);font-size:1.5rem;font-weight:700;margin:0;text-wrap:balance}
+.setup p{margin:0;color:var(--muted)}
+.steps{display:flex;gap:6px}
+.steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.steps i.on{background:var(--accent)}
+.skip{background:none;border:0;padding:4px 0;color:var(--muted);text-decoration:underline;font-weight:500;align-self:flex-start}
+
+.syncbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:.88rem;color:var(--muted)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:6px;vertical-align:middle}
+.dot.off{background:var(--muted)} .dot.warn{background:var(--warn)}
+.syncbar button{padding:5px 10px;font-size:.82rem}
+
+.tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.tabs button{padding:6px 12px;font-size:.9rem}
+.tabs button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.sign{background:var(--accent);color:var(--accent-fg);border-radius:12px;padding:16px 18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px 12px}
+.sign .big{grid-column:1/-1}
+.sign small{display:block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;opacity:.82;font-weight:600}
+.sign strong{font-family:var(--display);font-size:1.35rem;font-weight:700}
+.sign .big strong{font-size:2.6rem;line-height:1.05}
+@media (max-width:420px){.sign{grid-template-columns:1fr 1fr}}
+
+.cmp{margin-top:12px;overflow-x:auto}
+.cmp table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.cmp th,.cmp td{padding:8px 10px;text-align:right;border-top:1px solid var(--line)}
+.cmp th:first-child,.cmp td:first-child{text-align:left;color:var(--muted);font-weight:500}
+.cmp thead th{border-top:0;font-family:var(--display);font-size:1.1rem}
+.cmp .l{color:var(--lyft)} .cmp .u{color:var(--uber)}
+.cmp td.win{font-weight:700}
+
+.log{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:12px 14px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .d{font-weight:600}
+.row .meta{color:var(--muted);font-size:.86rem;grid-column:1}
+.row .meta b{font-weight:600}
+.row .meta .l{color:var(--lyft)} .row .meta .u{color:var(--uber)}
+.row .net{font-family:var(--display);font-size:1.3rem;font-weight:700;text-align:right;grid-row:1/4;grid-column:2;align-self:center;display:flex;flex-direction:column;align-items:flex-end}
+.row .net em{font-style:normal;font-family:var(--body);font-size:.8rem;font-weight:500;color:var(--muted)}
+.row .x{grid-column:1/-1;display:flex;gap:6px;margin-top:6px}
+.row .x button{padding:4px 10px;font-size:.82rem}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.empty{padding:22px 16px;color:var(--muted);text-align:center}
+.chip{display:inline-block;font-size:.75rem;font-weight:600;padding:1px 8px;border-radius:99px;border:1px solid currentColor;margin-right:6px}
+@media (prefers-reduced-motion:no-preference){button{transition:background .15s,color .15s}}
+</style>
+</head><body>
+<div class="wrap">
+  <header>
+    <h1>Shift Ledger</h1>
+    <p class="sub">Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.</p>
+  </header>
+
+  <div id="app">
+    <div class="syncbar"><span id="syncText"></span><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" id="exportBtn">Export to Excel / Sheets</button><label class="btn" for="importFile" style="padding:5px 10px;font-size:.82rem">Import backup</label><input type="file" id="importFile" accept=".json,application/json" hidden></span></div>
+
+    <section class="a-form">
+      <h2 id="formTitle">Log a day</h2>
+      <form id="f" class="card" autocomplete="off">
+        <div class="field full"><label for="date">Date</label><input id="date" type="date" required></div>
+        <div class="plat">
+          <div class="pcol lyft">
+            <h3>Lyft</h3>
+            <div class="field"><label for="le">Earnings</label><div class="inp pre"><span>$</span><input id="le" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
+            <div class="field"><label for="lr">Rides</label><input id="lr" type="number" inputmode="numeric" step="1" min="0" placeholder="0"></div>
+            <div class="field"><label for="lh">Hours</label><div class="inp suf"><input id="lh" type="number" inputmode="decimal" step="0.25" min="0" placeholder="0"><span class="r">hr</span></div></div>
+            <div class="calc num" id="lcalc"></div>
+          </div>
+          <div class="pcol uber">
+            <h3>Uber</h3>
+            <div class="field"><label for="ue">Earnings</label><div class="inp pre"><span>$</span><input id="ue" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
+            <div class="field"><label for="ur">Rides</label><input id="ur" type="number" inputmode="numeric" step="1" min="0" placeholder="0"></div>
+            <div class="field"><label for="uh">Hours</label><div class="inp suf"><input id="uh" type="number" inputmode="decimal" step="0.25" min="0" placeholder="0"><span class="r">hr</span></div></div>
+            <div class="calc num" id="ucalc"></div>
+          </div>
+        </div>
+        <div class="field"><label for="gas">Gas</label><div class="inp pre"><span>$</span><input id="gas" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
+        <div class="field"><label for="miles">Total miles</label><div class="inp suf"><input id="miles" type="number" inputmode="decimal" step="0.1" min="0" placeholder="0"><span class="r">mi</span></div></div>
+        <div class="field full"><label for="bonus">Bonus earned / other</label><div class="inp pre"><span>$</span><input id="bonus" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
+        <div class="preview"><span>You kept</span><b class="num" id="pv">$0.00</b></div>
+        <div class="actions"><button class="primary" type="submit" id="saveBtn">Save day</button><button type="button" id="cancelBtn" hidden>Cancel</button></div>
+        <p class="msg" id="msg" role="status"></p>
+      </form>
+    </section>
+
+    <section class="a-stand">
+      <h2>Where you stand</h2>
+      <div class="tabs" role="group" aria-label="Period">
+        <button type="button" data-p="week" aria-pressed="true">This week</button>
+        <button type="button" data-p="month" aria-pressed="false">This month</button>
+        <button type="button" data-p="year" aria-pressed="false">This year</button>
+        <button type="button" data-p="all" aria-pressed="false">All time</button>
+      </div>
+      <div class="sign num" id="sum"></div>
+      <div class="card cmp"><table id="cmp"></table></div>
+    </section>
+
+    <section class="a-days">
+      <h2>Days</h2>
+      <div class="log" id="log"></div>
+    </section>
+
+    <section class="a-dep">
+      <h2>Deposits <span class="num" id="depTotal"></span></h2>
+      <form id="df" class="card" autocomplete="off">
+        <div class="field"><label for="dd">Date</label><input id="dd" type="date" required></div>
+        <div class="field"><label for="dp">Platform</label><select id="dp"><option>Lyft</option><option>Uber</option><option>Other</option></select></div>
+        <div class="field"><label for="dt">Deposit type</label><input id="dt" list="dtypes" placeholder="e.g. Express Pay"><datalist id="dtypes"><option value="Weekly"><option value="Express Pay"><option value="Instant Cash Out"><option value="Direct deposit"></datalist></div>
+        <div class="field"><label for="da">Amount</label><div class="inp pre"><span>$</span><input id="da" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" required></div></div>
+        <div class="actions"><button class="primary" type="submit" id="dSave">Add deposit</button></div>
+        <p class="msg" id="dmsg" role="status"></p>
+      </form>
+      <div class="log" id="dlog" style="margin-top:12px"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const SERVER='Google Sheets';
+const money = n => (n<0?'-':'') + '$' + Math.abs(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const todayStr = () => { const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); };
+const num = v => { const n=parseFloat(String(v??'').replace(/[^0-9.\-]/g,'')); return isFinite(n)?n:0; };
+const r2 = n => Math.round(n*100)/100;
+const newId = p => p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+// Day math
+const made = s => s.le + s.ue + s.bonus;
+const kept = s => made(s) - s.gas;
+const hrs  = s => s.lh + s.uh;
+
+
+let data={shifts:[],deposits:[]}, period='week', editing=null, mode='local';
+const KEY='shift-ledger-v1';
+function errText(){ return 'Couldn\'t save on this device. Your browser may be blocking storage.'; }
+function load(){ try{ const d=JSON.parse(localStorage.getItem(KEY)||'null'); if(d&&Array.isArray(d.shifts)) data={shifts:d.shifts,deposits:d.deposits||[]}; }catch(e){} }
+function save(){ localStorage.setItem(KEY, JSON.stringify(data)); }
+async function persist(kind,rec){ const a=data[kind], i=a.findIndex(x=>x.id===rec.id); if(i>=0) a[i]=rec; else a.push(rec); save(); render(); }
+async function remove(kind,id){ data[kind]=data[kind].filter(x=>x.id!==id); save(); render(); }
+/* ---------- rendering ---------- */
+function setSync(text,state){ $('syncText').innerHTML=`<span class="dot ${state||''}"></span>`; $('syncText').append(document.createTextNode(text)); }
+function fmtDate(iso){ const [y,m,d]=iso.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString(undefined,{weekday:'long',month:'numeric',day:'numeric',year:'2-digit'}); }
+function inPeriod(iso){
+  if(period==='all') return true;
+  const [y,m,d]=iso.split('-').map(Number), dt=new Date(y,m-1,d), now=new Date(); now.setHours(0,0,0,0);
+  if(period==='year') return y===now.getFullYear();
+  if(period==='month') return y===now.getFullYear()&&dt.getMonth()===now.getMonth();
+  const start=new Date(now); start.setDate(now.getDate()-((now.getDay()+6)%7)); return dt>=start;
+}
+const per = (a,b) => b ? money(a/b) : '—';
+function armDelete(btn,fn){
+  btn.onclick=async()=>{
+    if(!btn.dataset.armed){ btn.dataset.armed='1'; btn.textContent='Tap again to delete';
+      setTimeout(()=>{ if(btn.isConnected&&!btn.disabled){ delete btn.dataset.armed; btn.textContent='Delete'; } },3000); return; }
+    btn.disabled=true; btn.textContent='Deleting…';
+    try{ await fn(); }catch(e){ alertMsg($('msg'),mode==='sheets'?errText(e):'Couldn\'t delete that. Try again.'); btn.disabled=false; btn.textContent='Delete'; }
+  };
+}
+function alertMsg(el,t){ el.className='msg err'; el.textContent=t; }
+function render(){
+  const days=data.shifts.slice().sort((a,b)=>b.date.localeCompare(a.date)||(b.row||0)-(a.row||0));
+  const p=days.filter(s=>inPeriod(s.date));
+  const T=p.reduce((a,s)=>{ for(const k of ['le','ue','lh','uh','lr','ur','gas','miles','bonus']) a[k]+=s[k]||0; return a; },
+    {le:0,ue:0,lh:0,uh:0,lr:0,ur:0,gas:0,miles:0,bonus:0});
+  const M=T.le+T.ue+T.bonus, K=M-T.gas, H=T.lh+T.uh, R=T.lr+T.ur;
+  $('sum').innerHTML=`
+    <div class="big"><small>Kept after gas · ${p.length} day${p.length===1?'':'s'}</small><strong>${money(K)}</strong></div>
+    <div><small>Made</small><strong>${money(M)}</strong></div>
+    <div><small>Gas</small><strong>${money(T.gas)}</strong></div>
+    <div><small>Bonus / other</small><strong>${money(T.bonus)}</strong></div>
+    <div><small>Miles</small><strong>${T.miles.toLocaleString(undefined,{maximumFractionDigits:1})}</strong></div>
+    <div><small>Kept per mile</small><strong>${per(K,T.miles)}</strong></div>
+    <div><small>Kept per hour</small><strong>${per(K,H)}</strong></div>`;
+  const rowsC=[
+    ['Earnings',T.le,T.ue,money],
+    ['Hours',T.lh,T.uh,v=>v.toLocaleString(undefined,{maximumFractionDigits:2})],
+    ['Hourly wage',T.lh?T.le/T.lh:null,T.uh?T.ue/T.uh:null,money,true],
+    ['Rides',T.lr,T.ur,v=>v.toLocaleString()],
+    ['Amount per ride',T.lr?T.le/T.lr:null,T.ur?T.ue/T.ur:null,money,true],
+  ];
+  $('cmp').innerHTML='<thead><tr><th></th><th class="l">Lyft</th><th class="u">Uber</th></tr></thead><tbody>'+
+    rowsC.map(([n,a,b,f,cmp])=>{ const wa=cmp&&a!=null&&b!=null&&a>b, wb=cmp&&a!=null&&b!=null&&b>a;
+      return `<tr><td>${n}</td><td class="${wa?'win':''}">${a==null?'—':f(a)}</td><td class="${wb?'win':''}">${b==null?'—':f(b)}</td></tr>`; }).join('')+'</tbody>';
+
+  const log=$('log');
+  if(!days.length) log.innerHTML='<div class="empty">No days logged yet. Fill in today above and your totals show up here.</div>';
+  else { log.innerHTML='';
+    for(const s of days){
+      const n=kept(s), r=document.createElement('div'); r.className='row';
+      r.innerHTML=`<div class="d"></div><div class="net num ${n<0?'neg':'pos'}">${money(n)}<em>${s.miles?money(n/s.miles)+'/mi':''}</em></div><div class="meta num"></div><div class="meta num"></div>
+        <div class="x"><button type="button" data-a="edit">Edit</button><button type="button" data-a="del">Delete</button></div>`;
+      r.querySelector('.d').textContent=fmtDate(s.date);
+      const [m1,m2]=r.querySelectorAll('.meta');
+      const pl=(cls,name,e,rides,h)=> (e||rides||h) ? `<b class="${cls}">${name}</b> ${money(e)}${rides?` · ${rides} rides`:''}${h?` · ${h} hr`:''}` : '';
+      m1.innerHTML=[pl('l','Lyft',s.le,s.lr,s.lh),pl('u','Uber',s.ue,s.ur,s.uh)].filter(Boolean).join('<br>')||'No platform earnings';
+      m2.textContent=[money(s.gas)+' gas', s.miles+' mi', s.bonus?money(s.bonus)+' bonus':''].filter(Boolean).join(' · ');
+      r.querySelector('[data-a=edit]').onclick=()=>startEdit(s);
+      armDelete(r.querySelector('[data-a=del]'),async()=>{ await remove('shifts',s.id); if(editing===s.id) resetForm(); });
+      log.appendChild(r);
+    }
+  }
+
+  const deps=data.deposits.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const dp=deps.filter(d=>inPeriod(d.date)), byP={};
+  dp.forEach(d=>byP[d.platform]=(byP[d.platform]||0)+d.amount);
+  $('depTotal').textContent = dp.length ? Object.entries(byP).map(([k,v])=>k+' '+money(v)).join(' · ') : '';
+  const dl=$('dlog');
+  if(!deps.length) dl.innerHTML='<div class="empty">No deposits logged yet.</div>';
+  else { dl.innerHTML='';
+    for(const d of deps){
+      const r=document.createElement('div'); r.className='row';
+      r.innerHTML=`<div class="d"></div><div class="net num">${money(d.amount)}</div><div class="meta"><span class="chip"></span><span class="t"></span></div>
+        <div class="x"><button type="button" data-a="del">Delete</button></div>`;
+      r.querySelector('.d').textContent=fmtDate(d.date);
+      const chip=r.querySelector('.chip'); chip.textContent=d.platform; chip.style.color=d.platform==='Lyft'?'var(--lyft)':d.platform==='Uber'?'var(--uber)':'var(--muted)';
+      r.querySelector('.t').textContent=d.type;
+      armDelete(r.querySelector('[data-a=del]'),()=>remove('deposits',d.id));
+      dl.appendChild(r);
+    }
+  }
+}
+
+/* ---------- day form ---------- */
+const F=['le','ue','lh','uh','lr','ur','gas','miles','bonus'];
+function readForm(){ const s={date:$('date').value}; F.forEach(k=>s[k]=num($(k).value)); return s; }
+function updatePreview(){
+  const s=readForm(); $('pv').textContent=money(kept(s));
+  const c=(e,h,r)=>[h?money(e/h)+'/hr':'', r?money(e/r)+'/ride':''].filter(Boolean).join(' · ');
+  $('lcalc').textContent=c(s.le,s.lh,s.lr); $('ucalc').textContent=c(s.ue,s.uh,s.ur);
+}
+F.forEach(k=>$(k).addEventListener('input',updatePreview));
+function resetForm(){
+  editing=null; $('f').reset(); $('date').value=todayStr(); updatePreview();
+  $('formTitle').textContent='Log a day'; $('saveBtn').textContent='Save day'; $('cancelBtn').hidden=true;
+}
+function startEdit(s){
+  editing=s.id; $('date').value=s.date; F.forEach(k=>$(k).value=s[k]||'');
+  updatePreview(); $('formTitle').textContent='Edit day'; $('saveBtn').textContent='Save changes'; $('cancelBtn').hidden=false; $('msg').textContent='';
+  $('f').scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('cancelBtn').onclick=resetForm;
+$('f').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const s={...readForm(), id: editing||newId('s')};
+  if(!s.date){ alertMsg($('msg'),'Pick a date for this day.'); return; }
+  if(!s.le&&!s.ue&&!s.bonus&&!s.gas&&!s.miles){ alertMsg($('msg'),'Enter at least your earnings, gas or miles.'); return; }
+  $('saveBtn').disabled=true; $('msg').className='msg'; $('msg').textContent=mode==='sheets'?'Saving to your sheet…':'';
+  try{ const was=editing; await persist('shifts',s); resetForm(); $('msg').textContent=was?'Day updated.':'Saved. You kept '+money(kept(s))+'.'; }
+  catch(err){ alertMsg($('msg'),mode==='sheets'?errText(err):'Couldn\'t save. Try again in a moment.'); }
+  finally{ $('saveBtn').disabled=false; }
+});
+
+/* ---------- deposit form ---------- */
+$('df').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const d={id:newId('d'),date:$('dd').value,platform:$('dp').value,type:$('dt').value.trim(),amount:num($('da').value)};
+  if(!d.date||!d.amount){ alertMsg($('dmsg'),'Enter the deposit date and amount.'); return; }
+  $('dSave').disabled=true; $('dmsg').className='msg'; $('dmsg').textContent=mode==='sheets'?'Saving to your sheet…':'';
+  try{ await persist('deposits',d); $('da').value=''; $('dt').value=''; $('dmsg').textContent='Deposit added.'; }
+  catch(err){ alertMsg($('dmsg'),mode==='sheets'?errText(err):'Couldn\'t save. Try again in a moment.'); }
+  finally{ $('dSave').disabled=false; }
+});
+
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+  period=b.dataset.p; document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b)); render();
+});
+
+
+/* ---------- backup / export ---------- */
+function dl(name,text,type){ const b=new Blob([text],{type}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500); }
+const csvCell=v=>{ const t=String(v??''); return /[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t; };
+$('exportBtn').onclick=()=>{
+  const days=data.shifts.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const H=['Date','Earnings - Lyft','Earnings - Uber','Hours - Lyft','Hours - Uber','Rides - Lyft','Rides - Uber','Gas','Total Miles','Bonus/Other','Hourly Wage - Lyft','Hourly Wage - Uber','Amt per Ride - Lyft','Amt per Ride - Uber','Kept After Gas'];
+  const rows=[H].concat(days.map(s=>[s.date,s.le,s.ue,s.lh||'',s.uh||'',s.lr||'',s.ur||'',s.gas,s.miles,s.bonus||'',
+    s.lh?r2(s.le/s.lh):'',s.uh?r2(s.ue/s.uh):'',s.lr?r2(s.le/s.lr):'',s.ur?r2(s.ue/s.ur):'',r2(kept(s))]));
+  rows.push([],['Deposits'],['Date','Platform','Deposit Type','Amount']);
+  data.deposits.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(d=>rows.push([d.date,d.platform,d.type,d.amount]));
+  dl('shift-ledger-'+todayStr()+'.csv', rows.map(r=>r.map(csvCell).join(',')).join('\n'),'text/csv');
+  dl('shift-ledger-backup-'+todayStr()+'.json', JSON.stringify(data),'application/json');
+  setSync('Exported. Open the .csv in Excel or Google Sheets. Keep the .json as your backup.','');
+};
+$('importFile').onchange=async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{ const d=JSON.parse(await f.text()); if(!Array.isArray(d.shifts)) throw 0;
+    const merge=(a,b)=>{ const m=new Map(a.map(x=>[x.id,x])); b.forEach(x=>m.set(x.id,x)); return [...m.values()]; };
+    data={shifts:merge(data.shifts,d.shifts),deposits:merge(data.deposits,d.deposits||[])}; save(); render();
+    setSync('Backup imported.','');
+  }catch(err){ setSync('That file isn\'t a Shift Ledger backup. Pick the .json file from Export.','warn'); }
+  e.target.value='';
+};
+
+$('dd').value=todayStr(); load(); resetForm(); render();
+try{ localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t'); setSync('Saved on this device only. Export now and then as a backup.','off'); }
+catch(e){ setSync('This browser is blocking storage, so entries won\'t be kept. Try a regular (not private) window.','warn'); }
+</script>
+</body></html>
