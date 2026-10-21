@@ -1,9 +1,10 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Shift Ledger</title>
+<meta name="theme-color" content="#1c6b47">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
 <style>
-/* Standalone copy. Layout: one narrow column — first-run Google Sheets setup, then the day's entry (Lyft and Uber side by side), totals, platform comparison, shift log, and deposits. Road-sign green on asphalt. */
+/* Standalone copy. Layout: one narrow column — first-run Google Sheets setup, then the day's entry (Lyft and Uber side by side), totals, platform comparison, and the day log. Road-sign green on asphalt. */
 :root{
   --bg:#f3f4f2; --surface:#ffffff; --fg:#1d2320; --muted:#5d6762; --line:#d9ddd9;
   --accent:#1c6b47; --accent-fg:#ffffff; --good:#1c6b47; --bad:#b4442b; --warn:#a86b0b;
@@ -31,8 +32,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px
   .wrap{max-width:1180px;padding-block:32px 56px}
   header{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
   #app{display:grid;grid-template-columns:minmax(0,460px) minmax(0,1fr);column-gap:32px;row-gap:24px;align-items:start;
-    grid-template-areas:"sync sync" "form stand" "form days" "dep days"}
-  .syncbar{grid-area:sync} .a-form{grid-area:form} .a-stand{grid-area:stand} .a-days{grid-area:days} .a-dep{grid-area:dep}
+    grid-template-areas:"sync sync" "form stand" "form days"}
+  .syncbar{grid-area:sync} .a-form{grid-area:form} .a-stand{grid-area:stand} .a-days{grid-area:days}
   .a-days .log{max-height:calc(100vh - 120px);overflow-y:auto}
   .sign{grid-template-columns:repeat(3,1fr)}
   .sign .big strong{font-size:3rem}
@@ -117,6 +118,7 @@ button:disabled{opacity:.6;cursor:default}
 .chip{display:inline-block;font-size:.75rem;font-weight:600;padding:1px 8px;border-radius:99px;border:1px solid currentColor;margin-right:6px}
 @media (prefers-reduced-motion:no-preference){button{transition:background .15s,color .15s}}
 </style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
 </head><body>
 <div class="wrap">
   <header>
@@ -125,7 +127,7 @@ button:disabled{opacity:.6;cursor:default}
   </header>
 
   <div id="app">
-    <div class="syncbar"><span id="syncText"></span><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" id="exportBtn">Export to Excel / Sheets</button><label class="btn" for="importFile" style="padding:5px 10px;font-size:.82rem">Import backup</label><input type="file" id="importFile" accept=".json,application/json" hidden></span></div>
+    <div class="syncbar"><span id="syncText"></span><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" id="driveBtn">Back up to Google Drive</button><button type="button" id="exportBtn">Export to Excel / Sheets</button><label class="btn" for="importFile" style="padding:5px 10px;font-size:.82rem">Restore backup</label><input type="file" id="importFile" accept=".json,application/json" hidden></span></div>
 
     <section class="a-form">
       <h2 id="formTitle">Log a day</h2>
@@ -137,6 +139,7 @@ button:disabled{opacity:.6;cursor:default}
             <div class="field"><label for="le">Earnings</label><div class="inp pre"><span>$</span><input id="le" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
             <div class="field"><label for="lr">Rides</label><input id="lr" type="number" inputmode="numeric" step="1" min="0" placeholder="0"></div>
             <div class="field"><label for="lh">Hours</label><div class="inp suf"><input id="lh" type="number" inputmode="decimal" step="0.25" min="0" placeholder="0"><span class="r">hr</span></div></div>
+            <div class="field"><label for="ld">Deposit amount</label><div class="inp pre"><span>$</span><input id="ld" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
             <div class="calc num" id="lcalc"></div>
           </div>
           <div class="pcol uber">
@@ -144,12 +147,15 @@ button:disabled{opacity:.6;cursor:default}
             <div class="field"><label for="ue">Earnings</label><div class="inp pre"><span>$</span><input id="ue" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
             <div class="field"><label for="ur">Rides</label><input id="ur" type="number" inputmode="numeric" step="1" min="0" placeholder="0"></div>
             <div class="field"><label for="uh">Hours</label><div class="inp suf"><input id="uh" type="number" inputmode="decimal" step="0.25" min="0" placeholder="0"><span class="r">hr</span></div></div>
+            <div class="field"><label for="ud">Deposit amount</label><div class="inp pre"><span>$</span><input id="ud" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
             <div class="calc num" id="ucalc"></div>
           </div>
         </div>
         <div class="field"><label for="gas">Gas</label><div class="inp pre"><span>$</span><input id="gas" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
         <div class="field"><label for="miles">Total miles</label><div class="inp suf"><input id="miles" type="number" inputmode="decimal" step="0.1" min="0" placeholder="0"><span class="r">mi</span></div></div>
         <div class="field full"><label for="bonus">Bonus earned / other</label><div class="inp pre"><span>$</span><input id="bonus" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
+        <div class="field"><label for="dtype">Deposit type</label><input id="dtype" list="dtypes" placeholder="e.g. Express Pay"><datalist id="dtypes"><option value="Weekly"><option value="Express Pay"><option value="Instant Cash Out"><option value="Direct deposit"></datalist></div>
+        <div class="field"><label for="ddate">Deposit date</label><input id="ddate" type="date"></div>
         <div class="preview"><span>You kept</span><b class="num" id="pv">$0.00</b></div>
         <div class="actions"><button class="primary" type="submit" id="saveBtn">Save day</button><button type="button" id="cancelBtn" hidden>Cancel</button></div>
         <p class="msg" id="msg" role="status"></p>
@@ -173,18 +179,6 @@ button:disabled{opacity:.6;cursor:default}
       <div class="log" id="log"></div>
     </section>
 
-    <section class="a-dep">
-      <h2>Deposits <span class="num" id="depTotal"></span></h2>
-      <form id="df" class="card" autocomplete="off">
-        <div class="field"><label for="dd">Date</label><input id="dd" type="date" required></div>
-        <div class="field"><label for="dp">Platform</label><select id="dp"><option>Lyft</option><option>Uber</option><option>Other</option></select></div>
-        <div class="field"><label for="dt">Deposit type</label><input id="dt" list="dtypes" placeholder="e.g. Express Pay"><datalist id="dtypes"><option value="Weekly"><option value="Express Pay"><option value="Instant Cash Out"><option value="Direct deposit"></datalist></div>
-        <div class="field"><label for="da">Amount</label><div class="inp pre"><span>$</span><input id="da" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" required></div></div>
-        <div class="actions"><button class="primary" type="submit" id="dSave">Add deposit</button></div>
-        <p class="msg" id="dmsg" role="status"></p>
-      </form>
-      <div class="log" id="dlog" style="margin-top:12px"></div>
-    </section>
   </div>
 </div>
 
@@ -206,8 +200,8 @@ const hrs  = s => s.lh + s.uh;
 let data={shifts:[],deposits:[]}, period='week', editing=null, mode='local';
 const KEY='shift-ledger-v1';
 function errText(){ return 'Couldn\'t save on this device. Your browser may be blocking storage.'; }
-function load(){ try{ const d=JSON.parse(localStorage.getItem(KEY)||'null'); if(d&&Array.isArray(d.shifts)) data={shifts:d.shifts,deposits:d.deposits||[]}; }catch(e){} }
-function save(){ localStorage.setItem(KEY, JSON.stringify(data)); }
+function load(){ try{ const d=JSON.parse(localStorage.getItem(KEY)||'null'); if(d&&Array.isArray(d.shifts)) data={shifts:d.shifts,deposits:[]}; }catch(e){} }
+function save(){ localStorage.setItem(KEY, JSON.stringify({shifts:data.shifts})); }
 async function persist(kind,rec){ const a=data[kind], i=a.findIndex(x=>x.id===rec.id); if(i>=0) a[i]=rec; else a.push(rec); save(); render(); }
 async function remove(kind,id){ data[kind]=data[kind].filter(x=>x.id!==id); save(); render(); }
 /* ---------- rendering ---------- */
@@ -233,8 +227,8 @@ function alertMsg(el,t){ el.className='msg err'; el.textContent=t; }
 function render(){
   const days=data.shifts.slice().sort((a,b)=>b.date.localeCompare(a.date)||(b.row||0)-(a.row||0));
   const p=days.filter(s=>inPeriod(s.date));
-  const T=p.reduce((a,s)=>{ for(const k of ['le','ue','lh','uh','lr','ur','gas','miles','bonus']) a[k]+=s[k]||0; return a; },
-    {le:0,ue:0,lh:0,uh:0,lr:0,ur:0,gas:0,miles:0,bonus:0});
+  const T=p.reduce((a,s)=>{ for(const k of ['le','ue','lh','uh','lr','ur','gas','miles','bonus','ld','ud']) a[k]+=s[k]||0; return a; },
+    {le:0,ue:0,lh:0,uh:0,lr:0,ur:0,gas:0,miles:0,bonus:0,ld:0,ud:0});
   const M=T.le+T.ue+T.bonus, K=M-T.gas, H=T.lh+T.uh, R=T.lr+T.ur;
   $('sum').innerHTML=`
     <div class="big"><small>Kept after gas · ${p.length} day${p.length===1?'':'s'}</small><strong>${money(K)}</strong></div>
@@ -250,6 +244,7 @@ function render(){
     ['Hourly wage',T.lh?T.le/T.lh:null,T.uh?T.ue/T.uh:null,money,true],
     ['Rides',T.lr,T.ur,v=>v.toLocaleString()],
     ['Amount per ride',T.lr?T.le/T.lr:null,T.ur?T.ue/T.ur:null,money,true],
+    ['Deposits',T.ld,T.ud,money],
   ];
   $('cmp').innerHTML='<thead><tr><th></th><th class="l">Lyft</th><th class="u">Uber</th></tr></thead><tbody>'+
     rowsC.map(([n,a,b,f,cmp])=>{ const wa=cmp&&a!=null&&b!=null&&a>b, wb=cmp&&a!=null&&b!=null&&b>a;
@@ -267,35 +262,18 @@ function render(){
       const pl=(cls,name,e,rides,h)=> (e||rides||h) ? `<b class="${cls}">${name}</b> ${money(e)}${rides?` · ${rides} rides`:''}${h?` · ${h} hr`:''}` : '';
       m1.innerHTML=[pl('l','Lyft',s.le,s.lr,s.lh),pl('u','Uber',s.ue,s.ur,s.uh)].filter(Boolean).join('<br>')||'No platform earnings';
       m2.textContent=[money(s.gas)+' gas', s.miles+' mi', s.bonus?money(s.bonus)+' bonus':''].filter(Boolean).join(' · ');
+      if(s.ld||s.ud){ const m3=document.createElement('div'); m3.className='meta num'; m3.textContent='Deposited '+[s.ld?'Lyft '+money(s.ld):'',s.ud?'Uber '+money(s.ud):''].filter(Boolean).join(' · ')+(s.dtype?' ('+s.dtype+')':'')+(s.ddate&&s.ddate!==s.date?' on '+fmtDate(s.ddate):''); m2.after(m3); }
       r.querySelector('[data-a=edit]').onclick=()=>startEdit(s);
       armDelete(r.querySelector('[data-a=del]'),async()=>{ await remove('shifts',s.id); if(editing===s.id) resetForm(); });
       log.appendChild(r);
     }
   }
 
-  const deps=data.deposits.slice().sort((a,b)=>b.date.localeCompare(a.date));
-  const dp=deps.filter(d=>inPeriod(d.date)), byP={};
-  dp.forEach(d=>byP[d.platform]=(byP[d.platform]||0)+d.amount);
-  $('depTotal').textContent = dp.length ? Object.entries(byP).map(([k,v])=>k+' '+money(v)).join(' · ') : '';
-  const dl=$('dlog');
-  if(!deps.length) dl.innerHTML='<div class="empty">No deposits logged yet.</div>';
-  else { dl.innerHTML='';
-    for(const d of deps){
-      const r=document.createElement('div'); r.className='row';
-      r.innerHTML=`<div class="d"></div><div class="net num">${money(d.amount)}</div><div class="meta"><span class="chip"></span><span class="t"></span></div>
-        <div class="x"><button type="button" data-a="del">Delete</button></div>`;
-      r.querySelector('.d').textContent=fmtDate(d.date);
-      const chip=r.querySelector('.chip'); chip.textContent=d.platform; chip.style.color=d.platform==='Lyft'?'var(--lyft)':d.platform==='Uber'?'var(--uber)':'var(--muted)';
-      r.querySelector('.t').textContent=d.type;
-      armDelete(r.querySelector('[data-a=del]'),()=>remove('deposits',d.id));
-      dl.appendChild(r);
-    }
-  }
 }
 
 /* ---------- day form ---------- */
-const F=['le','ue','lh','uh','lr','ur','gas','miles','bonus'];
-function readForm(){ const s={date:$('date').value}; F.forEach(k=>s[k]=num($(k).value)); return s; }
+const F=['le','ue','lh','uh','lr','ur','gas','miles','bonus','ld','ud'];
+function readForm(){ const s={date:$('date').value,dtype:$('dtype').value.trim(),ddate:$('ddate').value}; F.forEach(k=>s[k]=num($(k).value)); return s; }
 function updatePreview(){
   const s=readForm(); $('pv').textContent=money(kept(s));
   const c=(e,h,r)=>[h?money(e/h)+'/hr':'', r?money(e/r)+'/ride':''].filter(Boolean).join(' · ');
@@ -307,7 +285,7 @@ function resetForm(){
   $('formTitle').textContent='Log a day'; $('saveBtn').textContent='Save day'; $('cancelBtn').hidden=true;
 }
 function startEdit(s){
-  editing=s.id; $('date').value=s.date; F.forEach(k=>$(k).value=s[k]||'');
+  editing=s.id; $('date').value=s.date; F.forEach(k=>$(k).value=s[k]||''); $('dtype').value=s.dtype||''; $('ddate').value=s.ddate||'';
   updatePreview(); $('formTitle').textContent='Edit day'; $('saveBtn').textContent='Save changes'; $('cancelBtn').hidden=false; $('msg').textContent='';
   $('f').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -316,23 +294,13 @@ $('f').addEventListener('submit',async e=>{
   e.preventDefault();
   const s={...readForm(), id: editing||newId('s')};
   if(!s.date){ alertMsg($('msg'),'Pick a date for this day.'); return; }
-  if(!s.le&&!s.ue&&!s.bonus&&!s.gas&&!s.miles){ alertMsg($('msg'),'Enter at least your earnings, gas or miles.'); return; }
+  if(!s.le&&!s.ue&&!s.bonus&&!s.gas&&!s.miles&&!s.ld&&!s.ud){ alertMsg($('msg'),'Enter at least your earnings, gas or miles.'); return; }
   $('saveBtn').disabled=true; $('msg').className='msg'; $('msg').textContent=mode==='sheets'?'Saving to your sheet…':'';
   try{ const was=editing; await persist('shifts',s); resetForm(); $('msg').textContent=was?'Day updated.':'Saved. You kept '+money(kept(s))+'.'; }
   catch(err){ alertMsg($('msg'),mode==='sheets'?errText(err):'Couldn\'t save. Try again in a moment.'); }
   finally{ $('saveBtn').disabled=false; }
 });
 
-/* ---------- deposit form ---------- */
-$('df').addEventListener('submit',async e=>{
-  e.preventDefault();
-  const d={id:newId('d'),date:$('dd').value,platform:$('dp').value,type:$('dt').value.trim(),amount:num($('da').value)};
-  if(!d.date||!d.amount){ alertMsg($('dmsg'),'Enter the deposit date and amount.'); return; }
-  $('dSave').disabled=true; $('dmsg').className='msg'; $('dmsg').textContent=mode==='sheets'?'Saving to your sheet…':'';
-  try{ await persist('deposits',d); $('da').value=''; $('dt').value=''; $('dmsg').textContent='Deposit added.'; }
-  catch(err){ alertMsg($('dmsg'),mode==='sheets'?errText(err):'Couldn\'t save. Try again in a moment.'); }
-  finally{ $('dSave').disabled=false; }
-});
 
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
   period=b.dataset.p; document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b)); render();
@@ -340,31 +308,46 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
 
 
 /* ---------- backup / export ---------- */
-function dl(name,text,type){ const b=new Blob([text],{type}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500); }
+async function saveFile(name,text,type,preferShare){
+  const file=new File([text],name,{type});
+  if(preferShare&&navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:name}); return 'shared'; }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(file); a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800); return 'downloaded';
+}
 const csvCell=v=>{ const t=String(v??''); return /[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t; };
-$('exportBtn').onclick=()=>{
-  const days=data.shifts.slice().sort((a,b)=>a.date.localeCompare(b.date));
-  const H=['Date','Earnings - Lyft','Earnings - Uber','Hours - Lyft','Hours - Uber','Rides - Lyft','Rides - Uber','Gas','Total Miles','Bonus/Other','Hourly Wage - Lyft','Hourly Wage - Uber','Amt per Ride - Lyft','Amt per Ride - Uber','Kept After Gas'];
-  const rows=[H].concat(days.map(s=>[s.date,s.le,s.ue,s.lh||'',s.uh||'',s.lr||'',s.ur||'',s.gas,s.miles,s.bonus||'',
-    s.lh?r2(s.le/s.lh):'',s.uh?r2(s.ue/s.uh):'',s.lr?r2(s.le/s.lr):'',s.ur?r2(s.ue/s.ur):'',r2(kept(s))]));
-  rows.push([],['Deposits'],['Date','Platform','Deposit Type','Amount']);
-  data.deposits.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(d=>rows.push([d.date,d.platform,d.type,d.amount]));
-  dl('shift-ledger-'+todayStr()+'.csv', rows.map(r=>r.map(csvCell).join(',')).join('\n'),'text/csv');
-  dl('shift-ledger-backup-'+todayStr()+'.json', JSON.stringify(data),'application/json');
-  setSync('Exported. Open the .csv in Excel or Google Sheets. Keep the .json as your backup.','');
+function csvText(){
+  const H=['Date','Earnings - Lyft','Earnings - Uber','Hours - Lyft','Hours - Uber','Rides - Lyft','Rides - Uber','Gas','Total Miles','Bonus/Other','Hourly Wage - Lyft','Hourly Wage - Uber','Amt per Ride - Lyft','Amt per Ride - Uber','Kept After Gas','Deposit Type','Deposit Date','Deposit Amount - Lyft','Deposit Amount - Uber'];
+  const rows=[H].concat(data.shifts.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(s=>[s.date,s.le,s.ue,s.lh||'',s.uh||'',s.lr||'',s.ur||'',s.gas,s.miles,s.bonus||'',
+    s.lh?r2(s.le/s.lh):'',s.uh?r2(s.ue/s.uh):'',s.lr?r2(s.le/s.lr):'',s.ur?r2(s.ue/s.ur):'',r2(kept(s)),s.dtype||'',s.ddate||'',s.ld||'',s.ud||'']));
+  return rows.map(r=>r.map(csvCell).join(',')).join('\n');
+}
+const backupText=()=>JSON.stringify({app:'shift-ledger',saved:new Date().toISOString(),shifts:data.shifts});
+$('exportBtn').onclick=async()=>{
+  try{ await saveFile('shift-ledger-'+todayStr()+'.csv',csvText(),'text/csv',false);
+    setSync('Exported. Open the .csv in Excel or Google Sheets.',''); }
+  catch(e){ if(e&&(e.name==='AbortError'||e.code==='cancelled')) setSync('Export cancelled.','off'); else setSync('Couldn\'t export from this browser. Try Chrome.','warn'); }
+};
+$('driveBtn').onclick=async()=>{
+  if(!data.shifts.length){ setSync('Nothing to back up yet. Log a day first.','off'); return; }
+  try{ const how=await saveFile('shift-ledger-backup-'+todayStr()+'.json',backupText(),'application/json',true);
+    setSync(how==='shared'?'Backup sent. If you picked Drive, it\'s in your Google Drive now.':'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.','');
+    try{ localStorage.setItem(KEY+'-lastBackup',todayStr()); }catch(e){} }
+  catch(e){ if(e&&(e.name==='AbortError'||e.code==='cancelled')) setSync('Backup cancelled.','off'); else setSync('Couldn\'t back up from this browser. Try Chrome.','warn'); }
 };
 $('importFile').onchange=async e=>{
   const f=e.target.files[0]; if(!f) return;
   try{ const d=JSON.parse(await f.text()); if(!Array.isArray(d.shifts)) throw 0;
-    const merge=(a,b)=>{ const m=new Map(a.map(x=>[x.id,x])); b.forEach(x=>m.set(x.id,x)); return [...m.values()]; };
-    data={shifts:merge(data.shifts,d.shifts),deposits:merge(data.deposits,d.deposits||[])}; save(); render();
-    setSync('Backup imported.','');
-  }catch(err){ setSync('That file isn\'t a Shift Ledger backup. Pick the .json file from Export.','warn'); }
+    const m=new Map(data.shifts.map(x=>[x.id,x])); d.shifts.forEach(x=>m.set(x.id,x));
+    data.shifts=[...m.values()]; save(); render();
+    setSync('Backup restored: '+d.shifts.length+' day'+(d.shifts.length===1?'':'s')+'.','');
+  }catch(err){ setSync('That file isn\'t a Shift Ledger backup. Pick the .json file from "Back up to Google Drive".','warn'); }
   e.target.value='';
 };
 
-$('dd').value=todayStr(); load(); resetForm(); render();
-try{ localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t'); setSync('Saved on this device only. Export now and then as a backup.','off'); }
+load(); resetForm(); render();
+try{ localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t');
+  const lb=localStorage.getItem(KEY+'-lastBackup');
+  setSync(lb?'Saved on this device. Last backup '+fmtDate(lb)+'.':'Saved on this device only. Back up to Google Drive now and then.','off'); }
 catch(e){ setSync('This browser is blocking storage, so entries won\'t be kept. Try a regular (not private) window.','warn'); }
 </script>
 </body></html>
