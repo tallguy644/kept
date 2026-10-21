@@ -346,7 +346,7 @@ $('importFile').onchange=async e=>{
 
 
 /* ---------- Google Drive auto-backup (daily, on save) ---------- */
-const GOOGLE_CLIENT_ID='';   // OAuth client ID from Google Cloud; Drive sync stays hidden while empty
+const GOOGLE_CLIENT_ID='95970130829-keq2n85296k987m21ins1jbv01qu7ja0.apps.googleusercontent.com';   // OAuth client ID from Google Cloud; Drive sync stays hidden while empty
 const GDK=KEY+'-gdrive';
 let gdState={}; try{ gdState=JSON.parse(localStorage.getItem(GDK)||'{}'); }catch(e){}
 let gdTok=null, gdExp=0, gdClient=null, gdPending=null;
