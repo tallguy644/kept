@@ -127,7 +127,7 @@ button:disabled{opacity:.6;cursor:default}
   </header>
 
   <div id="app">
-    <div class="syncbar"><span id="syncText"></span><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" id="driveBtn">Back up to Google Drive</button><button type="button" id="exportBtn">Export to Excel / Sheets</button><label class="btn" for="importFile" style="padding:5px 10px;font-size:.82rem">Restore backup</label><input type="file" id="importFile" accept=".json,application/json" hidden></span></div>
+    <div class="syncbar"><span id="syncText"></span><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" id="gdBtn" hidden>Connect Google Drive</button><button type="button" id="gdRestore" hidden>Restore from Drive</button><button type="button" id="driveBtn">Back up to Google Drive</button><button type="button" id="exportBtn">Export to Excel / Sheets</button><label class="btn" for="importFile" style="padding:5px 10px;font-size:.82rem">Restore backup</label><input type="file" id="importFile" accept=".json,application/json" hidden></span></div>
 
     <section class="a-form">
       <h2 id="formTitle">Log a day</h2>
@@ -296,7 +296,7 @@ $('f').addEventListener('submit',async e=>{
   if(!s.date){ alertMsg($('msg'),'Pick a date for this day.'); return; }
   if(!s.le&&!s.ue&&!s.bonus&&!s.gas&&!s.miles&&!s.ld&&!s.ud){ alertMsg($('msg'),'Enter at least your earnings, gas or miles.'); return; }
   $('saveBtn').disabled=true; $('msg').className='msg'; $('msg').textContent=mode==='sheets'?'Saving to your sheet…':'';
-  try{ const was=editing; await persist('shifts',s); resetForm(); $('msg').textContent=was?'Day updated.':'Saved. You kept '+money(kept(s))+'.'; }
+  try{ const was=editing; const pr=persist('shifts',s); gdAuto(); await pr; resetForm(); $('msg').textContent=was?'Day updated.':'Saved. You kept '+money(kept(s))+'.'; }
   catch(err){ alertMsg($('msg'),mode==='sheets'?errText(err):'Couldn\'t save. Try again in a moment.'); }
   finally{ $('saveBtn').disabled=false; }
 });
@@ -343,6 +343,58 @@ $('importFile').onchange=async e=>{
   }catch(err){ setSync('That file isn\'t a Shift Ledger backup. Pick the .json file from "Back up to Google Drive".','warn'); }
   e.target.value='';
 };
+
+
+/* ---------- Google Drive auto-backup (daily, on save) ---------- */
+const GOOGLE_CLIENT_ID='';   // OAuth client ID from Google Cloud; Drive sync stays hidden while empty
+const GDK=KEY+'-gdrive';
+let gdState={}; try{ gdState=JSON.parse(localStorage.getItem(GDK)||'{}'); }catch(e){}
+let gdTok=null, gdExp=0, gdClient=null, gdPending=null;
+const gdSave=()=>{ try{ localStorage.setItem(GDK,JSON.stringify(gdState)); }catch(e){} };
+function gdStatus(){
+  if(!gdClient) return;
+  $('gdBtn').hidden=false; $('gdRestore').hidden=!gdState.connected; $('driveBtn').hidden=!!gdState.connected;
+  $('gdBtn').textContent=gdState.connected?'Sync to Drive now':'Connect Google Drive';
+  if(gdState.connected) setSync(gdState.last===todayStr()?'Backed up to Google Drive today.':'Google Drive backup runs once a day, the next time you save.', gdState.last===todayStr()?'':'off');
+}
+function gdToken(interactive){   // call straight from a tap so the Google window can open
+  if(gdTok&&Date.now()<gdExp) return Promise.resolve();
+  return new Promise((res,rej)=>{ gdPending={res,rej}; gdClient.requestAccessToken({prompt:interactive?'consent':''}); });
+}
+async function gdFetch(url,opt={}){
+  const r=await fetch(url,{...opt,headers:{...(opt.headers||{}),Authorization:'Bearer '+gdTok}});
+  if(!r.ok) throw {status:r.status}; return r;
+}
+async function gdUpload(){
+  const body=backupText(); let id=gdState.fileId;
+  if(id){ try{ await gdFetch('https://www.googleapis.com/upload/drive/v3/files/'+id+'?uploadType=media',{method:'PATCH',headers:{'Content-Type':'application/json'},body}); }
+    catch(e){ if(e.status===404) id=null; else throw e; } }
+  if(!id){
+    const fd=new FormData();
+    fd.append('metadata',new Blob([JSON.stringify({name:'Shift Ledger backup.json',mimeType:'application/json'})],{type:'application/json'}));
+    fd.append('file',new Blob([body],{type:'application/json'}));
+    id=(await (await gdFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',body:fd})).json()).id;
+  }
+  gdState={...gdState,fileId:id,last:todayStr(),connected:true}; gdSave(); gdStatus();
+}
+const gdFail=e=>{ if(e&&e.status===401){ gdTok=null; } setSync(e&&(e.type==='popup_closed'||e.error==='access_denied')?'Google Drive sign-in was cancelled.':'Google Drive backup didn\'t go through. Tap "Sync to Drive now" to try again.','warn'); };
+function gdAuto(){ if(!gdClient||!gdState.connected||gdState.last===todayStr()) return; gdToken(false).then(gdUpload).catch(gdFail); }
+$('gdBtn').onclick=()=>{ setSync('Backing up to Google Drive…','warn'); gdToken(!gdState.connected).then(gdUpload).catch(gdFail); };
+$('gdRestore').onclick=()=>{
+  if(!gdState.fileId){ setSync('No Drive backup found yet.','off'); return; }
+  gdToken(false).then(async()=>{
+    const d=await (await gdFetch('https://www.googleapis.com/drive/v3/files/'+gdState.fileId+'?alt=media')).json();
+    const m=new Map(data.shifts.map(x=>[x.id,x])); (d.shifts||[]).forEach(x=>m.set(x.id,x));
+    data.shifts=[...m.values()]; save(); render(); setSync('Restored '+(d.shifts||[]).length+' days from Google Drive.','');
+  }).catch(gdFail);
+};
+if(GOOGLE_CLIENT_ID){
+  const sc=document.createElement('script'); sc.src='https://accounts.google.com/gsi/client'; sc.async=true;
+  sc.onload=()=>{ gdClient=google.accounts.oauth2.initTokenClient({client_id:GOOGLE_CLIENT_ID,scope:'https://www.googleapis.com/auth/drive.file',
+    callback:r=>{ const p=gdPending; gdPending=null; if(r.error){ p&&p.rej(r); return; } gdTok=r.access_token; gdExp=Date.now()+(Number(r.expires_in)-60)*1000; p&&p.res(); },
+    error_callback:e=>{ const p=gdPending; gdPending=null; p&&p.rej(e); } }); gdStatus(); };
+  document.head.appendChild(sc);
+}
 
 load(); resetForm(); render();
 try{ localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t');
