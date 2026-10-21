@@ -174,6 +174,10 @@ button:disabled{opacity:.6;cursor:default}
       </div>
     </div>
     <div class="cust-grp">
+      <label class="lbl" for="langSel">Language</label>
+      <select id="langSel" style="max-width:280px"></select>
+    </div>
+    <div class="cust-grp">
       <span class="lbl">Main color</span>
       <div class="swatches" id="swatches"></div>
     </div>
@@ -253,7 +257,7 @@ button:disabled{opacity:.6;cursor:default}
 <script>
 const $ = id => document.getElementById(id);
 const SERVER='Google Sheets';
-const money = n => (n<0?'-':'') + '$' + Math.abs(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const money = n => (n<0?'-':'') + '$' + Math.abs(n).toLocaleString(LOC,{minimumFractionDigits:2,maximumFractionDigits:2});
 const todayStr = () => { const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); };
 const num = v => { const n=parseFloat(String(v??'').replace(/[^0-9.\-]/g,'')); return isFinite(n)?n:0; };
 const r2 = n => Math.round(n*100)/100;
@@ -274,7 +278,7 @@ async function persist(kind,rec){ const a=data[kind], i=a.findIndex(x=>x.id===re
 async function remove(kind,id){ data[kind]=data[kind].filter(x=>x.id!==id); save(); render(); }
 /* ---------- rendering ---------- */
 function setSync(text,state){ $('syncText').innerHTML=`<span class="dot ${state||''}"></span>`; $('syncText').append(document.createTextNode(text)); }
-function fmtDate(iso){ const [y,m,d]=iso.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString(undefined,{weekday:'long',month:'numeric',day:'numeric',year:'2-digit'}); }
+function fmtDate(iso){ const [y,m,d]=iso.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString(LOC,{weekday:'long',month:'numeric',day:'numeric',year:'2-digit'}); }
 function inPeriod(iso){
   if(period==='all') return true;
   const [y,m,d]=iso.split('-').map(Number), dt=new Date(y,m-1,d), now=new Date(); now.setHours(0,0,0,0);
@@ -303,12 +307,12 @@ function render(){
     <div><small>Made</small><strong>${money(M)}</strong></div>
     <div><small>Gas</small><strong>${money(T.gas)}</strong></div>
     <div><small>Bonus / other</small><strong>${money(T.bonus)}</strong></div>
-    <div><small>Miles</small><strong>${T.miles.toLocaleString(undefined,{maximumFractionDigits:1})}</strong></div>
+    <div><small>Miles</small><strong>${T.miles.toLocaleString(LOC,{maximumFractionDigits:1})}</strong></div>
     <div><small>Kept per mile</small><strong>${per(K,T.miles)}</strong></div>
     <div><small>Kept per hour</small><strong>${per(K,H)}</strong></div>`;
   const rowsC=[
     ['Earnings',T.le,T.ue,money],
-    ['Hours',T.lh,T.uh,v=>v.toLocaleString(undefined,{maximumFractionDigits:2})],
+    ['Hours',T.lh,T.uh,v=>v.toLocaleString(LOC,{maximumFractionDigits:2})],
     ['Hourly wage',T.lh?T.le/T.lh:null,T.uh?T.ue/T.uh:null,money,true],
     ['Rides',T.lr,T.ur,v=>v.toLocaleString()],
     ['Amount per ride',T.lr?T.le/T.lr:null,T.ur?T.ue/T.ur:null,money,true],
@@ -485,7 +489,7 @@ if(GOOGLE_CLIENT_ID){
 const PK=KEY+'-prefs';
 const SECS={form:'Log a day',stand:'Where you stand',cmp:'Lyft vs Uber',days:'Days'};
 const PRESETS=[['Road green','#1c6b47'],['Ocean','#1f5fa8'],['Grape','#6b3fa0'],['Sunset','#c4511f'],['Cherry','#b3263a'],['Gold','#a77a00'],['Teal','#127a7a'],['Slate','#3f4a5a']];
-const DEF={mode:'system',accent:'#1c6b47',lyft:'',uber:'',order:['form','stand','cmp','days'],hidden:[]};
+const DEF={lang:'auto',mode:'system',accent:'#1c6b47',lyft:'',uber:'',order:['form','stand','cmp','days'],hidden:[]};
 let prefs={...DEF}; try{ prefs={...DEF,...JSON.parse(localStorage.getItem(PK)||'{}')}; }catch(e){}
 const savePrefs=()=>{ try{ localStorage.setItem(PK,JSON.stringify(prefs)); }catch(e){} };
 
@@ -560,6 +564,249 @@ $('custBtn').onclick=()=>{ drawCust(); $('cust').hidden=false; $('cust').scrollI
 $('custDone').onclick=()=>{ $('cust').hidden=true; $('custBtn').focus(); };
 $('custReset').onclick=()=>{ prefs={...DEF,order:[...DEF.order],hidden:[]}; savePrefs(); applyPrefs(); drawCust(); };
 applyPrefs();
+
+/* ---------- Languages: follows the phone, or the choice in Customize ---------- */
+const LANGS={en:'English',es:'Español',pt:'Português',fr:'Français',ru:'Русский',zh:'中文（简体）',vi:'Tiếng Việt'};
+// Each language: S = exact phrases (keyed by the English text), P = sentence templates, W = small words used inside mixed text
+const I18N={
+es:{S:{
+'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':'Lyft y Uber, lado a lado. Registra tu día y ve cuánto te quedó. Todo se guarda en este dispositivo.',
+'Customize':'Personalizar','Connect Google Drive':'Conectar Google Drive','Open my Google Sheet':'Abrir mi hoja de Google','Restore from Drive':'Restaurar desde Drive','Back up to Google Drive':'Respaldar en Google Drive','Export to Excel / Sheets':'Exportar a Excel / Sheets','Restore backup':'Restaurar respaldo','Sync to Drive now':'Sincronizar con Drive ahora',
+'Log a day':'Registrar un día','Edit day':'Editar día','Date':'Fecha','Earnings':'Ganancias','Rides':'Viajes','Hours':'Horas','Deposit amount':'Monto del depósito','Gas':'Gasolina','Total miles':'Millas totales','Bonus earned / other':'Bonos / otros ingresos','Deposit type':'Tipo de depósito','Deposit date':'Fecha del depósito','e.g. Express Pay':'ej. Express Pay','You kept':'Te quedó','Save day':'Guardar día','Save changes':'Guardar cambios','Cancel':'Cancelar',
+'Where you stand':'Cómo vas','This week':'Esta semana','This month':'Este mes','This year':'Este año','All time':'Todo','Period':'Periodo','Made':'Ganado','Bonus / other':'Bonos / otros','Miles':'Millas','Kept per mile':'Neto por milla','Kept per hour':'Neto por hora',
+'Hourly wage':'Pago por hora','Amount per ride':'Pago por viaje','Deposits':'Depósitos','Days':'Días','Edit':'Editar','Delete':'Eliminar','Tap again to delete':'Toca otra vez para eliminar','Deleting…':'Eliminando…','No platform earnings':'Sin ganancias de apps',
+'No days logged yet. Fill in today above and your totals show up here.':'Aún no hay días registrados. Llena el día de hoy arriba y aquí verás tus totales.',
+'Appearance':'Apariencia','Match phone':'Igual que el teléfono','Light':'Claro','Dark':'Oscuro','Main color':'Color principal','Lyft color':'Color de Lyft','Uber color':'Color de Uber','Layout':'Diseño','Language':'Idioma',
+"Use the arrows to reorder. Turn off anything you don't need. On a computer, the first section sits on the left.":'Usa las flechas para reordenar. Desactiva lo que no necesites. En una computadora, la primera sección va a la izquierda.',
+'Show':'Mostrar','Move up':'Subir','Move down':'Bajar','Reset to original look':'Restablecer el aspecto original','Done':'Listo','Pick any color':'Elige cualquier color',
+'Road green':'Verde carretera','Ocean':'Océano','Grape':'Uva','Sunset':'Atardecer','Cherry':'Cereza','Gold':'Dorado','Teal':'Verde azulado','Slate':'Pizarra','Privacy policy':'Política de privacidad',
+'Day updated.':'Día actualizado.','Pick a date for this day.':'Elige una fecha para este día.','Enter at least your earnings, gas or miles.':'Ingresa al menos tus ganancias, gasolina o millas.',
+"Couldn't save on this device. Your browser may be blocking storage.":'No se pudo guardar en este dispositivo. Es posible que tu navegador esté bloqueando el almacenamiento.',
+"Couldn't delete that. Try again.":'No se pudo eliminar. Inténtalo de nuevo.',"Couldn't save. Try again in a moment.":'No se pudo guardar. Inténtalo de nuevo en un momento.',
+'Saved on this device only. Back up to Google Drive now and then.':'Guardado solo en este dispositivo. Respalda en Google Drive de vez en cuando.',
+'Backed up to Google Drive today.':'Respaldado en Google Drive hoy.','Backed up and Google Sheet updated today.':'Respaldado y hoja de Google actualizada hoy.',
+'Google Drive backup runs once a day, the next time you save.':'El respaldo en Google Drive se hace una vez al día, la próxima vez que guardes.',
+'Backing up and updating your Google Sheet…':'Respaldando y actualizando tu hoja de Google…','Google Drive sign-in was cancelled.':'Se canceló el inicio de sesión en Google Drive.',
+"Google Drive backup didn't go through. Tap \"Sync to Drive now\" to try again.":'El respaldo en Google Drive no se completó. Toca "Sincronizar con Drive ahora" para intentarlo de nuevo.',
+'No Drive backup found yet.':'Aún no hay respaldo en Drive.','Nothing to back up yet. Log a day first.':'Aún no hay nada que respaldar. Registra un día primero.',
+'Exported. Open the .csv in Excel or Google Sheets.':'Exportado. Abre el archivo .csv en Excel o Google Sheets.','Export cancelled.':'Exportación cancelada.','Backup cancelled.':'Respaldo cancelado.',
+"Couldn't export from this browser. Try Chrome.":'No se pudo exportar desde este navegador. Prueba con Chrome.',"Couldn't back up from this browser. Try Chrome.":'No se pudo respaldar desde este navegador. Prueba con Chrome.',
+"Backup sent. If you picked Drive, it's in your Google Drive now.":'Respaldo enviado. Si elegiste Drive, ya está en tu Google Drive.',
+'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Respaldo guardado. Para tenerlo en Google Drive, sube el archivo .json de tus Descargas a drive.google.com.',
+"That file isn't a Shift Ledger backup. Pick the .json file from \"Back up to Google Drive\".":'Ese archivo no es un respaldo de Shift Ledger. Elige el archivo .json de "Respaldar en Google Drive".',
+"This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Este navegador está bloqueando el almacenamiento, así que no se guardarán los datos. Usa una ventana normal (no privada).'},
+P:{kept:'Neto después de gasolina · {n} {days}',saved:'Guardado. Te quedó {x}.',restored:'Respaldo restaurado: {n} {days}.',restoredDrive:'Se restauraron {n} {days} desde Google Drive.',last:'Guardado en este dispositivo. Último respaldo: {d}.'},
+W:{day:'día',days:'días',rides:'{n} viajes',hr:'h',mi:'mi',gas:'gasolina',bonus:'bono',deposited:'Depositado',on:' el ',ride:'viaje'}},
+
+pt:{S:{
+'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':'Lyft e Uber lado a lado. Registre o dia e veja quanto sobrou. Tudo fica salvo neste aparelho.',
+'Customize':'Personalizar','Connect Google Drive':'Conectar ao Google Drive','Open my Google Sheet':'Abrir minha planilha Google','Restore from Drive':'Restaurar do Drive','Back up to Google Drive':'Fazer backup no Google Drive','Export to Excel / Sheets':'Exportar para Excel / Sheets','Restore backup':'Restaurar backup','Sync to Drive now':'Sincronizar com o Drive agora',
+'Log a day':'Registrar um dia','Edit day':'Editar dia','Date':'Data','Earnings':'Ganhos','Rides':'Corridas','Hours':'Horas','Deposit amount':'Valor do depósito','Gas':'Combustível','Total miles':'Milhas totais','Bonus earned / other':'Bônus / outros ganhos','Deposit type':'Tipo de depósito','Deposit date':'Data do depósito','e.g. Express Pay':'ex.: Express Pay','You kept':'Sobrou','Save day':'Salvar dia','Save changes':'Salvar alterações','Cancel':'Cancelar',
+'Where you stand':'Seu resumo','This week':'Esta semana','This month':'Este mês','This year':'Este ano','All time':'Tudo','Period':'Período','Made':'Ganho','Bonus / other':'Bônus / outros','Miles':'Milhas','Kept per mile':'Líquido por milha','Kept per hour':'Líquido por hora',
+'Hourly wage':'Ganho por hora','Amount per ride':'Valor por corrida','Deposits':'Depósitos','Days':'Dias','Edit':'Editar','Delete':'Excluir','Tap again to delete':'Toque de novo para excluir','Deleting…':'Excluindo…','No platform earnings':'Sem ganhos nos apps',
+'No days logged yet. Fill in today above and your totals show up here.':'Nenhum dia registrado ainda. Preencha o dia de hoje acima e seus totais aparecem aqui.',
+'Appearance':'Aparência','Match phone':'Igual ao celular','Light':'Claro','Dark':'Escuro','Main color':'Cor principal','Lyft color':'Cor da Lyft','Uber color':'Cor da Uber','Layout':'Layout','Language':'Idioma',
+"Use the arrows to reorder. Turn off anything you don't need. On a computer, the first section sits on the left.":'Use as setas para reorganizar. Desative o que não precisar. No computador, a primeira seção fica à esquerda.',
+'Show':'Mostrar','Move up':'Subir','Move down':'Descer','Reset to original look':'Restaurar o visual original','Done':'Pronto','Pick any color':'Escolha qualquer cor',
+'Road green':'Verde estrada','Ocean':'Oceano','Grape':'Uva','Sunset':'Pôr do sol','Cherry':'Cereja','Gold':'Dourado','Teal':'Verde-azulado','Slate':'Ardósia','Privacy policy':'Política de privacidade',
+'Day updated.':'Dia atualizado.','Pick a date for this day.':'Escolha uma data para este dia.','Enter at least your earnings, gas or miles.':'Informe pelo menos seus ganhos, combustível ou milhas.',
+"Couldn't save on this device. Your browser may be blocking storage.":'Não foi possível salvar neste aparelho. Seu navegador pode estar bloqueando o armazenamento.',
+"Couldn't delete that. Try again.":'Não foi possível excluir. Tente de novo.',"Couldn't save. Try again in a moment.":'Não foi possível salvar. Tente de novo em instantes.',
+'Saved on this device only. Back up to Google Drive now and then.':'Salvo só neste aparelho. Faça backup no Google Drive de vez em quando.',
+'Backed up to Google Drive today.':'Backup feito no Google Drive hoje.','Backed up and Google Sheet updated today.':'Backup feito e planilha Google atualizada hoje.',
+'Google Drive backup runs once a day, the next time you save.':'O backup no Google Drive é feito uma vez por dia, na próxima vez que você salvar.',
+'Backing up and updating your Google Sheet…':'Fazendo backup e atualizando sua planilha Google…','Google Drive sign-in was cancelled.':'O login no Google Drive foi cancelado.',
+"Google Drive backup didn't go through. Tap \"Sync to Drive now\" to try again.":'O backup no Google Drive não foi concluído. Toque em "Sincronizar com o Drive agora" para tentar de novo.',
+'No Drive backup found yet.':'Nenhum backup no Drive ainda.','Nothing to back up yet. Log a day first.':'Nada para salvar ainda. Registre um dia primeiro.',
+'Exported. Open the .csv in Excel or Google Sheets.':'Exportado. Abra o arquivo .csv no Excel ou no Google Sheets.','Export cancelled.':'Exportação cancelada.','Backup cancelled.':'Backup cancelado.',
+"Couldn't export from this browser. Try Chrome.":'Não foi possível exportar neste navegador. Tente o Chrome.',"Couldn't back up from this browser. Try Chrome.":'Não foi possível fazer backup neste navegador. Tente o Chrome.',
+"Backup sent. If you picked Drive, it's in your Google Drive now.":'Backup enviado. Se você escolheu o Drive, ele já está no seu Google Drive.',
+'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Backup salvo. Para guardá-lo no Google Drive, envie o arquivo .json da pasta Downloads para drive.google.com.',
+"That file isn't a Shift Ledger backup. Pick the .json file from \"Back up to Google Drive\".":'Esse arquivo não é um backup do Shift Ledger. Escolha o arquivo .json de "Fazer backup no Google Drive".',
+"This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Este navegador está bloqueando o armazenamento, então os dados não serão salvos. Use uma janela normal (não anônima).'},
+P:{kept:'Líquido após combustível · {n} {days}',saved:'Salvo. Sobrou {x}.',restored:'Backup restaurado: {n} {days}.',restoredDrive:'{n} {days} restaurados do Google Drive.',last:'Salvo neste aparelho. Último backup: {d}.'},
+W:{day:'dia',days:'dias',rides:'{n} corridas',hr:'h',mi:'mi',gas:'combustível',bonus:'bônus',deposited:'Depositado',on:' em ',ride:'corrida'}},
+
+fr:{S:{
+'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':"Lyft et Uber côte à côte. Notez votre journée et voyez ce qu'il vous reste. Tout reste sur cet appareil.",
+'Customize':'Personnaliser','Connect Google Drive':'Connecter Google Drive','Open my Google Sheet':'Ouvrir ma feuille Google','Restore from Drive':'Restaurer depuis Drive','Back up to Google Drive':'Sauvegarder sur Google Drive','Export to Excel / Sheets':'Exporter vers Excel / Sheets','Restore backup':'Restaurer une sauvegarde','Sync to Drive now':'Synchroniser avec Drive',
+'Log a day':'Noter une journée','Edit day':'Modifier la journée','Date':'Date','Earnings':'Gains','Rides':'Courses','Hours':'Heures','Deposit amount':'Montant du virement','Gas':'Essence','Total miles':'Miles au total','Bonus earned / other':'Bonus / autres revenus','Deposit type':'Type de virement','Deposit date':'Date du virement','e.g. Express Pay':'ex. Express Pay','You kept':'Il vous reste','Save day':'Enregistrer la journée','Save changes':'Enregistrer','Cancel':'Annuler',
+'Where you stand':'Votre bilan','This week':'Cette semaine','This month':'Ce mois-ci','This year':'Cette année','All time':'Depuis le début','Period':'Période','Made':'Gagné','Bonus / other':'Bonus / autres','Miles':'Miles','Kept per mile':'Net par mile','Kept per hour':'Net par heure',
+'Hourly wage':'Gain horaire','Amount per ride':'Gain par course','Deposits':'Virements','Days':'Journées','Edit':'Modifier','Delete':'Supprimer','Tap again to delete':'Touchez encore pour supprimer','Deleting…':'Suppression…','No platform earnings':'Aucun gain sur les applis',
+'No days logged yet. Fill in today above and your totals show up here.':"Aucune journée notée pour l'instant. Remplissez celle d'aujourd'hui ci-dessus pour voir vos totaux ici.",
+'Appearance':'Apparence','Match phone':'Comme le téléphone','Light':'Clair','Dark':'Sombre','Main color':'Couleur principale','Lyft color':'Couleur Lyft','Uber color':'Couleur Uber','Layout':'Disposition','Language':'Langue',
+"Use the arrows to reorder. Turn off anything you don't need. On a computer, the first section sits on the left.":"Utilisez les flèches pour réorganiser. Désactivez ce dont vous n'avez pas besoin. Sur ordinateur, la première section se place à gauche.",
+'Show':'Afficher','Move up':'Monter','Move down':'Descendre','Reset to original look':"Rétablir l'apparence d'origine",'Done':'Terminé','Pick any color':'Choisir une couleur',
+'Road green':'Vert route','Ocean':'Océan','Grape':'Raisin','Sunset':'Coucher de soleil','Cherry':'Cerise','Gold':'Or','Teal':'Sarcelle','Slate':'Ardoise','Privacy policy':'Politique de confidentialité',
+'Day updated.':'Journée mise à jour.','Pick a date for this day.':'Choisissez une date pour cette journée.','Enter at least your earnings, gas or miles.':"Saisissez au moins vos gains, l'essence ou les miles.",
+"Couldn't save on this device. Your browser may be blocking storage.":"Impossible d'enregistrer sur cet appareil. Votre navigateur bloque peut-être le stockage.",
+"Couldn't delete that. Try again.":'Suppression impossible. Réessayez.',"Couldn't save. Try again in a moment.":'Enregistrement impossible. Réessayez dans un instant.',
+'Saved on this device only. Back up to Google Drive now and then.':'Enregistré uniquement sur cet appareil. Sauvegardez de temps en temps sur Google Drive.',
+'Backed up to Google Drive today.':"Sauvegardé sur Google Drive aujourd'hui.",'Backed up and Google Sheet updated today.':"Sauvegardé et feuille Google mise à jour aujourd'hui.",
+'Google Drive backup runs once a day, the next time you save.':'La sauvegarde Google Drive se fait une fois par jour, au prochain enregistrement.',
+'Backing up and updating your Google Sheet…':'Sauvegarde et mise à jour de votre feuille Google…','Google Drive sign-in was cancelled.':'Connexion à Google Drive annulée.',
+"Google Drive backup didn't go through. Tap \"Sync to Drive now\" to try again.":'La sauvegarde Google Drive a échoué. Touchez « Synchroniser avec Drive » pour réessayer.',
+'No Drive backup found yet.':"Aucune sauvegarde sur Drive pour l'instant.",'Nothing to back up yet. Log a day first.':"Rien à sauvegarder pour l'instant. Notez d'abord une journée.",
+'Exported. Open the .csv in Excel or Google Sheets.':'Exporté. Ouvrez le fichier .csv dans Excel ou Google Sheets.','Export cancelled.':'Export annulé.','Backup cancelled.':'Sauvegarde annulée.',
+"Couldn't export from this browser. Try Chrome.":'Export impossible depuis ce navigateur. Essayez Chrome.',"Couldn't back up from this browser. Try Chrome.":'Sauvegarde impossible depuis ce navigateur. Essayez Chrome.',
+"Backup sent. If you picked Drive, it's in your Google Drive now.":'Sauvegarde envoyée. Si vous avez choisi Drive, elle est maintenant dans votre Google Drive.',
+'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Sauvegarde enregistrée. Pour la garder sur Google Drive, importez le fichier .json de vos Téléchargements sur drive.google.com.',
+"That file isn't a Shift Ledger backup. Pick the .json file from \"Back up to Google Drive\".":"Ce fichier n'est pas une sauvegarde Shift Ledger. Choisissez le fichier .json créé par « Sauvegarder sur Google Drive ».",
+"This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Ce navigateur bloque le stockage : vos données ne seront pas conservées. Utilisez une fenêtre normale (non privée).'},
+P:{kept:'Net après essence · {n} {days}',saved:'Enregistré. Il vous reste {x}.',restored:'Sauvegarde restaurée : {n} {days}.',restoredDrive:'{n} {days} restaurées depuis Google Drive.',last:'Enregistré sur cet appareil. Dernière sauvegarde : {d}.'},
+W:{day:'journée',days:'journées',rides:'{n} courses',hr:'h',mi:'mi',gas:'essence',bonus:'bonus',deposited:'Viré',on:' le ',ride:'course'}},
+
+ru:{S:{
+'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':'Lyft и Uber рядом. Записывайте день и смотрите, сколько осталось. Всё хранится на этом устройстве.',
+'Customize':'Настроить','Connect Google Drive':'Подключить Google Диск','Open my Google Sheet':'Открыть мою Google Таблицу','Restore from Drive':'Восстановить с Диска','Back up to Google Drive':'Копия в Google Диск','Export to Excel / Sheets':'Экспорт в Excel / Таблицы','Restore backup':'Восстановить из копии','Sync to Drive now':'Синхронизировать с Диском',
+'Log a day':'Записать день','Edit day':'Изменить день','Date':'Дата','Earnings':'Заработок','Rides':'Поездки','Hours':'Часы','Deposit amount':'Сумма выплаты','Gas':'Бензин','Total miles':'Всего миль','Bonus earned / other':'Бонусы / другое','Deposit type':'Тип выплаты','Deposit date':'Дата выплаты','e.g. Express Pay':'напр. Express Pay','You kept':'Осталось','Save day':'Сохранить день','Save changes':'Сохранить изменения','Cancel':'Отмена',
+'Where you stand':'Итоги','This week':'Эта неделя','This month':'Этот месяц','This year':'Этот год','All time':'Всё время','Period':'Период','Made':'Заработано','Bonus / other':'Бонусы / другое','Miles':'Мили','Kept per mile':'Чистыми за милю','Kept per hour':'Чистыми в час',
+'Hourly wage':'Заработок в час','Amount per ride':'За поездку','Deposits':'Выплаты','Days':'Дни','Edit':'Изменить','Delete':'Удалить','Tap again to delete':'Нажмите ещё раз для удаления','Deleting…':'Удаление…','No platform earnings':'Нет заработка в приложениях',
+'No days logged yet. Fill in today above and your totals show up here.':'Пока нет записанных дней. Заполните сегодняшний день выше, и здесь появятся итоги.',
+'Appearance':'Оформление','Match phone':'Как в телефоне','Light':'Светлое','Dark':'Тёмное','Main color':'Основной цвет','Lyft color':'Цвет Lyft','Uber color':'Цвет Uber','Layout':'Расположение','Language':'Язык',
+"Use the arrows to reorder. Turn off anything you don't need. On a computer, the first section sits on the left.":'Меняйте порядок стрелками. Отключите то, что не нужно. На компьютере первый раздел располагается слева.',
+'Show':'Показать','Move up':'Выше','Move down':'Ниже','Reset to original look':'Вернуть исходный вид','Done':'Готово','Pick any color':'Выбрать любой цвет',
+'Road green':'Дорожный зелёный','Ocean':'Океан','Grape':'Виноград','Sunset':'Закат','Cherry':'Вишня','Gold':'Золото','Teal':'Бирюза','Slate':'Сланец','Privacy policy':'Политика конфиденциальности',
+'Day updated.':'День обновлён.','Pick a date for this day.':'Выберите дату для этого дня.','Enter at least your earnings, gas or miles.':'Введите хотя бы заработок, бензин или мили.',
+"Couldn't save on this device. Your browser may be blocking storage.":'Не удалось сохранить на этом устройстве. Возможно, браузер блокирует хранилище.',
+"Couldn't delete that. Try again.":'Не удалось удалить. Попробуйте ещё раз.',"Couldn't save. Try again in a moment.":'Не удалось сохранить. Попробуйте чуть позже.',
+'Saved on this device only. Back up to Google Drive now and then.':'Сохранено только на этом устройстве. Время от времени делайте копию в Google Диск.',
+'Backed up to Google Drive today.':'Копия в Google Диск сделана сегодня.','Backed up and Google Sheet updated today.':'Копия сделана, Google Таблица обновлена сегодня.',
+'Google Drive backup runs once a day, the next time you save.':'Копия в Google Диск делается раз в день, при следующем сохранении.',
+'Backing up and updating your Google Sheet…':'Создаём копию и обновляем Google Таблицу…','Google Drive sign-in was cancelled.':'Вход в Google Диск отменён.',
+"Google Drive backup didn't go through. Tap \"Sync to Drive now\" to try again.":'Копия в Google Диск не создана. Нажмите «Синхронизировать с Диском», чтобы повторить.',
+'No Drive backup found yet.':'Копии на Диске пока нет.','Nothing to back up yet. Log a day first.':'Пока нечего сохранять. Сначала запишите день.',
+'Exported. Open the .csv in Excel or Google Sheets.':'Экспорт готов. Откройте файл .csv в Excel или Google Таблицах.','Export cancelled.':'Экспорт отменён.','Backup cancelled.':'Копирование отменено.',
+"Couldn't export from this browser. Try Chrome.":'Не удалось экспортировать в этом браузере. Попробуйте Chrome.',"Couldn't back up from this browser. Try Chrome.":'Не удалось создать копию в этом браузере. Попробуйте Chrome.',
+"Backup sent. If you picked Drive, it's in your Google Drive now.":'Копия отправлена. Если вы выбрали Диск, она уже в вашем Google Диске.',
+'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Копия сохранена. Чтобы хранить её в Google Диске, загрузите файл .json из папки «Загрузки» на drive.google.com.',
+"That file isn't a Shift Ledger backup. Pick the .json file from \"Back up to Google Drive\".":'Этот файл не является копией Shift Ledger. Выберите файл .json, созданный кнопкой «Копия в Google Диск».',
+"This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Браузер блокирует хранилище, поэтому данные не сохранятся. Откройте обычное (не приватное) окно.'},
+P:{kept:'Чистыми после бензина · дней: {n}',saved:'Сохранено. Осталось {x}.',restored:'Копия восстановлена, дней: {n}.',restoredDrive:'Восстановлено с Google Диска, дней: {n}.',last:'Сохранено на этом устройстве. Последняя копия: {d}.'},
+W:{day:'день',days:'дней',rides:'поездок: {n}',hr:'ч',mi:'миль',gas:'бензин',bonus:'бонус',deposited:'Выплачено',on:', ',ride:'поездка'}},
+
+zh:{S:{
+'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':'Lyft 和 Uber 并排对比。记录每天的数据，看看你实际赚了多少。所有数据都保存在这台设备上。',
+'Customize':'自定义','Connect Google Drive':'连接 Google 云端硬盘','Open my Google Sheet':'打开我的 Google 表格','Restore from Drive':'从云端硬盘恢复','Back up to Google Drive':'备份到 Google 云端硬盘','Export to Excel / Sheets':'导出到 Excel / 表格','Restore backup':'恢复备份','Sync to Drive now':'立即同步到云端硬盘',
+'Log a day':'记录一天','Edit day':'编辑这一天','Date':'日期','Earnings':'收入','Rides':'单数','Hours':'小时','Deposit amount':'到账金额','Gas':'油费','Total miles':'总里程（英里）','Bonus earned / other':'奖励 / 其他收入','Deposit type':'到账方式','Deposit date':'到账日期','e.g. Express Pay':'例如 Express Pay','You kept':'净收入','Save day':'保存','Save changes':'保存修改','Cancel':'取消',
+'Where you stand':'收入概况','This week':'本周','This month':'本月','This year':'今年','All time':'全部','Period':'时间段','Made':'总收入','Bonus / other':'奖励 / 其他','Miles':'英里','Kept per mile':'每英里净收入','Kept per hour':'每小时净收入',
+'Hourly wage':'时薪','Amount per ride':'每单收入','Deposits':'到账','Days':'每日记录','Edit':'编辑','Delete':'删除','Tap again to delete':'再点一次删除','Deleting…':'正在删除…','No platform earnings':'无平台收入',
+'No days logged yet. Fill in today above and your totals show up here.':'还没有记录。在上方填写今天的数据，这里就会显示你的统计。',
+'Appearance':'外观','Match phone':'跟随手机','Light':'浅色','Dark':'深色','Main color':'主题色','Lyft color':'Lyft 颜色','Uber color':'Uber 颜色','Layout':'布局','Language':'语言',
+"Use the arrows to reorder. Turn off anything you don't need. On a computer, the first section sits on the left.":'用箭头调整顺序，关闭不需要的部分。在电脑上，第一个部分显示在左侧。',
+'Show':'显示','Move up':'上移','Move down':'下移','Reset to original look':'恢复默认外观','Done':'完成','Pick any color':'选择任意颜色',
+'Road green':'公路绿','Ocean':'海洋蓝','Grape':'葡萄紫','Sunset':'日落橙','Cherry':'樱桃红','Gold':'金色','Teal':'青色','Slate':'石板灰','Privacy policy':'隐私政策',
+'Day updated.':'已更新。','Pick a date for this day.':'请选择日期。','Enter at least your earnings, gas or miles.':'请至少填写收入、油费或里程。',
+"Couldn't save on this device. Your browser may be blocking storage.":'无法在此设备上保存，浏览器可能阻止了存储。',
+"Couldn't delete that. Try again.":'删除失败，请重试。',"Couldn't save. Try again in a moment.":'保存失败，请稍后重试。',
+'Saved on this device only. Back up to Google Drive now and then.':'仅保存在此设备上。请不时备份到 Google 云端硬盘。',
+'Backed up to Google Drive today.':'今天已备份到 Google 云端硬盘。','Backed up and Google Sheet updated today.':'今天已备份，Google 表格已更新。',
+'Google Drive backup runs once a day, the next time you save.':'Google 云端硬盘每天备份一次，在你下次保存时进行。',
+'Backing up and updating your Google Sheet…':'正在备份并更新 Google 表格…','Google Drive sign-in was cancelled.':'已取消登录 Google 云端硬盘。',
+"Google Drive backup didn't go through. Tap \"Sync to Drive now\" to try again.":'备份到 Google 云端硬盘未成功。请点击“立即同步到云端硬盘”重试。',
+'No Drive backup found yet.':'云端硬盘中还没有备份。','Nothing to back up yet. Log a day first.':'还没有可备份的内容，请先记录一天。',
+'Exported. Open the .csv in Excel or Google Sheets.':'已导出。用 Excel 或 Google 表格打开 .csv 文件。','Export cancelled.':'已取消导出。','Backup cancelled.':'已取消备份。',
+"Couldn't export from this browser. Try Chrome.":'此浏览器无法导出，请使用 Chrome。',"Couldn't back up from this browser. Try Chrome.":'此浏览器无法备份，请使用 Chrome。',
+"Backup sent. If you picked Drive, it's in your Google Drive now.":'备份已发送。如果你选择了云端硬盘，它现在就在你的 Google 云端硬盘中。',
+'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'备份已保存。要保存到 Google 云端硬盘，请把“下载”中的 .json 文件上传到 drive.google.com。',
+"That file isn't a Shift Ledger backup. Pick the .json file from \"Back up to Google Drive\".":'这个文件不是 Shift Ledger 备份。请选择“备份到 Google 云端硬盘”生成的 .json 文件。',
+"This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'此浏览器阻止了存储，数据不会被保存。请使用普通（非无痕）窗口。'},
+P:{kept:'扣除油费后净收入 · {n} 天',saved:'已保存。净收入 {x}。',restored:'已恢复备份：{n} 天。',restoredDrive:'已从 Google 云端硬盘恢复 {n} 天的记录。',last:'已保存在此设备上。上次备份：{d}。'},
+W:{day:'天',days:'天',rides:'{n} 单',hr:'小时',mi:'英里',gas:'油费',bonus:'奖励',deposited:'到账',on:' · ',ride:'单'}},
+
+vi:{S:{
+'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':'Lyft và Uber cạnh nhau. Ghi lại mỗi ngày và xem bạn thực sự giữ lại bao nhiêu. Mọi dữ liệu nằm trên thiết bị này.',
+'Customize':'Tùy chỉnh','Connect Google Drive':'Kết nối Google Drive','Open my Google Sheet':'Mở Google Trang tính của tôi','Restore from Drive':'Khôi phục từ Drive','Back up to Google Drive':'Sao lưu lên Google Drive','Export to Excel / Sheets':'Xuất sang Excel / Trang tính','Restore backup':'Khôi phục bản sao lưu','Sync to Drive now':'Đồng bộ với Drive ngay',
+'Log a day':'Ghi một ngày','Edit day':'Sửa ngày','Date':'Ngày','Earnings':'Thu nhập','Rides':'Số chuyến','Hours':'Số giờ','Deposit amount':'Số tiền rút về','Gas':'Xăng','Total miles':'Tổng số dặm','Bonus earned / other':'Thưởng / thu nhập khác','Deposit type':'Hình thức rút tiền','Deposit date':'Ngày tiền về','e.g. Express Pay':'vd. Express Pay','You kept':'Còn lại','Save day':'Lưu ngày','Save changes':'Lưu thay đổi','Cancel':'Hủy',
+'Where you stand':'Tổng quan','This week':'Tuần này','This month':'Tháng này','This year':'Năm nay','All time':'Tất cả','Period':'Khoảng thời gian','Made':'Tổng thu','Bonus / other':'Thưởng / khác','Miles':'Dặm','Kept per mile':'Còn lại mỗi dặm','Kept per hour':'Còn lại mỗi giờ',
+'Hourly wage':'Thu nhập mỗi giờ','Amount per ride':'Mỗi chuyến','Deposits':'Tiền đã rút','Days':'Các ngày','Edit':'Sửa','Delete':'Xóa','Tap again to delete':'Nhấn lần nữa để xóa','Deleting…':'Đang xóa…','No platform earnings':'Chưa có thu nhập từ ứng dụng',
+'No days logged yet. Fill in today above and your totals show up here.':'Chưa ghi ngày nào. Điền hôm nay ở trên và tổng của bạn sẽ hiện ở đây.',
+'Appearance':'Giao diện','Match phone':'Theo điện thoại','Light':'Sáng','Dark':'Tối','Main color':'Màu chính','Lyft color':'Màu Lyft','Uber color':'Màu Uber','Layout':'Bố cục','Language':'Ngôn ngữ',
+"Use the arrows to reorder. Turn off anything you don't need. On a computer, the first section sits on the left.":'Dùng mũi tên để sắp xếp lại. Tắt những phần bạn không cần. Trên máy tính, phần đầu tiên nằm bên trái.',
+'Show':'Hiện','Move up':'Lên','Move down':'Xuống','Reset to original look':'Khôi phục giao diện gốc','Done':'Xong','Pick any color':'Chọn màu bất kỳ',
+'Road green':'Xanh lá','Ocean':'Đại dương','Grape':'Nho','Sunset':'Hoàng hôn','Cherry':'Anh đào','Gold':'Vàng','Teal':'Xanh mòng két','Slate':'Xám đá','Privacy policy':'Chính sách quyền riêng tư',
+'Day updated.':'Đã cập nhật ngày.','Pick a date for this day.':'Hãy chọn ngày.','Enter at least your earnings, gas or miles.':'Nhập ít nhất thu nhập, xăng hoặc số dặm.',
+"Couldn't save on this device. Your browser may be blocking storage.":'Không lưu được trên thiết bị này. Có thể trình duyệt đang chặn bộ nhớ.',
+"Couldn't delete that. Try again.":'Không xóa được. Hãy thử lại.',"Couldn't save. Try again in a moment.":'Không lưu được. Hãy thử lại sau giây lát.',
+'Saved on this device only. Back up to Google Drive now and then.':'Chỉ lưu trên thiết bị này. Thỉnh thoảng hãy sao lưu lên Google Drive.',
+'Backed up to Google Drive today.':'Đã sao lưu lên Google Drive hôm nay.','Backed up and Google Sheet updated today.':'Đã sao lưu và cập nhật Google Trang tính hôm nay.',
+'Google Drive backup runs once a day, the next time you save.':'Sao lưu Google Drive chạy mỗi ngày một lần, vào lần lưu tiếp theo.',
+'Backing up and updating your Google Sheet…':'Đang sao lưu và cập nhật Google Trang tính…','Google Drive sign-in was cancelled.':'Đã hủy đăng nhập Google Drive.',
+"Google Drive backup didn't go through. Tap \"Sync to Drive now\" to try again.":'Sao lưu lên Google Drive chưa thành công. Nhấn "Đồng bộ với Drive ngay" để thử lại.',
+'No Drive backup found yet.':'Chưa có bản sao lưu trên Drive.','Nothing to back up yet. Log a day first.':'Chưa có gì để sao lưu. Hãy ghi một ngày trước.',
+'Exported. Open the .csv in Excel or Google Sheets.':'Đã xuất. Mở tệp .csv bằng Excel hoặc Google Trang tính.','Export cancelled.':'Đã hủy xuất.','Backup cancelled.':'Đã hủy sao lưu.',
+"Couldn't export from this browser. Try Chrome.":'Không xuất được trên trình duyệt này. Hãy thử Chrome.',"Couldn't back up from this browser. Try Chrome.":'Không sao lưu được trên trình duyệt này. Hãy thử Chrome.',
+"Backup sent. If you picked Drive, it's in your Google Drive now.":'Đã gửi bản sao lưu. Nếu bạn chọn Drive, nó đã nằm trong Google Drive của bạn.',
+'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Đã lưu bản sao lưu. Để giữ trên Google Drive, hãy tải tệp .json trong mục Tải xuống lên drive.google.com.',
+"That file isn't a Shift Ledger backup. Pick the .json file from \"Back up to Google Drive\".":'Tệp này không phải bản sao lưu Shift Ledger. Hãy chọn tệp .json từ "Sao lưu lên Google Drive".',
+"This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Trình duyệt này đang chặn bộ nhớ nên dữ liệu sẽ không được lưu. Hãy dùng cửa sổ thường (không ẩn danh).'},
+P:{kept:'Còn lại sau xăng · {n} ngày',saved:'Đã lưu. Còn lại {x}.',restored:'Đã khôi phục: {n} ngày.',restoredDrive:'Đã khôi phục {n} ngày từ Google Drive.',last:'Đã lưu trên thiết bị này. Lần sao lưu gần nhất: {d}.'},
+W:{day:'ngày',days:'ngày',rides:'{n} chuyến',hr:'giờ',mi:'dặm',gas:'xăng',bonus:'thưởng',deposited:'Đã rút',on:' ngày ',ride:'chuyến'}}
+};
+
+function pickLang(){
+  const want=(typeof prefs!=='undefined'&&prefs.lang&&prefs.lang!=='auto')?[prefs.lang]:(navigator.languages||[navigator.language||'en']);
+  for(const l of want){ const k=String(l).toLowerCase().split('-')[0]; if(LANGS[k]) return k; }
+  return 'en';
+}
+var LANG=pickLang();
+// Dates and numbers follow the phone unless a language was picked by hand
+var LOC=(typeof prefs!=='undefined'&&prefs.lang&&prefs.lang!=='auto')?({zh:'zh-CN',pt:'pt-BR'}[LANG]||LANG):undefined;
+document.documentElement.lang=LANG==='zh'?'zh-CN':LANG;
+
+const L=I18N[LANG];
+const fill=(s,o)=>s.replace(/\{(\w+)\}/g,(_,k)=>o[k]);
+const plural=n=>Number(String(n).replace(/[^\d]/g,''))===1?L.W.day:L.W.days;
+const PATTERNS=L?[
+  [/^Kept after gas · (\d+) days?$/, m=>fill(L.P.kept,{n:m[1],days:plural(m[1])})],
+  [/^Saved\. You kept (.+)\.$/, m=>fill(L.P.saved,{x:m[1]})],
+  [/^Backup restored: (\d+) days?\.$/, m=>fill(L.P.restored,{n:m[1],days:plural(m[1])})],
+  [/^Restored (\d+) days from Google Drive\.$/, m=>fill(L.P.restoredDrive,{n:m[1],days:plural(m[1])})],
+  [/^Saved on this device\. Last backup (.+)\.$/, m=>fill(L.P.last,{d:m[1]})],
+]:[];
+function trMixed(t){   // numbers mixed with words, e.g. "$30.00 gas · 100 mi"
+  const W=L.W; let o=t;
+  o=o.replace(/(\d[\d,.]*) rides\b/g,(_,n)=>fill(W.rides,{n}));
+  o=o.replace(/(\d[\d,.]*) hr\b/g,(_,n)=>n+' '+W.hr).replace(/(\d[\d,.]*) mi\b/g,(_,n)=>n+' '+W.mi);
+  o=o.replace(/(\d) gas\b/g,(_,d)=>d+' '+W.gas).replace(/(\d) bonus\b/g,(_,d)=>d+' '+W.bonus);
+  o=o.replace(/\/mi\b/g,'/'+W.mi).replace(/\/hr\b/g,'/'+W.hr).replace(/\/ride\b/g,'/'+W.ride);
+  if(/^Deposited /.test(o)) o=o.replace(/^Deposited /,W.deposited+' ').replace(/ on (?=\S)/,W.on);
+  return o;
+}
+function tr(text){
+  if(!L||!text) return null;
+  const lead=text.match(/^\s*/)[0], trail=text.match(/\s*$/)[0], t=text.trim();
+  if(!t) return null;
+  let out=L.S[t];
+  if(out==null) for(const [re,fn] of PATTERNS){ const m=t.match(re); if(m){ out=fn(m); break; } }
+  if(out==null&&/\d/.test(t)){ const x=trMixed(t); if(x!==t) out=x; }
+  if(out==null&&(t==='hr'||t==='mi')) out=L.W[t];
+  return out!=null&&out!==t?lead+out+trail:null;
+}
+function trNode(n){
+  if(n.nodeType===3){ const p=n.parentNode; if(!p||/^(SCRIPT|STYLE|TEXTAREA|OPTION)$/.test(p.nodeName)) return; const x=tr(n.nodeValue); if(x!=null) n.nodeValue=x; return; }
+  if(n.nodeType!==1||/^(SCRIPT|STYLE)$/.test(n.nodeName)) return;
+  for(const a of ['placeholder','aria-label','title']){ if(n.hasAttribute&&n.hasAttribute(a)){ const x=tr(n.getAttribute(a)); if(x!=null) n.setAttribute(a,x); } }
+  for(const c of n.childNodes) trNode(c);
+}
+if(L){
+  trNode(document.body);
+  new MutationObserver(ms=>{ for(const m of ms){
+    if(m.type==='characterData') trNode(m.target);
+    else if(m.type==='attributes') trNode(m.target);
+    else m.addedNodes.forEach(trNode);
+  } }).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['placeholder','aria-label','title']});
+  const tm=document.querySelector('title'); if(tm) document.title='Shift Ledger';
+}
+
+// Language picker in Customize
+(function(){
+  const sel=document.getElementById('langSel'); if(!sel) return;
+  const auto=document.createElement('option'); auto.value='auto'; auto.textContent=(L&&L.S['Match phone'])||'Match phone'; sel.appendChild(auto);
+  for(const [k,v] of Object.entries(LANGS)){ const o=document.createElement('option'); o.value=k; o.textContent=v; sel.appendChild(o); }
+  sel.value=prefs.lang||'auto';
+  sel.onchange=()=>{ prefs.lang=sel.value; savePrefs(); location.reload(); };
+})();
 
 load(); resetForm(); render();
 try{ localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t');
