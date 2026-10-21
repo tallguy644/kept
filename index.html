@@ -418,7 +418,7 @@ $('importFile').onchange=async e=>{
 
 
 /* ---------- Google Drive auto-backup (daily, on save) ---------- */
-const GOOGLE_CLIENT_ID='394365449530-jp83d2ut5t75sef6s92ea0o9j779tmt4.apps.googleusercontent.com';   // OAuth client ID from Google Cloud; Drive sync stays hidden while empty
+const GOOGLE_CLIENT_ID='394365449530-3l5vdsrsaq7dag4moq720n2eta4pp3no.apps.googleusercontent.com';   // OAuth client ID from Google Cloud; Drive sync stays hidden while empty
 const GDK=KEY+'-gdrive';
 let gdState={}; try{ gdState=JSON.parse(localStorage.getItem(GDK)||'{}'); }catch(e){}
 let gdTok=null, gdExp=0, gdClient=null, gdPending=null;
