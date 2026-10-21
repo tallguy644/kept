@@ -2,6 +2,10 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Shift Ledger</title>
 <meta name="theme-color" content="#1c6b47">
+<meta name="description" content="Daily tracker for Lyft and Uber drivers.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
 <style>
 /* Standalone copy. Layout: one narrow column — first-run Google Sheets setup, then the day's entry (Lyft and Uber side by side), totals, platform comparison, and the day log. Road-sign green on asphalt. */
@@ -118,7 +122,7 @@ button:disabled{opacity:.6;cursor:default}
 .chip{display:inline-block;font-size:.75rem;font-weight:600;padding:1px 8px;border-radius:99px;border:1px solid currentColor;margin-right:6px}
 @media (prefers-reduced-motion:no-preference){button{transition:background .15s,color .15s}}
 </style>
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}.foot{text-align:center;font-size:.82rem;color:var(--muted);padding:0 16px 32px}</style>
 </head><body>
 <div class="wrap">
   <header>
@@ -182,6 +186,7 @@ button:disabled{opacity:.6;cursor:default}
   </div>
 </div>
 
+<p class="foot"><a href="privacy.html">Privacy policy</a></p>
 <script>
 const $ = id => document.getElementById(id);
 const SERVER='Google Sheets';
@@ -402,4 +407,5 @@ try{ localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t');
   setSync(lb?'Saved on this device. Last backup '+fmtDate(lb)+'.':'Saved on this device only. Back up to Google Drive now and then.','off'); }
 catch(e){ setSync('This browser is blocking storage, so entries won\'t be kept. Try a regular (not private) window.','warn'); }
 </script>
+<script>if('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </body></html>
