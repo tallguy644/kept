@@ -2,7 +2,7 @@
   "name": "Kept for Gig Workers",
   "short_name": "Kept",
   "description": "Daily tracker for gig drivers: Lyft and Uber earnings, rides, hours, gas, miles and deposits, and what you actually kept.",
-  "id": "/shift-ledger/",
+  "id": "/kept/",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

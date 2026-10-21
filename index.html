@@ -395,13 +395,13 @@ function csvText(){
 }
 const backupText=()=>JSON.stringify({app:'shift-ledger',saved:new Date().toISOString(),shifts:data.shifts,prefs:typeof prefs!=='undefined'?prefs:undefined});
 $('exportBtn').onclick=async()=>{
-  try{ await saveFile('shift-ledger-'+todayStr()+'.csv',csvText(),'text/csv',false);
+  try{ await saveFile('kept-'+todayStr()+'.csv',csvText(),'text/csv',false);
     setSync('Exported. Open the .csv in Excel or Google Sheets.',''); }
   catch(e){ if(e&&(e.name==='AbortError'||e.code==='cancelled')) setSync('Export cancelled.','off'); else setSync('Couldn\'t export from this browser. Try Chrome.','warn'); }
 };
 $('driveBtn').onclick=async()=>{
   if(!data.shifts.length){ setSync('Nothing to back up yet. Log a day first.','off'); return; }
-  try{ const how=await saveFile('shift-ledger-backup-'+todayStr()+'.json',backupText(),'application/json',true);
+  try{ const how=await saveFile('kept-backup-'+todayStr()+'.json',backupText(),'application/json',true);
     setSync(how==='shared'?'Backup sent. If you picked Drive, it\'s in your Google Drive now.':'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.','');
     try{ localStorage.setItem(KEY+'-lastBackup',todayStr()); }catch(e){} }
   catch(e){ if(e&&(e.name==='AbortError'||e.code==='cancelled')) setSync('Backup cancelled.','off'); else setSync('Couldn\'t back up from this browser. Try Chrome.','warn'); }

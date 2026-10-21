@@ -2,7 +2,7 @@
 
 A simple daily tracker for Lyft and Uber drivers. Log each day's earnings, rides and hours for each app, plus gas, miles, bonuses and deposits, and see what you actually kept.
 
-**Open it:** https://tallguy644.github.io/shift-ledger/
+**Open it:** https://tallguy644.github.io/kept/
 
 - No account or sign-in needed. Works on phone and computer.
 - Your entries are saved only in the browser on your own device. Nobody else can see them.
