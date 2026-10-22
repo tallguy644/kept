@@ -140,9 +140,12 @@ button:disabled{opacity:.6;cursor:default}
 .tax .scroll{overflow-x:auto}
 .tax-note{margin:0;font-size:.82rem;color:var(--muted)}
 .tax-actions{margin-top:2px}
+.tax-panel{display:flex;flex-direction:column;gap:14px}
+.tax-toggle{align-self:flex-start}
 @media print{
   body{background:#fff;color:#000}
-  .wrap>header,#setup,#cust,.syncbar,#app>section:not(.a-tax),.foot,.tax-actions,.tax-top select{display:none!important}
+  .tax-panel[hidden]{display:flex!important}
+  .wrap>header,#setup,#cust,.syncbar,#app>section:not(.a-tax),.foot,.tax-actions,.tax-top select,.tax-toggle{display:none!important}
   #app{display:block!important}
   .a-tax{display:block!important}
   .tax{border:0;padding:0}
@@ -282,6 +285,8 @@ button:disabled{opacity:.6;cursor:default}
     <section class="a-tax sec" data-sec="tax">
       <h2>Taxes</h2>
       <div class="card tax">
+        <button type="button" id="taxToggle" class="tax-toggle" aria-expanded="false" aria-controls="taxPanel">Show my taxes</button>
+        <div id="taxPanel" class="tax-panel" hidden>
         <div class="tax-top">
           <label class="lbl" for="taxYear">Tax year</label>
           <select id="taxYear"></select>
@@ -292,6 +297,7 @@ button:disabled{opacity:.6;cursor:default}
           <button type="button" id="taxPrint" hidden>Print / save as PDF</button>
         </div>
         <p class="tax-note">Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.</p>
+        </div>
       </div>
     </section>
 
@@ -459,6 +465,15 @@ function taxCsv(y){
   row('MILEAGE LOG'); row('Date','Miles','Business purpose','Lyft hours','Uber hours','Lyft rides','Uber rides','Tolls & parking');
   c.rows.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>row(s.date,s.miles||0,'Rideshare driving'+(s.le||s.lr?' - Lyft':'')+(s.ue||s.ur?(s.le||s.lr?' & Uber':' - Uber'):''),s.lh||'',s.uh||'',s.lr||'',s.ur||'',s.tolls||''));
   return L.join('\n');
+}
+if($('taxToggle')){
+  $('taxToggle').onclick=()=>{
+    const p=$('taxPanel'), open=p.hidden;
+    p.hidden=!open;
+    $('taxToggle').setAttribute('aria-expanded',String(open));
+    $('taxToggle').textContent=open?'Hide taxes':'Show my taxes';
+    if(open) renderTax();
+  };
 }
 if($('taxYear')){
   $('taxYear').onchange=e=>{ taxYear=Number(e.target.value); renderTax(); };
@@ -701,6 +716,8 @@ es:{S:{
 "Tax year":"Año fiscal",
 "Export tax report":"Exportar informe de impuestos",
 "Print / save as PDF":"Imprimir / guardar como PDF",
+"Show my taxes":"Ver mis impuestos",
+"Hide taxes":"Ocultar impuestos",
 "Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"Son estimaciones para ayudarte a declarar, no asesoría fiscal. Compara las cifras con los resúmenes fiscales de tus apps de Lyft y Uber, y consulta a un profesional si tienes dudas.",
 "Income":"Ingresos",
 "Lyft (fares + tips)":"Lyft (tarifas + propinas)",
@@ -752,6 +769,8 @@ pt:{S:{
 "Tax year":"Ano fiscal",
 "Export tax report":"Exportar relatório de impostos",
 "Print / save as PDF":"Imprimir / salvar como PDF",
+"Show my taxes":"Ver meus impostos",
+"Hide taxes":"Ocultar impostos",
 "Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"São estimativas para ajudar na declaração, não aconselhamento fiscal. Compare os números com os resumos fiscais dos apps da Lyft e da Uber e consulte um profissional se tiver dúvidas.",
 "Income":"Renda",
 "Lyft (fares + tips)":"Lyft (corridas + gorjetas)",
@@ -803,6 +822,8 @@ fr:{S:{
 "Tax year":"Année fiscale",
 "Export tax report":"Exporter le rapport fiscal",
 "Print / save as PDF":"Imprimer / enregistrer en PDF",
+"Show my taxes":"Voir mes impôts",
+"Hide taxes":"Masquer les impôts",
 "Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"Estimations pour vous aider à déclarer, pas des conseils fiscaux. Comparez avec les récapitulatifs fiscaux de vos applis Lyft et Uber et demandez à un professionnel en cas de doute.",
 "Income":"Revenus",
 "Lyft (fares + tips)":"Lyft (courses + pourboires)",
@@ -854,6 +875,8 @@ ru:{S:{
 "Tax year":"Налоговый год",
 "Export tax report":"Экспорт налогового отчёта",
 "Print / save as PDF":"Печать / сохранить в PDF",
+"Show my taxes":"Показать мои налоги",
+"Hide taxes":"Скрыть налоги",
 "Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"Это оценки для подготовки декларации, а не налоговая консультация. Сверьте цифры с налоговыми сводками в приложениях Lyft и Uber и при сомнениях обратитесь к специалисту.",
 "Income":"Доход",
 "Lyft (fares + tips)":"Lyft (поездки + чаевые)",
@@ -905,6 +928,8 @@ zh:{S:{
 "Tax year":"纳税年度",
 "Export tax report":"导出税务报告",
 "Print / save as PDF":"打印 / 存为 PDF",
+"Show my taxes":"查看我的税务",
+"Hide taxes":"隐藏税务",
 "Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"这些只是帮助报税的估算，不是税务建议。请与 Lyft 和 Uber 应用中的税务汇总核对，如有疑问请咨询税务专业人士。",
 "Income":"收入",
 "Lyft (fares + tips)":"Lyft（车费 + 小费）",
@@ -956,6 +981,8 @@ vi:{S:{
 "Tax year":"Năm tính thuế",
 "Export tax report":"Xuất báo cáo thuế",
 "Print / save as PDF":"In / lưu PDF",
+"Show my taxes":"Xem thuế của tôi",
+"Hide taxes":"Ẩn thuế",
 "Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"Đây là số ước tính để giúp bạn khai thuế, không phải tư vấn thuế. Hãy đối chiếu với bản tóm tắt thuế trong ứng dụng Lyft và Uber, và hỏi chuyên gia thuế nếu chưa chắc.",
 "Income":"Thu nhập",
 "Lyft (fares + tips)":"Lyft (cước + tip)",
