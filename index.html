@@ -417,7 +417,7 @@ function render(){
       m2.textContent=[money(s.gas)+' gas', s.miles+' mi', s.bonus?money(s.bonus)+' bonus':'', s.tolls?money(s.tolls)+' tolls':''].filter(Boolean).join(' · ');
       if(s.ld||s.ud){ const m3=document.createElement('div'); m3.className='meta num'; m3.textContent='Deposited '+[s.ld?'Lyft '+money(s.ld):'',s.ud?'Uber '+money(s.ud):''].filter(Boolean).join(' · ')+(s.dtype?' ('+s.dtype+')':'')+(s.ddate&&s.ddate!==s.date?' on '+fmtDate(s.ddate):''); m2.after(m3); }
       r.querySelector('[data-a=edit]').onclick=()=>startEdit(s);
-      armDelete(r.querySelector('[data-a=del]'),async()=>{ await remove('shifts',s.id); if(editing===s.id) resetForm(); });
+      armDelete(r.querySelector('[data-a=del]'),async()=>{ await remove('shifts',s.id); gdAuto(); if(editing===s.id) resetForm(); });
       log.appendChild(r);
     }
   }
@@ -581,7 +581,7 @@ $('importFile').onchange=async e=>{
 };
 
 
-/* ---------- Google Drive auto-backup (daily, on save) ---------- */
+/* ---------- Google Drive auto-backup (every save, edit and delete) ---------- */
 const GOOGLE_CLIENT_ID='394365449530-3l5vdsrsaq7dag4moq720n2eta4pp3no.apps.googleusercontent.com';   // OAuth client ID from Google Cloud; Drive sync stays hidden while empty
 const GDK=KEY+'-gdrive';
 let gdState={}; try{ gdState=JSON.parse(localStorage.getItem(GDK)||'{}'); }catch(e){}
@@ -592,7 +592,7 @@ function gdStatus(){
   $('gdBtn').hidden=false; $('gdRestore').hidden=!gdState.connected; $('driveBtn').hidden=!!gdState.connected;
   $('gdSheet').hidden=!gdState.sheetId; if(gdState.sheetId) $('gdSheet').href='https://docs.google.com/spreadsheets/d/'+gdState.sheetId+'/edit';
   $('gdBtn').textContent=gdState.connected?'Sync to Drive now':'Connect Google Drive';
-  if(gdState.connected) setSync(gdState.last===todayStr()?(gdState.sheetId?'Backed up and Google Sheet updated today.':'Backed up to Google Drive today.'):'Google Drive backup runs once a day, the next time you save.', gdState.last===todayStr()?'':'off');
+  if(gdState.connected) setSync(gdState.last===todayStr()?(gdState.sheetId?'Backed up and Google Sheet updated today.':'Backed up to Google Drive today.'):'Backs up to Google Drive every time you save.', gdState.last===todayStr()?'':'off');
 }
 function gdToken(interactive){   // call straight from a tap so the Google window can open
   if(gdTok&&Date.now()<gdExp) return Promise.resolve();
@@ -630,7 +630,14 @@ async function gdSheetSync(){
   gdState.sheetId=id; gdSave();
 }
 const gdFail=e=>{ if(e&&e.status===401){ gdTok=null; } setSync(e&&(e.type==='popup_closed'||e.error==='access_denied')?'Google Drive sign-in was cancelled.':'Google Drive backup didn\'t go through. Tap "Sync to Drive now" to try again.','warn'); };
-function gdAuto(){ if(!gdClient||!gdState.connected||gdState.last===todayStr()) return; gdToken(false).then(gdUpload).catch(gdFail); }
+// Backs up after every save, edit and delete. If a backup is already running, one more runs right after it.
+let gdBusy=false, gdAgain=false;
+function gdAuto(){
+  if(!gdClient||!gdState.connected) return;
+  if(gdBusy){ gdAgain=true; return; }
+  gdBusy=true;
+  gdToken(false).then(gdUpload).catch(gdFail).finally(()=>{ gdBusy=false; if(gdAgain){ gdAgain=false; gdAuto(); } });
+}
 $('gdBtn').onclick=()=>{ setSync('Backing up and updating your Google Sheet…','warn'); gdToken(!gdState.connected).then(gdUpload).catch(gdFail); };
 $('gdRestore').onclick=()=>{
   if(!gdState.fileId){ setSync('No Drive backup found yet.','off'); return; }
@@ -771,7 +778,7 @@ es:{S:{
 "Couldn't delete that. Try again.":'No se pudo eliminar. Inténtalo de nuevo.',"Couldn't save. Try again in a moment.":'No se pudo guardar. Inténtalo de nuevo en un momento.',
 'Saved on this device only. Back up to Google Drive now and then.':'Guardado solo en este dispositivo. Respalda en Google Drive de vez en cuando.',
 'Backed up to Google Drive today.':'Respaldado en Google Drive hoy.','Backed up and Google Sheet updated today.':'Respaldado y hoja de Google actualizada hoy.',
-'Google Drive backup runs once a day, the next time you save.':'El respaldo en Google Drive se hace una vez al día, la próxima vez que guardes.',
+'Backs up to Google Drive every time you save.':'Se respalda en Google Drive cada vez que guardas.',
 'Backing up and updating your Google Sheet…':'Respaldando y actualizando tu hoja de Google…','Google Drive sign-in was cancelled.':'Se canceló el inicio de sesión en Google Drive.',
 "Google Drive backup didn't go through. Tap \"Sync to Drive now\" to try again.":'El respaldo en Google Drive no se completó. Toca "Sincronizar con Drive ahora" para intentarlo de nuevo.',
 'No Drive backup found yet.':'Aún no hay respaldo en Drive.','Nothing to back up yet. Log a day first.':'Aún no hay nada que respaldar. Registra un día primero.',
@@ -822,7 +829,7 @@ pt:{S:{
 "Couldn't delete that. Try again.":'Não foi possível excluir. Tente de novo.',"Couldn't save. Try again in a moment.":'Não foi possível salvar. Tente de novo em instantes.',
 'Saved on this device only. Back up to Google Drive now and then.':'Salvo só neste aparelho. Faça backup no Google Drive de vez em quando.',
 'Backed up to Google Drive today.':'Backup feito no Google Drive hoje.','Backed up and Google Sheet updated today.':'Backup feito e planilha Google atualizada hoje.',
-'Google Drive backup runs once a day, the next time you save.':'O backup no Google Drive é feito uma vez por dia, na próxima vez que você salvar.',
+'Backs up to Google Drive every time you save.':'Faz backup no Google Drive sempre que você salva.',
 'Backing up and updating your Google Sheet…':'Fazendo backup e atualizando sua planilha Google…','Google Drive sign-in was cancelled.':'O login no Google Drive foi cancelado.',
 "Google Drive backup didn't go through. Tap \"Sync to Drive now\" to try again.":'O backup no Google Drive não foi concluído. Toque em "Sincronizar com o Drive agora" para tentar de novo.',
 'No Drive backup found yet.':'Nenhum backup no Drive ainda.','Nothing to back up yet. Log a day first.':'Nada para salvar ainda. Registre um dia primeiro.',
@@ -873,7 +880,7 @@ fr:{S:{
 "Couldn't delete that. Try again.":'Suppression impossible. Réessayez.',"Couldn't save. Try again in a moment.":'Enregistrement impossible. Réessayez dans un instant.',
 'Saved on this device only. Back up to Google Drive now and then.':'Enregistré uniquement sur cet appareil. Sauvegardez de temps en temps sur Google Drive.',
 'Backed up to Google Drive today.':"Sauvegardé sur Google Drive aujourd'hui.",'Backed up and Google Sheet updated today.':"Sauvegardé et feuille Google mise à jour aujourd'hui.",
-'Google Drive backup runs once a day, the next time you save.':'La sauvegarde Google Drive se fait une fois par jour, au prochain enregistrement.',
+'Backs up to Google Drive every time you save.':'Sauvegarde sur Google Drive à chaque enregistrement.',
 'Backing up and updating your Google Sheet…':'Sauvegarde et mise à jour de votre feuille Google…','Google Drive sign-in was cancelled.':'Connexion à Google Drive annulée.',
 "Google Drive backup didn't go through. Tap \"Sync to Drive now\" to try again.":'La sauvegarde Google Drive a échoué. Touchez « Synchroniser avec Drive » pour réessayer.',
 'No Drive backup found yet.':"Aucune sauvegarde sur Drive pour l'instant.",'Nothing to back up yet. Log a day first.':"Rien à sauvegarder pour l'instant. Notez d'abord une journée.",
@@ -924,7 +931,7 @@ ru:{S:{
 "Couldn't delete that. Try again.":'Не удалось удалить. Попробуйте ещё раз.',"Couldn't save. Try again in a moment.":'Не удалось сохранить. Попробуйте чуть позже.',
 'Saved on this device only. Back up to Google Drive now and then.':'Сохранено только на этом устройстве. Время от времени делайте копию в Google Диск.',
 'Backed up to Google Drive today.':'Копия в Google Диск сделана сегодня.','Backed up and Google Sheet updated today.':'Копия сделана, Google Таблица обновлена сегодня.',
-'Google Drive backup runs once a day, the next time you save.':'Копия в Google Диск делается раз в день, при следующем сохранении.',
+'Backs up to Google Drive every time you save.':'Копия в Google Диск сохраняется при каждом сохранении.',
 'Backing up and updating your Google Sheet…':'Создаём копию и обновляем Google Таблицу…','Google Drive sign-in was cancelled.':'Вход в Google Диск отменён.',
 "Google Drive backup didn't go through. Tap \"Sync to Drive now\" to try again.":'Копия в Google Диск не создана. Нажмите «Синхронизировать с Диском», чтобы повторить.',
 'No Drive backup found yet.':'Копии на Диске пока нет.','Nothing to back up yet. Log a day first.':'Пока нечего сохранять. Сначала запишите день.',
@@ -975,7 +982,7 @@ zh:{S:{
 "Couldn't delete that. Try again.":'删除失败，请重试。',"Couldn't save. Try again in a moment.":'保存失败，请稍后重试。',
 'Saved on this device only. Back up to Google Drive now and then.':'仅保存在此设备上。请不时备份到 Google 云端硬盘。',
 'Backed up to Google Drive today.':'今天已备份到 Google 云端硬盘。','Backed up and Google Sheet updated today.':'今天已备份，Google 表格已更新。',
-'Google Drive backup runs once a day, the next time you save.':'Google 云端硬盘每天备份一次，在你下次保存时进行。',
+'Backs up to Google Drive every time you save.':'每次保存时都会备份到 Google 云端硬盘。',
 'Backing up and updating your Google Sheet…':'正在备份并更新 Google 表格…','Google Drive sign-in was cancelled.':'已取消登录 Google 云端硬盘。',
 "Google Drive backup didn't go through. Tap \"Sync to Drive now\" to try again.":'备份到 Google 云端硬盘未成功。请点击“立即同步到云端硬盘”重试。',
 'No Drive backup found yet.':'云端硬盘中还没有备份。','Nothing to back up yet. Log a day first.':'还没有可备份的内容，请先记录一天。',
@@ -1026,7 +1033,7 @@ vi:{S:{
 "Couldn't delete that. Try again.":'Không xóa được. Hãy thử lại.',"Couldn't save. Try again in a moment.":'Không lưu được. Hãy thử lại sau giây lát.',
 'Saved on this device only. Back up to Google Drive now and then.':'Chỉ lưu trên thiết bị này. Thỉnh thoảng hãy sao lưu lên Google Drive.',
 'Backed up to Google Drive today.':'Đã sao lưu lên Google Drive hôm nay.','Backed up and Google Sheet updated today.':'Đã sao lưu và cập nhật Google Trang tính hôm nay.',
-'Google Drive backup runs once a day, the next time you save.':'Sao lưu Google Drive chạy mỗi ngày một lần, vào lần lưu tiếp theo.',
+'Backs up to Google Drive every time you save.':'Tự sao lưu lên Google Drive mỗi lần bạn lưu.',
 'Backing up and updating your Google Sheet…':'Đang sao lưu và cập nhật Google Trang tính…','Google Drive sign-in was cancelled.':'Đã hủy đăng nhập Google Drive.',
 "Google Drive backup didn't go through. Tap \"Sync to Drive now\" to try again.":'Sao lưu lên Google Drive chưa thành công. Nhấn "Đồng bộ với Drive ngay" để thử lại.',
 'No Drive backup found yet.':'Chưa có bản sao lưu trên Drive.','Nothing to back up yet. Log a day first.':'Chưa có gì để sao lưu. Hãy ghi một ngày trước.',
