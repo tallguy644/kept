@@ -12,18 +12,18 @@
 :root{
   --bg:#f3f4f2; --surface:#ffffff; --fg:#1d2320; --muted:#5d6762; --line:#d9ddd9;
   --accent:#1c6b47; --accent-fg:#ffffff; --good:#1c6b47; --bad:#b4442b; --warn:#a86b0b;
-  --lyft:#c2187a; --uber:#1d2320;
+  --lyft:#c2187a; --uber:#1d2320; --well:rgba(0,0,0,.16); --lip:rgba(255,255,255,.7); --wellbg:linear-gradient(to bottom,#e6e8e5,#f6f7f5 60%);
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#151917; --surface:#1e2421; --fg:#e8ece9; --muted:#9aa49f; --line:#2f3733;
   --accent:#3fae7a; --accent-fg:#0d1511; --good:#4fc08b; --bad:#e8775c; --warn:#e0a33c;
-  --lyft:#f06bb5; --uber:#e8ece9; color-scheme:dark}}
+  --lyft:#f06bb5; --uber:#e8ece9; --well:rgba(0,0,0,.6); --lip:rgba(255,255,255,.09); --wellbg:linear-gradient(to bottom,#0b0e0c,#1a201d 75%); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#151917; --surface:#1e2421; --fg:#e8ece9; --muted:#9aa49f; --line:#2f3733;
   --accent:#3fae7a; --accent-fg:#0d1511; --good:#4fc08b; --bad:#e8775c; --warn:#e0a33c;
-  --lyft:#f06bb5; --uber:#e8ece9; color-scheme:dark}
+  --lyft:#f06bb5; --uber:#e8ece9; --well:rgba(0,0,0,.6); --lip:rgba(255,255,255,.09); --wellbg:linear-gradient(to bottom,#0b0e0c,#1a201d 75%); color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45}
 .wrap{max-width:600px;margin:0 auto;padding-block:20px 48px;
@@ -61,6 +61,16 @@ input,select{width:100%;font:inherit;font-size:1.05rem;padding:10px 12px;border:
 .inp.pre input{padding-left:24px}
 .inp.suf input{padding-right:40px}
 input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* 3D text fields: pressed into the card, so they read as "type here" next to raised buttons */
+input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]),select{
+  border-color:color-mix(in srgb,var(--line) 65%,var(--fg) 35%);
+  background:var(--wellbg);
+  box-shadow:inset 0 3px 6px var(--well),inset 0 1px 1px var(--well),0 1px 0 var(--lip);
+}
+input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]):focus,select:focus{
+  border-color:var(--accent);
+  box-shadow:inset 0 3px 6px var(--well),inset 0 1px 1px var(--well),0 0 0 3px color-mix(in srgb,var(--accent) 28%,transparent);
+}
 .plat{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .pcol{display:flex;flex-direction:column;gap:10px;min-width:0;border-top:3px solid var(--pc);padding-top:10px}
 .pcol h3{margin:0;font-family:var(--display);font-size:1.25rem;font-weight:700;color:var(--pc)}
