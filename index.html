@@ -120,7 +120,22 @@ button:disabled{opacity:.6;cursor:default}
 .pos{color:var(--good)} .neg{color:var(--bad)}
 .empty{padding:22px 16px;color:var(--muted);text-align:center}
 .chip{display:inline-block;font-size:.75rem;font-weight:600;padding:1px 8px;border-radius:99px;border:1px solid currentColor;margin-right:6px}
-@media (prefers-reduced-motion:no-preference){button{transition:background .15s,color .15s}}
+/* 3D buttons: raised with a ledge underneath, press down when tapped */
+button,.btn{
+  --ledge:color-mix(in srgb,var(--line) 55%,var(--fg) 45%);
+  background:linear-gradient(to bottom,color-mix(in srgb,var(--surface) 88%,#fff),var(--surface));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 3px 0 var(--ledge),0 5px 10px rgba(0,0,0,.14);
+  -webkit-tap-highlight-color:transparent;
+}
+button.primary,.btn.primary{
+  --ledge:color-mix(in srgb,var(--accent) 62%,#000);
+  background:linear-gradient(to bottom,color-mix(in srgb,var(--accent) 90%,#fff),var(--accent));
+}
+button:not(:disabled):active,.btn:active{transform:translateY(3px);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 0 0 var(--ledge),0 1px 2px rgba(0,0,0,.14)}
+button:disabled{box-shadow:none}
+.seg button{box-shadow:none;background:transparent}
+.seg{box-shadow:0 3px 0 color-mix(in srgb,var(--line) 55%,var(--fg) 45%)}
+@media (prefers-reduced-motion:no-preference){button,.btn{transition:background .15s,color .15s,transform .08s,box-shadow .08s}}
 
 /* Taxes */
 .tax{display:flex;flex-direction:column;gap:14px}
