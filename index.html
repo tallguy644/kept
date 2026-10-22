@@ -12,18 +12,18 @@
 :root{
   --bg:#f3f4f2; --surface:#ffffff; --fg:#1d2320; --muted:#5d6762; --line:#d9ddd9;
   --accent:#1c6b47; --accent-fg:#ffffff; --good:#1c6b47; --bad:#b4442b; --warn:#a86b0b;
-  --lyft:#c2187a; --uber:#1d2320; --well:rgba(0,0,0,.16); --lip:rgba(255,255,255,.7); --wellbg:linear-gradient(to bottom,#e6e8e5,#f6f7f5 60%);
+  --lyft:#c2187a; --uber:#1d2320; --well:rgba(0,0,0,.16); --lip:rgba(255,255,255,.7); --wellbg:linear-gradient(to bottom,#e6e8e5,#f6f7f5 60%); --ledge-card:#c9cec9; --drop:rgba(20,30,25,.14); --sheen:rgba(255,255,255,.9);
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#151917; --surface:#1e2421; --fg:#e8ece9; --muted:#9aa49f; --line:#2f3733;
   --accent:#3fae7a; --accent-fg:#0d1511; --good:#4fc08b; --bad:#e8775c; --warn:#e0a33c;
-  --lyft:#f06bb5; --uber:#e8ece9; --well:rgba(0,0,0,.6); --lip:rgba(255,255,255,.09); --wellbg:linear-gradient(to bottom,#0b0e0c,#1a201d 75%); color-scheme:dark}}
+  --lyft:#f06bb5; --uber:#e8ece9; --well:rgba(0,0,0,.6); --lip:rgba(255,255,255,.09); --wellbg:linear-gradient(to bottom,#0b0e0c,#1a201d 75%); --ledge-card:#0c0f0d; --drop:rgba(0,0,0,.55); --sheen:rgba(255,255,255,.07); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#151917; --surface:#1e2421; --fg:#e8ece9; --muted:#9aa49f; --line:#2f3733;
   --accent:#3fae7a; --accent-fg:#0d1511; --good:#4fc08b; --bad:#e8775c; --warn:#e0a33c;
-  --lyft:#f06bb5; --uber:#e8ece9; --well:rgba(0,0,0,.6); --lip:rgba(255,255,255,.09); --wellbg:linear-gradient(to bottom,#0b0e0c,#1a201d 75%); color-scheme:dark}
+  --lyft:#f06bb5; --uber:#e8ece9; --well:rgba(0,0,0,.6); --lip:rgba(255,255,255,.09); --wellbg:linear-gradient(to bottom,#0b0e0c,#1a201d 75%); --ledge-card:#0c0f0d; --drop:rgba(0,0,0,.55); --sheen:rgba(255,255,255,.07); color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45}
 .wrap{max-width:600px;margin:0 auto;padding-block:20px 48px;
@@ -50,6 +50,13 @@ h2 span{letter-spacing:.02em;text-transform:none;font-family:var(--body);font-we
 a{color:var(--accent)}
 
 .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+/* 3D cards: lifted off the page with a solid edge and soft shadow */
+.card,.log{
+  background:linear-gradient(to bottom,color-mix(in srgb,var(--surface) 94%,#fff),var(--surface) 40%);
+  box-shadow:inset 0 1px 0 var(--sheen),0 4px 0 var(--ledge-card),0 8px 18px var(--drop),0 2px 4px var(--drop);
+}
+.sign{box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 4px 0 color-mix(in srgb,var(--accent) 62%,#000),0 8px 18px var(--drop),0 2px 4px var(--drop);
+  background:linear-gradient(to bottom,color-mix(in srgb,var(--accent) 90%,#fff),var(--accent) 45%)!important}
 form{display:grid;gap:12px;grid-template-columns:1fr 1fr}
 .field{display:flex;flex-direction:column;gap:4px;min-width:0}
 .field.full{grid-column:1/-1}
@@ -169,7 +176,7 @@ button:disabled{box-shadow:none}
   body{background:#fff;color:#000}
   .wrap>header,#setup,#cust,#app,.foot,.tax-actions,.tax-top select,#taxClose{display:none!important}
   .a-tax[hidden]{display:block!important}
-  .tax{border:0;padding:0}
+  .tax{border:0;padding:0;box-shadow:none!important;background:none!important}
 }
 
 /* Customize panel */
