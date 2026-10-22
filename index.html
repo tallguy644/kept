@@ -36,8 +36,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px
   .wrap{max-width:1180px;padding-block:32px 56px}
   header{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
   #app{display:grid;grid-template-columns:minmax(0,460px) minmax(0,1fr);column-gap:32px;row-gap:24px;align-items:start;
-    grid-template-areas:"sync sync" "form stand" "form cmp" "form days" "tax days"}
-  .syncbar{grid-area:sync} .a-form{grid-area:form} .a-stand{grid-area:stand} .a-days{grid-area:days} .a-cmp{grid-area:cmp} .a-tax{grid-area:tax}
+    grid-template-areas:"sync sync" "form stand" "form cmp" "form days"}
+  .syncbar{grid-area:sync} .a-form{grid-area:form} .a-stand{grid-area:stand} .a-days{grid-area:days} .a-cmp{grid-area:cmp}
   .a-days .log{max-height:calc(100vh - 120px);overflow-y:auto}
   .sign{grid-template-columns:repeat(4,1fr)}
   .sign .big strong{font-size:3rem}
@@ -140,14 +140,10 @@ button:disabled{opacity:.6;cursor:default}
 .tax .scroll{overflow-x:auto}
 .tax-note{margin:0;font-size:.82rem;color:var(--muted)}
 .tax-actions{margin-top:2px}
-.tax-panel{display:flex;flex-direction:column;gap:14px}
-.tax-toggle{align-self:flex-start}
 @media print{
   body{background:#fff;color:#000}
-  .tax-panel[hidden]{display:flex!important}
-  .wrap>header,#setup,#cust,.syncbar,#app>section:not(.a-tax),.foot,.tax-actions,.tax-top select,.tax-toggle{display:none!important}
-  #app{display:block!important}
-  .a-tax{display:block!important}
+  .wrap>header,#setup,#cust,#app,.foot,.tax-actions,.tax-top select,#taxClose{display:none!important}
+  .a-tax[hidden]{display:block!important}
   .tax{border:0;padding:0}
 }
 
@@ -222,8 +218,24 @@ button:disabled{opacity:.6;cursor:default}
     <button type="button" class="skip" id="custReset">Reset to original look</button>
   </section>
 
+  <section class="a-tax" id="taxSec" hidden aria-labelledby="taxTitle">
+    <div class="card tax">
+      <div class="cust-head"><h3 id="taxTitle">Taxes</h3><button type="button" class="primary" id="taxClose">Done</button></div>
+        <div class="tax-top">
+          <label class="lbl" for="taxYear">Tax year</label>
+          <select id="taxYear"></select>
+        </div>
+        <div id="taxBody"></div>
+        <div class="actions tax-actions">
+          <button type="button" id="taxExport" hidden>Export tax report</button>
+          <button type="button" id="taxPrint" hidden>Print / save as PDF</button>
+        </div>
+        <p class="tax-note">Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.</p>
+    </div>
+  </section>
+
   <div id="app">
-    <div class="syncbar"><span id="syncText"></span><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" id="custBtn">Customize</button><button type="button" id="gdBtn" hidden>Connect Google Drive</button><a class="btn" id="gdSheet" hidden target="_blank" rel="noopener" style="padding:5px 10px;font-size:.82rem">Open my Google Sheet</a><button type="button" id="gdRestore" hidden>Restore from Drive</button><button type="button" id="driveBtn">Back up to Google Drive</button><button type="button" id="exportBtn">Export to Excel / Sheets</button><label class="btn" for="importFile" style="padding:5px 10px;font-size:.82rem">Restore backup</label><input type="file" id="importFile" accept=".json,application/json" hidden></span></div>
+    <div class="syncbar"><span id="syncText"></span><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" id="taxBtn" aria-expanded="false" aria-controls="taxSec">Taxes</button><button type="button" id="custBtn">Customize</button><button type="button" id="gdBtn" hidden>Connect Google Drive</button><a class="btn" id="gdSheet" hidden target="_blank" rel="noopener" style="padding:5px 10px;font-size:.82rem">Open my Google Sheet</a><button type="button" id="gdRestore" hidden>Restore from Drive</button><button type="button" id="driveBtn">Back up to Google Drive</button><button type="button" id="exportBtn">Export to Excel / Sheets</button><label class="btn" for="importFile" style="padding:5px 10px;font-size:.82rem">Restore backup</label><input type="file" id="importFile" accept=".json,application/json" hidden></span></div>
 
     <section class="a-form sec" data-sec="form">
       <h2 id="formTitle">Log a day</h2>
@@ -282,24 +294,6 @@ button:disabled{opacity:.6;cursor:default}
       <div class="log" id="log"></div>
     </section>
 
-    <section class="a-tax sec" data-sec="tax">
-      <h2>Taxes</h2>
-      <div class="card tax">
-        <button type="button" id="taxToggle" class="tax-toggle" aria-expanded="false" aria-controls="taxPanel">Show my taxes</button>
-        <div id="taxPanel" class="tax-panel" hidden>
-        <div class="tax-top">
-          <label class="lbl" for="taxYear">Tax year</label>
-          <select id="taxYear"></select>
-        </div>
-        <div id="taxBody"></div>
-        <div class="actions tax-actions">
-          <button type="button" id="taxExport" hidden>Export tax report</button>
-          <button type="button" id="taxPrint" hidden>Print / save as PDF</button>
-        </div>
-        <p class="tax-note">Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.</p>
-        </div>
-      </div>
-    </section>
 
   </div>
 </div>
@@ -466,15 +460,12 @@ function taxCsv(y){
   c.rows.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>row(s.date,s.miles||0,'Rideshare driving'+(s.le||s.lr?' - Lyft':'')+(s.ue||s.ur?(s.le||s.lr?' & Uber':' - Uber'):''),s.lh||'',s.uh||'',s.lr||'',s.ur||'',s.tolls||''));
   return L.join('\n');
 }
-if($('taxToggle')){
-  $('taxToggle').onclick=()=>{
-    const p=$('taxPanel'), open=p.hidden;
-    p.hidden=!open;
-    $('taxToggle').setAttribute('aria-expanded',String(open));
-    $('taxToggle').textContent=open?'Hide taxes':'Show my taxes';
-    if(open) renderTax();
-  };
+function showTax(open){
+  $('taxSec').hidden=!open; $('taxBtn').setAttribute('aria-expanded',String(open));
+  if(open){ renderTax(); $('taxSec').scrollIntoView({behavior:'smooth',block:'start'}); }
 }
+$('taxBtn').onclick=()=>showTax($('taxSec').hidden);
+$('taxClose').onclick=()=>{ showTax(false); $('taxBtn').focus(); };
 if($('taxYear')){
   $('taxYear').onchange=e=>{ taxYear=Number(e.target.value); renderTax(); };
   $('taxPrint').onclick=()=>window.print();
@@ -628,9 +619,9 @@ if(GOOGLE_CLIENT_ID){
 
 /* ---------- Customization: colors, theme, layout (saved on this device) ---------- */
 const PK=KEY+'-prefs';
-const SECS={form:'Log a day',stand:'Where you stand',cmp:'Lyft vs Uber',days:'Days',tax:'Taxes'};
+const SECS={form:'Log a day',stand:'Where you stand',cmp:'Lyft vs Uber',days:'Days'};
 const PRESETS=[['Road green','#1c6b47'],['Ocean','#1f5fa8'],['Grape','#6b3fa0'],['Sunset','#c4511f'],['Cherry','#b3263a'],['Gold','#a77a00'],['Teal','#127a7a'],['Slate','#3f4a5a']];
-const DEF={lang:'auto',mode:'system',accent:'#1c6b47',lyft:'',uber:'',order:['form','stand','cmp','days','tax'],hidden:[]};
+const DEF={lang:'auto',mode:'system',accent:'#1c6b47',lyft:'',uber:'',order:['form','stand','cmp','days'],hidden:[]};
 let prefs={...DEF}; try{ prefs={...DEF,...JSON.parse(localStorage.getItem(PK)||'{}')}; }catch(e){}
 const savePrefs=()=>{ try{ localStorage.setItem(PK,JSON.stringify(prefs)); }catch(e){} };
 
@@ -657,8 +648,8 @@ function applyPrefs(){
   const tm=document.querySelector('meta[name=theme-color]'); if(tm) tm.content=acc;
   // layout
   const app=$('app'), order=prefs.order.filter(k=>SECS[k]).concat(Object.keys(SECS).filter(k=>!prefs.order.includes(k)));
-  const visible=order.filter(k=>!prefs.hidden.includes(k));
-  const custom=JSON.stringify(order)!==JSON.stringify(DEF.order)||prefs.hidden.length>0;
+  const hid=prefs.hidden.filter(k=>SECS[k]), visible=order.filter(k=>!hid.includes(k));
+  const custom=JSON.stringify(order)!==JSON.stringify(DEF.order)||hid.length>0;
   app.classList.toggle('custom-layout',custom); app.classList.toggle('one',visible.length<2);
   order.forEach((k,i)=>{ const el=document.querySelector(`.sec[data-sec="${k}"]`); if(!el) return;
     el.classList.toggle('off',prefs.hidden.includes(k)); el.style.order=i+1;
@@ -716,8 +707,6 @@ es:{S:{
 "Tax year":"Año fiscal",
 "Export tax report":"Exportar informe de impuestos",
 "Print / save as PDF":"Imprimir / guardar como PDF",
-"Show my taxes":"Ver mis impuestos",
-"Hide taxes":"Ocultar impuestos",
 "Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"Son estimaciones para ayudarte a declarar, no asesoría fiscal. Compara las cifras con los resúmenes fiscales de tus apps de Lyft y Uber, y consulta a un profesional si tienes dudas.",
 "Income":"Ingresos",
 "Lyft (fares + tips)":"Lyft (tarifas + propinas)",
@@ -769,8 +758,6 @@ pt:{S:{
 "Tax year":"Ano fiscal",
 "Export tax report":"Exportar relatório de impostos",
 "Print / save as PDF":"Imprimir / salvar como PDF",
-"Show my taxes":"Ver meus impostos",
-"Hide taxes":"Ocultar impostos",
 "Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"São estimativas para ajudar na declaração, não aconselhamento fiscal. Compare os números com os resumos fiscais dos apps da Lyft e da Uber e consulte um profissional se tiver dúvidas.",
 "Income":"Renda",
 "Lyft (fares + tips)":"Lyft (corridas + gorjetas)",
@@ -822,8 +809,6 @@ fr:{S:{
 "Tax year":"Année fiscale",
 "Export tax report":"Exporter le rapport fiscal",
 "Print / save as PDF":"Imprimer / enregistrer en PDF",
-"Show my taxes":"Voir mes impôts",
-"Hide taxes":"Masquer les impôts",
 "Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"Estimations pour vous aider à déclarer, pas des conseils fiscaux. Comparez avec les récapitulatifs fiscaux de vos applis Lyft et Uber et demandez à un professionnel en cas de doute.",
 "Income":"Revenus",
 "Lyft (fares + tips)":"Lyft (courses + pourboires)",
@@ -875,8 +860,6 @@ ru:{S:{
 "Tax year":"Налоговый год",
 "Export tax report":"Экспорт налогового отчёта",
 "Print / save as PDF":"Печать / сохранить в PDF",
-"Show my taxes":"Показать мои налоги",
-"Hide taxes":"Скрыть налоги",
 "Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"Это оценки для подготовки декларации, а не налоговая консультация. Сверьте цифры с налоговыми сводками в приложениях Lyft и Uber и при сомнениях обратитесь к специалисту.",
 "Income":"Доход",
 "Lyft (fares + tips)":"Lyft (поездки + чаевые)",
@@ -928,8 +911,6 @@ zh:{S:{
 "Tax year":"纳税年度",
 "Export tax report":"导出税务报告",
 "Print / save as PDF":"打印 / 存为 PDF",
-"Show my taxes":"查看我的税务",
-"Hide taxes":"隐藏税务",
 "Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"这些只是帮助报税的估算，不是税务建议。请与 Lyft 和 Uber 应用中的税务汇总核对，如有疑问请咨询税务专业人士。",
 "Income":"收入",
 "Lyft (fares + tips)":"Lyft（车费 + 小费）",
@@ -981,8 +962,6 @@ vi:{S:{
 "Tax year":"Năm tính thuế",
 "Export tax report":"Xuất báo cáo thuế",
 "Print / save as PDF":"In / lưu PDF",
-"Show my taxes":"Xem thuế của tôi",
-"Hide taxes":"Ẩn thuế",
 "Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"Đây là số ước tính để giúp bạn khai thuế, không phải tư vấn thuế. Hãy đối chiếu với bản tóm tắt thuế trong ứng dụng Lyft và Uber, và hỏi chuyên gia thuế nếu chưa chắc.",
 "Income":"Thu nhập",
 "Lyft (fares + tips)":"Lyft (cước + tip)",
