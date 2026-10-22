@@ -36,8 +36,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px
   .wrap{max-width:1180px;padding-block:32px 56px}
   header{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
   #app{display:grid;grid-template-columns:minmax(0,460px) minmax(0,1fr);column-gap:32px;row-gap:24px;align-items:start;
-    grid-template-areas:"sync sync" "form stand" "form cmp" "form days"}
-  .syncbar{grid-area:sync} .a-form{grid-area:form} .a-stand{grid-area:stand} .a-days{grid-area:days} .a-cmp{grid-area:cmp}
+    grid-template-areas:"sync sync" "form stand" "form cmp" "form days" "tax days"}
+  .syncbar{grid-area:sync} .a-form{grid-area:form} .a-stand{grid-area:stand} .a-days{grid-area:days} .a-cmp{grid-area:cmp} .a-tax{grid-area:tax}
   .a-days .log{max-height:calc(100vh - 120px);overflow-y:auto}
   .sign{grid-template-columns:repeat(4,1fr)}
   .sign .big strong{font-size:3rem}
@@ -121,6 +121,32 @@ button:disabled{opacity:.6;cursor:default}
 .empty{padding:22px 16px;color:var(--muted);text-align:center}
 .chip{display:inline-block;font-size:.75rem;font-weight:600;padding:1px 8px;border-radius:99px;border:1px solid currentColor;margin-right:6px}
 @media (prefers-reduced-motion:no-preference){button{transition:background .15s,color .15s}}
+
+/* Taxes */
+.tax{display:flex;flex-direction:column;gap:14px}
+.tax-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tax-top select{width:auto;min-width:110px}
+.tax h3{margin:4px 0 0;font-family:var(--display);font-size:1.15rem;font-weight:700}
+.tax table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tax td,.tax th{padding:7px 4px;border-top:1px solid var(--line);text-align:right;vertical-align:top}
+.tax td:first-child,.tax th:first-child{text-align:left}
+.tax td:not(:first-child),.tax th:not(:first-child){white-space:nowrap;padding-left:10px}
+.tax .scroll table{font-size:.92rem}
+@media (max-width:480px){.tax .scroll td:nth-child(2),.tax .scroll th:nth-child(2){display:none}}
+.tax th{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;border-top:0}
+.tax tr.total td{font-weight:700}
+.tax tr.minus td:last-child{color:var(--muted)}
+.tax .hint{display:block;font-size:.8rem;color:var(--muted);font-weight:400}
+.tax .scroll{overflow-x:auto}
+.tax-note{margin:0;font-size:.82rem;color:var(--muted)}
+.tax-actions{margin-top:2px}
+@media print{
+  body{background:#fff;color:#000}
+  .wrap>header,#setup,#cust,.syncbar,#app>section:not(.a-tax),.foot,.tax-actions,.tax-top select{display:none!important}
+  #app{display:block!important}
+  .a-tax{display:block!important}
+  .tax{border:0;padding:0}
+}
 
 /* Customize panel */
 .cust{display:flex;flex-direction:column;gap:18px}
@@ -222,7 +248,8 @@ button:disabled{opacity:.6;cursor:default}
         </div>
         <div class="field"><label for="gas">Gas</label><div class="inp pre"><span>$</span><input id="gas" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
         <div class="field"><label for="miles">Total miles</label><div class="inp suf"><input id="miles" type="number" inputmode="decimal" step="0.1" min="0" placeholder="0"><span class="r">mi</span></div></div>
-        <div class="field full"><label for="bonus">Bonus earned / other</label><div class="inp pre"><span>$</span><input id="bonus" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
+        <div class="field"><label for="bonus">Bonus earned / other</label><div class="inp pre"><span>$</span><input id="bonus" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
+        <div class="field"><label for="tolls">Tolls &amp; parking</label><div class="inp pre"><span>$</span><input id="tolls" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
         <div class="field"><label for="dtype">Deposit type</label><input id="dtype" list="dtypes" placeholder="e.g. Express Pay"><datalist id="dtypes"><option value="Weekly"><option value="Express Pay"><option value="Instant Cash Out"><option value="Direct deposit"></datalist></div>
         <div class="field"><label for="ddate">Deposit date</label><input id="ddate" type="date"></div>
         <div class="preview"><span>You kept</span><b class="num" id="pv">$0.00</b></div>
@@ -252,6 +279,22 @@ button:disabled{opacity:.6;cursor:default}
       <div class="log" id="log"></div>
     </section>
 
+    <section class="a-tax sec" data-sec="tax">
+      <h2>Taxes</h2>
+      <div class="card tax">
+        <div class="tax-top">
+          <label class="lbl" for="taxYear">Tax year</label>
+          <select id="taxYear"></select>
+        </div>
+        <div id="taxBody"></div>
+        <div class="actions tax-actions">
+          <button type="button" id="taxExport" hidden>Export tax report</button>
+          <button type="button" id="taxPrint" hidden>Print / save as PDF</button>
+        </div>
+        <p class="tax-note">Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.</p>
+      </div>
+    </section>
+
   </div>
 </div>
 
@@ -268,7 +311,7 @@ const newId = p => p+Date.now().toString(36)+Math.random().toString(36).slice(2,
 // Day math
 const made = s => s.le + s.ue + (s.lt||0) + (s.ut||0) + s.bonus;
 const lpay = s => s.le + (s.lt||0), upay = s => s.ue + (s.ut||0);
-const kept = s => made(s) - s.gas;
+const kept = s => made(s) - s.gas - (s.tolls||0);
 const hrs  = s => s.lh + s.uh;
 
 
@@ -302,9 +345,9 @@ function alertMsg(el,t){ el.className='msg err'; el.textContent=t; }
 function render(){
   const days=data.shifts.slice().sort((a,b)=>b.date.localeCompare(a.date)||(b.row||0)-(a.row||0));
   const p=days.filter(s=>inPeriod(s.date));
-  const T=p.reduce((a,s)=>{ for(const k of ['le','ue','lt','ut','lh','uh','lr','ur','gas','miles','bonus','ld','ud']) a[k]+=s[k]||0; return a; },
-    {le:0,ue:0,lt:0,ut:0,lh:0,uh:0,lr:0,ur:0,gas:0,miles:0,bonus:0,ld:0,ud:0});
-  const LP=T.le+T.lt, UP=T.ue+T.ut, M=LP+UP+T.bonus, K=M-T.gas, H=T.lh+T.uh, R=T.lr+T.ur;
+  const T=p.reduce((a,s)=>{ for(const k of ['le','ue','lt','ut','lh','uh','lr','ur','gas','miles','bonus','ld','ud','tolls']) a[k]+=s[k]||0; return a; },
+    {le:0,ue:0,lt:0,ut:0,lh:0,uh:0,lr:0,ur:0,gas:0,miles:0,bonus:0,ld:0,ud:0,tolls:0});
+  const LP=T.le+T.lt, UP=T.ue+T.ut, M=LP+UP+T.bonus, K=M-T.gas-T.tolls, H=T.lh+T.uh, R=T.lr+T.ur;
   $('sum').innerHTML=`
     <div class="big"><small>Kept after gas · ${p.length} day${p.length===1?'':'s'}</small><strong>${money(K)}</strong></div>
     <div><small>Made</small><strong>${money(M)}</strong></div>
@@ -339,18 +382,95 @@ function render(){
       const [m1,m2]=r.querySelectorAll('.meta');
       const pl=(cls,name,e,t,rides,h)=> (e||t||rides||h) ? `<b class="${cls}">${name}</b> ${money(e)}${t?` + ${money(t)} tips`:''}${rides?` · ${rides} rides`:''}${h?` · ${h} hr`:''}` : '';
       m1.innerHTML=[pl('l','Lyft',s.le,s.lt,s.lr,s.lh),pl('u','Uber',s.ue,s.ut,s.ur,s.uh)].filter(Boolean).join('<br>')||'No platform earnings';
-      m2.textContent=[money(s.gas)+' gas', s.miles+' mi', s.bonus?money(s.bonus)+' bonus':''].filter(Boolean).join(' · ');
+      m2.textContent=[money(s.gas)+' gas', s.miles+' mi', s.bonus?money(s.bonus)+' bonus':'', s.tolls?money(s.tolls)+' tolls':''].filter(Boolean).join(' · ');
       if(s.ld||s.ud){ const m3=document.createElement('div'); m3.className='meta num'; m3.textContent='Deposited '+[s.ld?'Lyft '+money(s.ld):'',s.ud?'Uber '+money(s.ud):''].filter(Boolean).join(' · ')+(s.dtype?' ('+s.dtype+')':'')+(s.ddate&&s.ddate!==s.date?' on '+fmtDate(s.ddate):''); m2.after(m3); }
       r.querySelector('[data-a=edit]').onclick=()=>startEdit(s);
       armDelete(r.querySelector('[data-a=del]'),async()=>{ await remove('shifts',s.id); if(editing===s.id) resetForm(); });
       log.appendChild(r);
     }
   }
+  renderTax();
+}
 
+
+/* ---------- Taxes: yearly summary for Schedule C / SE tax ---------- */
+// IRS business standard mileage rates (dollars per mile)
+const IRS_RATE={2023:0.655,2024:0.67,2025:0.70,2026:0.725};
+const rateFor=y=>{ if(IRS_RATE[y]) return {rate:IRS_RATE[y],year:y,exact:true};
+  const ks=Object.keys(IRS_RATE).map(Number).sort((a,b)=>a-b); const k=ks.filter(x=>x<=y).pop()||ks[0]; return {rate:IRS_RATE[k],year:k,exact:false}; };
+const QTRS=[{n:'Q1',from:'01-01',to:'03-31',due:y=>`${y}-04-15`},{n:'Q2',from:'04-01',to:'05-31',due:y=>`${y}-06-15`},
+  {n:'Q3',from:'06-01',to:'08-31',due:y=>`${y}-09-15`},{n:'Q4',from:'09-01',to:'12-31',due:y=>`${y+1}-01-15`}];
+const SE_RATE=0.153, SE_BASE=0.9235;
+function taxYears(){ const ys=new Set(data.shifts.map(s=>Number(s.date.slice(0,4)))); ys.add(new Date().getFullYear()); return [...ys].sort((a,b)=>b-a); }
+let taxYear=new Date().getFullYear();
+function taxCalc(y){
+  const rows=data.shifts.filter(s=>s.date.startsWith(y+'-'));
+  const sum=list=>list.reduce((a,s)=>{ for(const k of ['le','ue','lt','ut','bonus','gas','miles','tolls','lh','uh','lr','ur']) a[k]+=s[k]||0; return a; },
+    {le:0,ue:0,lt:0,ut:0,bonus:0,gas:0,miles:0,tolls:0,lh:0,uh:0,lr:0,ur:0});
+  const R=rateFor(y), t=sum(rows);
+  const fig=t=>{ const lyft=t.le+t.lt, uber=t.ue+t.ut, gross=lyft+uber+t.bonus, mileage=t.miles*R.rate, net=Math.max(0,gross-mileage-t.tolls);
+    return {lyft,uber,gross,mileage,net,se:net*SE_BASE*SE_RATE}; };
+  const q=QTRS.map(Q=>{ const qt=sum(rows.filter(s=>{ const md=s.date.slice(5); return md>=Q.from&&md<=Q.to; })); return {...Q,t:qt,f:fig(qt)}; });
+  return {y,rows,t,R,f:fig(t),q};
+}
+const fmtShort=(iso,ty)=>{ const [y,m,d]=iso.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString(LOCX(),y===ty?{month:'short',day:'numeric'}:{month:'short',day:'numeric',year:'numeric'}); };
+function LOCX(){ return typeof LOC!=='undefined'?LOC:undefined; }
+function renderTax(){
+  const sel=$('taxYear'); if(!sel) return;
+  const ys=taxYears(); if(!ys.includes(taxYear)) taxYear=ys[0];
+  sel.innerHTML=ys.map(y=>`<option value="${y}" ${y===taxYear?'selected':''}>${y}</option>`).join('');
+  const c=taxCalc(taxYear), t=c.t, f=c.f, mi=v=>v.toLocaleString(LOCX(),{maximumFractionDigits:1});
+  const cents=(c.R.rate*100).toLocaleString(LOCX(),{maximumFractionDigits:1});
+  $('taxBody').innerHTML = !c.rows.length ? `<p class="tax-note">No days logged in ${taxYear} yet.</p>` : `
+    <h3>Income</h3>
+    <table>
+      <tr><td>Lyft (fares + tips)</td><td>${money(f.lyft)}</td></tr>
+      <tr><td>Uber (fares + tips)</td><td>${money(f.uber)}</td></tr>
+      <tr><td>Bonus / other</td><td>${money(t.bonus)}</td></tr>
+      <tr class="total"><td>Total income</td><td>${money(f.gross)}</td></tr>
+    </table>
+    <h3>Deductions</h3>
+    <table>
+      <tr class="minus"><td>Business miles<span class="hint">${mi(t.miles)} mi × ${cents}¢ IRS rate</span></td><td>−${money(f.mileage)}</td></tr>
+      <tr class="minus"><td>Tolls &amp; parking</td><td>−${money(t.tolls)}</td></tr>
+      <tr class="total"><td>Estimated net profit</td><td>${money(f.net)}</td></tr>
+      <tr><td>Estimated self-employment tax<span class="hint">15.3% of 92.35% of net profit</span></td><td>${money(f.se)}</td></tr>
+    </table>
+    ${c.R.exact?'':`<p class="tax-note">The IRS hasn't set a ${taxYear} mileage rate in this app yet, so this uses the ${c.R.year} rate.</p>`}
+    <p class="tax-note">Gas (${money(t.gas)}) is covered by the mileage rate, so it isn't deducted again.</p>
+    <h3>Quarterly estimates</h3>
+    <div class="scroll"><table>
+      <tr><th>Quarter</th><th>Income</th><th>Net profit</th><th>Est. SE tax</th></tr>
+      ${c.q.map(q=>`<tr><td>${q.n}<span class="hint">Due ${fmtShort(q.due(taxYear),taxYear)}</span></td><td>${money(q.f.gross)}</td><td>${money(q.f.net)}</td><td>${money(q.f.se)}</td></tr>`).join('')}
+    </table></div>
+    <p class="tax-note">Income tax is owed on top of self-employment tax, based on your total income and filing status.</p>`;
+  if($('taxExport')) $('taxExport').hidden = typeof saveFile!=='function' || !c.rows.length;
+  if($('taxPrint')) $('taxPrint').hidden = window.self!==window.top || !c.rows.length;
+}
+function taxCsv(y){
+  const c=taxCalc(y), t=c.t, f=c.f, L=[];
+  const row=(...a)=>L.push(a.map(v=>{ const x=String(v??''); return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x; }).join(','));
+  row('Kept for Gig Workers - Tax report',y); row('Estimates only, not tax advice. Compare with your Lyft and Uber tax summaries.'); row();
+  row('INCOME'); row('Lyft fares',r2(t.le)); row('Lyft tips',r2(t.lt)); row('Uber fares',r2(t.ue)); row('Uber tips',r2(t.ut)); row('Bonus / other',r2(t.bonus)); row('Total income',r2(f.gross)); row();
+  row('DEDUCTIONS'); row('Business miles',r2(t.miles)); row('IRS standard mileage rate ($/mile)',c.R.rate+(c.R.exact?'':' (rate from '+c.R.year+')')); row('Mileage deduction',r2(f.mileage)); row('Tolls & parking',r2(t.tolls));
+  row('Gas spent (covered by mileage rate)',r2(t.gas)); row('Estimated net profit',r2(f.net)); row('Estimated self-employment tax',r2(f.se)); row();
+  row('QUARTERLY'); row('Quarter','Months','Income','Miles','Net profit','Est. SE tax','Due date');
+  c.q.forEach(q=>row(q.n,y+'-'+q.from+' to '+y+'-'+q.to,r2(q.f.gross),r2(q.t.miles),r2(q.f.net),r2(q.f.se),q.due(y))); row();
+  row('MILEAGE LOG'); row('Date','Miles','Business purpose','Lyft hours','Uber hours','Lyft rides','Uber rides','Tolls & parking');
+  c.rows.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>row(s.date,s.miles||0,'Rideshare driving'+(s.le||s.lr?' - Lyft':'')+(s.ue||s.ur?(s.le||s.lr?' & Uber':' - Uber'):''),s.lh||'',s.uh||'',s.lr||'',s.ur||'',s.tolls||''));
+  return L.join('\n');
+}
+if($('taxYear')){
+  $('taxYear').onchange=e=>{ taxYear=Number(e.target.value); renderTax(); };
+  $('taxPrint').onclick=()=>window.print();
+  $('taxExport').onclick=async()=>{
+    try{ await saveFile('kept-taxes-'+taxYear+'.csv',taxCsv(taxYear),'text/csv',false); }
+    catch(e){ if(!(e&&(e.name==='AbortError'||e.code==='cancelled'))) console.warn(e); }
+  };
 }
 
 /* ---------- day form ---------- */
-const F=['le','ue','lt','ut','lh','uh','lr','ur','gas','miles','bonus','ld','ud'];
+const F=['le','ue','lt','ut','lh','uh','lr','ur','gas','miles','bonus','ld','ud','tolls'];
 function readForm(){ const s={date:$('date').value,dtype:$('dtype').value.trim(),ddate:$('ddate').value}; F.forEach(k=>s[k]=num($(k).value)); return s; }
 function updatePreview(){
   const s=readForm(); $('pv').textContent=money(kept(s));
@@ -372,7 +492,7 @@ $('f').addEventListener('submit',async e=>{
   e.preventDefault();
   const s={...readForm(), id: editing||newId('s')};
   if(!s.date){ alertMsg($('msg'),'Pick a date for this day.'); return; }
-  if(!s.le&&!s.ue&&!s.lt&&!s.ut&&!s.bonus&&!s.gas&&!s.miles&&!s.ld&&!s.ud){ alertMsg($('msg'),'Enter at least your earnings, gas or miles.'); return; }
+  if(!s.le&&!s.ue&&!s.lt&&!s.ut&&!s.bonus&&!s.tolls&&!s.gas&&!s.miles&&!s.ld&&!s.ud){ alertMsg($('msg'),'Enter at least your earnings, gas or miles.'); return; }
   $('saveBtn').disabled=true; $('msg').className='msg'; $('msg').textContent=mode==='sheets'?'Saving to your sheet…':'';
   try{ const was=editing; const pr=persist('shifts',s); gdAuto(); await pr; resetForm(); $('msg').textContent=was?'Day updated.':'Saved. You kept '+money(kept(s))+'.'; }
   catch(err){ alertMsg($('msg'),mode==='sheets'?errText(err):'Couldn\'t save. Try again in a moment.'); }
@@ -394,9 +514,9 @@ async function saveFile(name,text,type,preferShare){
 }
 const csvCell=v=>{ const t=String(v??''); return /[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t; };
 function csvText(){
-  const H=['Date','Earnings - Lyft','Earnings - Uber','Hours - Lyft','Hours - Uber','Rides - Lyft','Rides - Uber','Gas','Total Miles','Bonus/Other','Hourly Wage - Lyft','Hourly Wage - Uber','Amt per Ride - Lyft','Amt per Ride - Uber','Kept After Gas','Deposit Type','Deposit Date','Deposit Amount - Lyft','Deposit Amount - Uber','Tips - Lyft','Tips - Uber'];
+  const H=['Date','Earnings - Lyft','Earnings - Uber','Hours - Lyft','Hours - Uber','Rides - Lyft','Rides - Uber','Gas','Total Miles','Bonus/Other','Hourly Wage - Lyft','Hourly Wage - Uber','Amt per Ride - Lyft','Amt per Ride - Uber','Kept After Gas','Deposit Type','Deposit Date','Deposit Amount - Lyft','Deposit Amount - Uber','Tips - Lyft','Tips - Uber','Tolls/Parking'];
   const rows=[H].concat(data.shifts.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(s=>[s.date,s.le,s.ue,s.lh||'',s.uh||'',s.lr||'',s.ur||'',s.gas,s.miles,s.bonus||'',
-    s.lh?r2(lpay(s)/s.lh):'',s.uh?r2(upay(s)/s.uh):'',s.lr?r2(lpay(s)/s.lr):'',s.ur?r2(upay(s)/s.ur):'',r2(kept(s)),s.dtype||'',s.ddate||'',s.ld||'',s.ud||'',s.lt||'',s.ut||'']));
+    s.lh?r2(lpay(s)/s.lh):'',s.uh?r2(upay(s)/s.uh):'',s.lr?r2(lpay(s)/s.lr):'',s.ur?r2(upay(s)/s.ur):'',r2(kept(s)),s.dtype||'',s.ddate||'',s.ld||'',s.ud||'',s.lt||'',s.ut||'',s.tolls||'']));
   return rows.map(r=>r.map(csvCell).join(',')).join('\n');
 }
 const backupText=()=>JSON.stringify({app:'shift-ledger',saved:new Date().toISOString(),shifts:data.shifts,prefs:typeof prefs!=='undefined'?prefs:undefined});
@@ -493,9 +613,9 @@ if(GOOGLE_CLIENT_ID){
 
 /* ---------- Customization: colors, theme, layout (saved on this device) ---------- */
 const PK=KEY+'-prefs';
-const SECS={form:'Log a day',stand:'Where you stand',cmp:'Lyft vs Uber',days:'Days'};
+const SECS={form:'Log a day',stand:'Where you stand',cmp:'Lyft vs Uber',days:'Days',tax:'Taxes'};
 const PRESETS=[['Road green','#1c6b47'],['Ocean','#1f5fa8'],['Grape','#6b3fa0'],['Sunset','#c4511f'],['Cherry','#b3263a'],['Gold','#a77a00'],['Teal','#127a7a'],['Slate','#3f4a5a']];
-const DEF={lang:'auto',mode:'system',accent:'#1c6b47',lyft:'',uber:'',order:['form','stand','cmp','days'],hidden:[]};
+const DEF={lang:'auto',mode:'system',accent:'#1c6b47',lyft:'',uber:'',order:['form','stand','cmp','days','tax'],hidden:[]};
 let prefs={...DEF}; try{ prefs={...DEF,...JSON.parse(localStorage.getItem(PK)||'{}')}; }catch(e){}
 const savePrefs=()=>{ try{ localStorage.setItem(PK,JSON.stringify(prefs)); }catch(e){} };
 
@@ -576,6 +696,27 @@ const LANGS={en:'English',es:'Español',pt:'Português',fr:'Français',ru:'Ру�
 // Each language: S = exact phrases (keyed by the English text), P = sentence templates, W = small words used inside mixed text
 const I18N={
 es:{S:{
+"Tolls & parking":"Peajes y estacionamiento",
+"Taxes":"Impuestos",
+"Tax year":"Año fiscal",
+"Export tax report":"Exportar informe de impuestos",
+"Print / save as PDF":"Imprimir / guardar como PDF",
+"Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"Son estimaciones para ayudarte a declarar, no asesoría fiscal. Compara las cifras con los resúmenes fiscales de tus apps de Lyft y Uber, y consulta a un profesional si tienes dudas.",
+"Income":"Ingresos",
+"Lyft (fares + tips)":"Lyft (tarifas + propinas)",
+"Uber (fares + tips)":"Uber (tarifas + propinas)",
+"Total income":"Ingresos totales",
+"Deductions":"Deducciones",
+"Business miles":"Millas de trabajo",
+"Estimated net profit":"Ganancia neta estimada",
+"Estimated self-employment tax":"Impuesto de trabajo por cuenta propia estimado",
+"15.3% of 92.35% of net profit":"15.3% del 92.35% de la ganancia neta",
+"Quarterly estimates":"Pagos trimestrales estimados",
+"Quarter":"Trimestre",
+"Net profit":"Ganancia neta",
+"Est. SE tax":"Imp. cuenta propia",
+"Due":"Vence",
+"Income tax is owed on top of self-employment tax, based on your total income and filing status.":"Además del impuesto de trabajo por cuenta propia, debes impuesto sobre la renta según tus ingresos totales y tu estado civil para efectos fiscales.",
 'Tips':'Propinas',
 'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':'Lyft y Uber, lado a lado. Registra tu día y ve cuánto te quedó. Todo se guarda en este dispositivo.',
 'Customize':'Personalizar','Connect Google Drive':'Conectar Google Drive','Open my Google Sheet':'Abrir mi hoja de Google','Restore from Drive':'Restaurar desde Drive','Back up to Google Drive':'Respaldar en Google Drive','Export to Excel / Sheets':'Exportar a Excel / Sheets','Restore backup':'Restaurar respaldo','Sync to Drive now':'Sincronizar con Drive ahora',
@@ -602,10 +743,31 @@ es:{S:{
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Respaldo guardado. Para tenerlo en Google Drive, sube el archivo .json de tus Descargas a drive.google.com.',
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Ese archivo no es un respaldo de Kept. Elige el archivo .json de "Respaldar en Google Drive".',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Este navegador está bloqueando el almacenamiento, así que no se guardarán los datos. Usa una ventana normal (no privada).'},
-P:{kept:'Neto después de gasolina · {n} {days}',saved:'Guardado. Te quedó {x}.',restored:'Respaldo restaurado: {n} {days}.',restoredDrive:'Se restauraron {n} {days} desde Google Drive.',last:'Guardado en este dispositivo. Último respaldo: {d}.'},
-W:{tips:'propinas',day:'día',days:'días',rides:'{n} viajes',hr:'h',mi:'mi',gas:'gasolina',bonus:'bono',deposited:'Depositado',on:' el ',ride:'viaje'}},
+P:{noyear:'Aún no hay días registrados en {y}.',gascov:'La gasolina ({x}) ya está cubierta por la tarifa por milla, así que no se deduce otra vez.',norate:'Esta app aún no tiene la tarifa del IRS para {y}, así que usa la de {r}.',kept:'Neto después de gasolina · {n} {days}',saved:'Guardado. Te quedó {x}.',restored:'Respaldo restaurado: {n} {days}.',restoredDrive:'Se restauraron {n} {days} desde Google Drive.',last:'Guardado en este dispositivo. Último respaldo: {d}.'},
+W:{due:'Vence',tolls:'peajes',irs:'tarifa del IRS',tips:'propinas',day:'día',days:'días',rides:'{n} viajes',hr:'h',mi:'mi',gas:'gasolina',bonus:'bono',deposited:'Depositado',on:' el ',ride:'viaje'}},
 
 pt:{S:{
+"Tolls & parking":"Pedágios e estacionamento",
+"Taxes":"Impostos",
+"Tax year":"Ano fiscal",
+"Export tax report":"Exportar relatório de impostos",
+"Print / save as PDF":"Imprimir / salvar como PDF",
+"Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"São estimativas para ajudar na declaração, não aconselhamento fiscal. Compare os números com os resumos fiscais dos apps da Lyft e da Uber e consulte um profissional se tiver dúvidas.",
+"Income":"Renda",
+"Lyft (fares + tips)":"Lyft (corridas + gorjetas)",
+"Uber (fares + tips)":"Uber (corridas + gorjetas)",
+"Total income":"Renda total",
+"Deductions":"Deduções",
+"Business miles":"Milhas a trabalho",
+"Estimated net profit":"Lucro líquido estimado",
+"Estimated self-employment tax":"Imposto de autônomo estimado",
+"15.3% of 92.35% of net profit":"15,3% de 92,35% do lucro líquido",
+"Quarterly estimates":"Estimativas trimestrais",
+"Quarter":"Trimestre",
+"Net profit":"Lucro líquido",
+"Est. SE tax":"Imp. autônomo",
+"Due":"Vencimento",
+"Income tax is owed on top of self-employment tax, based on your total income and filing status.":"Além do imposto de autônomo, há imposto de renda, conforme sua renda total e sua situação de declaração.",
 'Tips':'Gorjetas',
 'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':'Lyft e Uber lado a lado. Registre o dia e veja quanto sobrou. Tudo fica salvo neste aparelho.',
 'Customize':'Personalizar','Connect Google Drive':'Conectar ao Google Drive','Open my Google Sheet':'Abrir minha planilha Google','Restore from Drive':'Restaurar do Drive','Back up to Google Drive':'Fazer backup no Google Drive','Export to Excel / Sheets':'Exportar para Excel / Sheets','Restore backup':'Restaurar backup','Sync to Drive now':'Sincronizar com o Drive agora',
@@ -632,10 +794,31 @@ pt:{S:{
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Backup salvo. Para guardá-lo no Google Drive, envie o arquivo .json da pasta Downloads para drive.google.com.',
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Esse arquivo não é um backup do Kept. Escolha o arquivo .json de "Fazer backup no Google Drive".',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Este navegador está bloqueando o armazenamento, então os dados não serão salvos. Use uma janela normal (não anônima).'},
-P:{kept:'Líquido após combustível · {n} {days}',saved:'Salvo. Sobrou {x}.',restored:'Backup restaurado: {n} {days}.',restoredDrive:'{n} {days} restaurados do Google Drive.',last:'Salvo neste aparelho. Último backup: {d}.'},
-W:{tips:'gorjetas',day:'dia',days:'dias',rides:'{n} corridas',hr:'h',mi:'mi',gas:'combustível',bonus:'bônus',deposited:'Depositado',on:' em ',ride:'corrida'}},
+P:{noyear:'Nenhum dia registrado em {y} ainda.',gascov:'O combustível ({x}) já está coberto pela taxa por milha, então não é deduzido de novo.',norate:'Este app ainda não tem a taxa do IRS de {y}, então usa a de {r}.',kept:'Líquido após combustível · {n} {days}',saved:'Salvo. Sobrou {x}.',restored:'Backup restaurado: {n} {days}.',restoredDrive:'{n} {days} restaurados do Google Drive.',last:'Salvo neste aparelho. Último backup: {d}.'},
+W:{due:'Vence',tolls:'pedágios',irs:'taxa do IRS',tips:'gorjetas',day:'dia',days:'dias',rides:'{n} corridas',hr:'h',mi:'mi',gas:'combustível',bonus:'bônus',deposited:'Depositado',on:' em ',ride:'corrida'}},
 
 fr:{S:{
+"Tolls & parking":"Péages et stationnement",
+"Taxes":"Impôts",
+"Tax year":"Année fiscale",
+"Export tax report":"Exporter le rapport fiscal",
+"Print / save as PDF":"Imprimer / enregistrer en PDF",
+"Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"Estimations pour vous aider à déclarer, pas des conseils fiscaux. Comparez avec les récapitulatifs fiscaux de vos applis Lyft et Uber et demandez à un professionnel en cas de doute.",
+"Income":"Revenus",
+"Lyft (fares + tips)":"Lyft (courses + pourboires)",
+"Uber (fares + tips)":"Uber (courses + pourboires)",
+"Total income":"Revenus totaux",
+"Deductions":"Déductions",
+"Business miles":"Miles professionnels",
+"Estimated net profit":"Bénéfice net estimé",
+"Estimated self-employment tax":"Impôt des travailleurs indépendants estimé",
+"15.3% of 92.35% of net profit":"15,3 % de 92,35 % du bénéfice net",
+"Quarterly estimates":"Acomptes trimestriels",
+"Quarter":"Trimestre",
+"Net profit":"Bénéfice net",
+"Est. SE tax":"Impôt indép.",
+"Due":"Échéance",
+"Income tax is owed on top of self-employment tax, based on your total income and filing status.":"L'impôt sur le revenu s'ajoute à l'impôt des indépendants, selon vos revenus totaux et votre situation fiscale.",
 'Tips':'Pourboires',
 'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':"Lyft et Uber côte à côte. Notez votre journée et voyez ce qu'il vous reste. Tout reste sur cet appareil.",
 'Customize':'Personnaliser','Connect Google Drive':'Connecter Google Drive','Open my Google Sheet':'Ouvrir ma feuille Google','Restore from Drive':'Restaurer depuis Drive','Back up to Google Drive':'Sauvegarder sur Google Drive','Export to Excel / Sheets':'Exporter vers Excel / Sheets','Restore backup':'Restaurer une sauvegarde','Sync to Drive now':'Synchroniser avec Drive',
@@ -662,10 +845,31 @@ fr:{S:{
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Sauvegarde enregistrée. Pour la garder sur Google Drive, importez le fichier .json de vos Téléchargements sur drive.google.com.',
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":"Ce fichier n'est pas une sauvegarde Kept. Choisissez le fichier .json créé par « Sauvegarder sur Google Drive ».",
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Ce navigateur bloque le stockage : vos données ne seront pas conservées. Utilisez une fenêtre normale (non privée).'},
-P:{kept:'Net après essence · {n} {days}',saved:'Enregistré. Il vous reste {x}.',restored:'Sauvegarde restaurée : {n} {days}.',restoredDrive:'{n} {days} restaurées depuis Google Drive.',last:'Enregistré sur cet appareil. Dernière sauvegarde : {d}.'},
-W:{tips:'pourboires',day:'journée',days:'journées',rides:'{n} courses',hr:'h',mi:'mi',gas:'essence',bonus:'bonus',deposited:'Viré',on:' le ',ride:'course'}},
+P:{noyear:'Aucune journée notée en {y} pour l\'instant.',gascov:'L\'essence ({x}) est déjà couverte par le taux au mile, elle n\'est donc pas déduite une seconde fois.',norate:'Le taux de l\'IRS pour {y} n\'est pas encore dans l\'appli, celui de {r} est utilisé.',kept:'Net après essence · {n} {days}',saved:'Enregistré. Il vous reste {x}.',restored:'Sauvegarde restaurée : {n} {days}.',restoredDrive:'{n} {days} restaurées depuis Google Drive.',last:'Enregistré sur cet appareil. Dernière sauvegarde : {d}.'},
+W:{due:'Échéance :',tolls:'péages',irs:'taux IRS',tips:'pourboires',day:'journée',days:'journées',rides:'{n} courses',hr:'h',mi:'mi',gas:'essence',bonus:'bonus',deposited:'Viré',on:' le ',ride:'course'}},
 
 ru:{S:{
+"Tolls & parking":"Платные дороги и парковка",
+"Taxes":"Налоги",
+"Tax year":"Налоговый год",
+"Export tax report":"Экспорт налогового отчёта",
+"Print / save as PDF":"Печать / сохранить в PDF",
+"Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"Это оценки для подготовки декларации, а не налоговая консультация. Сверьте цифры с налоговыми сводками в приложениях Lyft и Uber и при сомнениях обратитесь к специалисту.",
+"Income":"Доход",
+"Lyft (fares + tips)":"Lyft (поездки + чаевые)",
+"Uber (fares + tips)":"Uber (поездки + чаевые)",
+"Total income":"Общий доход",
+"Deductions":"Вычеты",
+"Business miles":"Рабочие мили",
+"Estimated net profit":"Оценка чистой прибыли",
+"Estimated self-employment tax":"Оценка налога для самозанятых",
+"15.3% of 92.35% of net profit":"15,3% от 92,35% чистой прибыли",
+"Quarterly estimates":"Квартальные платежи",
+"Quarter":"Квартал",
+"Net profit":"Чистая прибыль",
+"Est. SE tax":"Налог самозан.",
+"Due":"Срок",
+"Income tax is owed on top of self-employment tax, based on your total income and filing status.":"Помимо налога для самозанятых, нужно платить подоходный налог в зависимости от общего дохода и статуса подачи декларации.",
 'Tips':'Чаевые',
 'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':'Lyft и Uber рядом. Записывайте день и смотрите, сколько осталось. Всё хранится на этом устройстве.',
 'Customize':'Настроить','Connect Google Drive':'Подключить Google Диск','Open my Google Sheet':'Открыть мою Google Таблицу','Restore from Drive':'Восстановить с Диска','Back up to Google Drive':'Копия в Google Диск','Export to Excel / Sheets':'Экспорт в Excel / Таблицы','Restore backup':'Восстановить из копии','Sync to Drive now':'Синхронизировать с Диском',
@@ -692,10 +896,31 @@ ru:{S:{
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Копия сохранена. Чтобы хранить её в Google Диске, загрузите файл .json из папки «Загрузки» на drive.google.com.',
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Этот файл не является копией Kept. Выберите файл .json, созданный кнопкой «Копия в Google Диск».',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Браузер блокирует хранилище, поэтому данные не сохранятся. Откройте обычное (не приватное) окно.'},
-P:{kept:'Чистыми после бензина · дней: {n}',saved:'Сохранено. Осталось {x}.',restored:'Копия восстановлена, дней: {n}.',restoredDrive:'Восстановлено с Google Диска, дней: {n}.',last:'Сохранено на этом устройстве. Последняя копия: {d}.'},
-W:{tips:'чаевых',day:'день',days:'дней',rides:'поездок: {n}',hr:'ч',mi:'миль',gas:'бензин',bonus:'бонус',deposited:'Выплачено',on:', ',ride:'поездка'}},
+P:{noyear:'За {y} год пока нет записей.',gascov:'Бензин ({x}) уже учтён в ставке за милю, поэтому повторно не вычитается.',norate:'Ставки IRS на {y} год в приложении пока нет, используется ставка {r} года.',kept:'Чистыми после бензина · дней: {n}',saved:'Сохранено. Осталось {x}.',restored:'Копия восстановлена, дней: {n}.',restoredDrive:'Восстановлено с Google Диска, дней: {n}.',last:'Сохранено на этом устройстве. Последняя копия: {d}.'},
+W:{due:'Срок:',tolls:'платные дороги',irs:'ставка IRS',tips:'чаевых',day:'день',days:'дней',rides:'поездок: {n}',hr:'ч',mi:'миль',gas:'бензин',bonus:'бонус',deposited:'Выплачено',on:', ',ride:'поездка'}},
 
 zh:{S:{
+"Tolls & parking":"过路费和停车费",
+"Taxes":"税务",
+"Tax year":"纳税年度",
+"Export tax report":"导出税务报告",
+"Print / save as PDF":"打印 / 存为 PDF",
+"Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"这些只是帮助报税的估算，不是税务建议。请与 Lyft 和 Uber 应用中的税务汇总核对，如有疑问请咨询税务专业人士。",
+"Income":"收入",
+"Lyft (fares + tips)":"Lyft（车费 + 小费）",
+"Uber (fares + tips)":"Uber（车费 + 小费）",
+"Total income":"总收入",
+"Deductions":"扣除项",
+"Business miles":"工作里程",
+"Estimated net profit":"预计净利润",
+"Estimated self-employment tax":"预计自雇税",
+"15.3% of 92.35% of net profit":"净利润的 92.35% × 15.3%",
+"Quarterly estimates":"季度预缴",
+"Quarter":"季度",
+"Net profit":"净利润",
+"Est. SE tax":"预计自雇税",
+"Due":"截止日期",
+"Income tax is owed on top of self-employment tax, based on your total income and filing status.":"除自雇税外，还需根据总收入和报税身份缴纳所得税。",
 'Tips':'小费',
 'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':'Lyft 和 Uber 并排对比。记录每天的数据，看看你实际赚了多少。所有数据都保存在这台设备上。',
 'Customize':'自定义','Connect Google Drive':'连接 Google 云端硬盘','Open my Google Sheet':'打开我的 Google 表格','Restore from Drive':'从云端硬盘恢复','Back up to Google Drive':'备份到 Google 云端硬盘','Export to Excel / Sheets':'导出到 Excel / 表格','Restore backup':'恢复备份','Sync to Drive now':'立即同步到云端硬盘',
@@ -722,10 +947,31 @@ zh:{S:{
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'备份已保存。要保存到 Google 云端硬盘，请把“下载”中的 .json 文件上传到 drive.google.com。',
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'这个文件不是 Kept 备份。请选择“备份到 Google 云端硬盘”生成的 .json 文件。',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'此浏览器阻止了存储，数据不会被保存。请使用普通（非无痕）窗口。'},
-P:{kept:'扣除油费后净收入 · {n} 天',saved:'已保存。净收入 {x}。',restored:'已恢复备份：{n} 天。',restoredDrive:'已从 Google 云端硬盘恢复 {n} 天的记录。',last:'已保存在此设备上。上次备份：{d}。'},
-W:{tips:'小费',day:'天',days:'天',rides:'{n} 单',hr:'小时',mi:'英里',gas:'油费',bonus:'奖励',deposited:'到账',on:' · ',ride:'单'}},
+P:{noyear:'{y} 年还没有记录。',gascov:'油费（{x}）已包含在里程标准中，因此不会重复扣除。',norate:'应用中还没有 {y} 年的 IRS 里程标准，暂用 {r} 年的标准。',kept:'扣除油费后净收入 · {n} 天',saved:'已保存。净收入 {x}。',restored:'已恢复备份：{n} 天。',restoredDrive:'已从 Google 云端硬盘恢复 {n} 天的记录。',last:'已保存在此设备上。上次备份：{d}。'},
+W:{due:'截止',tolls:'过路费',irs:'IRS 标准',tips:'小费',day:'天',days:'天',rides:'{n} 单',hr:'小时',mi:'英里',gas:'油费',bonus:'奖励',deposited:'到账',on:' · ',ride:'单'}},
 
 vi:{S:{
+"Tolls & parking":"Phí cầu đường và đỗ xe",
+"Taxes":"Thuế",
+"Tax year":"Năm tính thuế",
+"Export tax report":"Xuất báo cáo thuế",
+"Print / save as PDF":"In / lưu PDF",
+"Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.":"Đây là số ước tính để giúp bạn khai thuế, không phải tư vấn thuế. Hãy đối chiếu với bản tóm tắt thuế trong ứng dụng Lyft và Uber, và hỏi chuyên gia thuế nếu chưa chắc.",
+"Income":"Thu nhập",
+"Lyft (fares + tips)":"Lyft (cước + tip)",
+"Uber (fares + tips)":"Uber (cước + tip)",
+"Total income":"Tổng thu nhập",
+"Deductions":"Khoản khấu trừ",
+"Business miles":"Số dặm làm việc",
+"Estimated net profit":"Lợi nhuận ròng ước tính",
+"Estimated self-employment tax":"Thuế tự doanh ước tính",
+"15.3% of 92.35% of net profit":"15,3% của 92,35% lợi nhuận ròng",
+"Quarterly estimates":"Ước tính theo quý",
+"Quarter":"Quý",
+"Net profit":"Lợi nhuận ròng",
+"Est. SE tax":"Thuế tự doanh",
+"Due":"Hạn nộp",
+"Income tax is owed on top of self-employment tax, based on your total income and filing status.":"Ngoài thuế tự doanh, bạn còn nợ thuế thu nhập tùy theo tổng thu nhập và tình trạng khai thuế.",
 'Tips':'Tiền tip',
 'Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.':'Lyft và Uber cạnh nhau. Ghi lại mỗi ngày và xem bạn thực sự giữ lại bao nhiêu. Mọi dữ liệu nằm trên thiết bị này.',
 'Customize':'Tùy chỉnh','Connect Google Drive':'Kết nối Google Drive','Open my Google Sheet':'Mở Google Trang tính của tôi','Restore from Drive':'Khôi phục từ Drive','Back up to Google Drive':'Sao lưu lên Google Drive','Export to Excel / Sheets':'Xuất sang Excel / Trang tính','Restore backup':'Khôi phục bản sao lưu','Sync to Drive now':'Đồng bộ với Drive ngay',
@@ -752,8 +998,8 @@ vi:{S:{
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Đã lưu bản sao lưu. Để giữ trên Google Drive, hãy tải tệp .json trong mục Tải xuống lên drive.google.com.',
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Tệp này không phải bản sao lưu Kept. Hãy chọn tệp .json từ "Sao lưu lên Google Drive".',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Trình duyệt này đang chặn bộ nhớ nên dữ liệu sẽ không được lưu. Hãy dùng cửa sổ thường (không ẩn danh).'},
-P:{kept:'Còn lại sau xăng · {n} ngày',saved:'Đã lưu. Còn lại {x}.',restored:'Đã khôi phục: {n} ngày.',restoredDrive:'Đã khôi phục {n} ngày từ Google Drive.',last:'Đã lưu trên thiết bị này. Lần sao lưu gần nhất: {d}.'},
-W:{tips:'tiền tip',day:'ngày',days:'ngày',rides:'{n} chuyến',hr:'giờ',mi:'dặm',gas:'xăng',bonus:'thưởng',deposited:'Đã rút',on:' ngày ',ride:'chuyến'}}
+P:{noyear:'Chưa có ngày nào trong năm {y}.',gascov:'Tiền xăng ({x}) đã được tính trong mức theo dặm nên không khấu trừ thêm.',norate:'Ứng dụng chưa có mức IRS năm {y}, nên dùng mức năm {r}.',kept:'Còn lại sau xăng · {n} ngày',saved:'Đã lưu. Còn lại {x}.',restored:'Đã khôi phục: {n} ngày.',restoredDrive:'Đã khôi phục {n} ngày từ Google Drive.',last:'Đã lưu trên thiết bị này. Lần sao lưu gần nhất: {d}.'},
+W:{due:'Hạn',tolls:'phí cầu đường',irs:'mức IRS',tips:'tiền tip',day:'ngày',days:'ngày',rides:'{n} chuyến',hr:'giờ',mi:'dặm',gas:'xăng',bonus:'thưởng',deposited:'Đã rút',on:' ngày ',ride:'chuyến'}}
 };
 
 function pickLang(){
@@ -774,12 +1020,17 @@ const PATTERNS=L?[
   [/^Saved\. You kept (.+)\.$/, m=>fill(L.P.saved,{x:m[1]})],
   [/^Backup restored: (\d+) days?\.$/, m=>fill(L.P.restored,{n:m[1],days:plural(m[1])})],
   [/^Restored (\d+) days from Google Drive\.$/, m=>fill(L.P.restoredDrive,{n:m[1],days:plural(m[1])})],
+  [/^No days logged in (\d{4}) yet\.$/, m=>fill(L.P.noyear,{y:m[1]})],
+  [/^Gas \((.+)\) is covered by the mileage rate, so it isn't deducted again\.$/, m=>fill(L.P.gascov,{x:m[1]})],
+  [/^The IRS hasn't set a (\d{4}) mileage rate in this app yet, so this uses the (\d{4}) rate\.$/, m=>fill(L.P.norate,{y:m[1],r:m[2]})],
   [/^Saved on this device\. Last backup (.+)\.$/, m=>fill(L.P.last,{d:m[1]})],
 ]:[];
 function trMixed(t){   // numbers mixed with words, e.g. "$30.00 gas · 100 mi"
   const W=L.W; let o=t;
   o=o.replace(/(\d[\d,.]*) rides\b/g,(_,n)=>fill(W.rides,{n}));
   o=o.replace(/(\d[\d,.]*) hr\b/g,(_,n)=>n+' '+W.hr).replace(/(\d[\d,.]*) mi\b/g,(_,n)=>n+' '+W.mi);
+  o=o.replace(/(\d) tolls\b/g,(_,d)=>d+' '+W.tolls).replace(/ IRS rate\b/g,' '+W.irs);
+  o=o.replace(/^Due (?=\S)/,(L.W.due||'Due')+' ');
   o=o.replace(/(\d) tips\b/g,(_,d)=>d+' '+W.tips);
   o=o.replace(/(\d) gas\b/g,(_,d)=>d+' '+W.gas).replace(/(\d) bonus\b/g,(_,d)=>d+' '+W.bonus);
   o=o.replace(/\/mi\b/g,'/'+W.mi).replace(/\/hr\b/g,'/'+W.hr).replace(/\/ride\b/g,'/'+W.ride);
