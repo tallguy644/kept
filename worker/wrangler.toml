@@ -1,0 +1,10 @@
+name = "kept-pro"
+main = "index.js"
+compatibility_date = "2026-06-01"
+
+[vars]
+PACKAGE_NAME = ""                                  # fill in: the Play app's package name
+ALLOWED_ORIGIN = "https://tallguy644.github.io"
+
+# The service-account key is a secret, never put it in this file. Add it with:
+#   npx wrangler secret put GOOGLE_SA_JSON

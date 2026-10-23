@@ -1123,5 +1123,6 @@ try{ localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t');
   setSync(lb?'Saved on this device. Last backup '+fmtDate(lb)+'.':'Saved on this device only. Back up to Google Drive now and then.','off'); }
 catch(e){ setSync('This browser is blocking storage, so entries won\'t be kept. Try a regular (not private) window.','warn'); }
 </script>
+<script src="pro.js"></script>
 <script>if('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </body></html>
