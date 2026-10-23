@@ -39,5 +39,35 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/wide-light.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Log a day and see what you kept"
+    },
+    {
+      "src": "screenshots/wide-dark.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dark mode"
+    },
+    {
+      "src": "screenshots/narrow-light.png",
+      "sizes": "1170x2532",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Log Lyft and Uber side by side"
+    },
+    {
+      "src": "screenshots/narrow-dark.png",
+      "sizes": "1170x2532",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Weekly totals and Lyft vs Uber"
+    }
   ]
 }
