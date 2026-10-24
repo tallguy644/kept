@@ -1,0 +1,19 @@
+{
+  "name": "kept-android",
+  "private": true,
+  "version": "1.1.0",
+  "description": "Google Play app for Kept for Gig Workers (Capacitor). The web app in the repo root is copied in at build time.",
+  "scripts": {
+    "www": "node scripts/build-www.js",
+    "patch": "node scripts/patch-android.js"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/splash-screen": "^8.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.3"
+  }
+}

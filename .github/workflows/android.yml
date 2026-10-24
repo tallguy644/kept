@@ -1,0 +1,95 @@
+name: Build Android app
+
+# Builds the Google Play app (Capacitor) from the web app in this repo.
+# With the signing secrets set, it makes a signed APK (to install and test) and a signed AAB (for Google Play)
+# and attaches both to a GitHub release. Without them, it makes a debug APK so the build itself can be checked.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - '.github/workflows/android.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      HAS_KEY: ${{ secrets.KEPT_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install Capacitor
+        working-directory: app
+        run: npm install --no-audit --no-fund
+
+      - name: Copy the web app and create the Android project
+        working-directory: app
+        run: |
+          node scripts/build-www.js
+          npx cap add android
+          node scripts/patch-android.js
+          npx cap sync android
+
+      - name: Restore the signing key
+        if: env.HAS_KEY == 'true'
+        run: |
+          echo "${{ secrets.KEPT_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/kept.keystore"
+          echo "KEPT_KEYSTORE=$RUNNER_TEMP/kept.keystore" >> "$GITHUB_ENV"
+
+      - name: Build signed APK and AAB
+        if: env.HAS_KEY == 'true'
+        working-directory: app/android
+        env:
+          KEPT_STORE_PASSWORD: ${{ secrets.KEPT_STORE_PASSWORD }}
+          KEPT_KEY_ALIAS: ${{ secrets.KEPT_KEY_ALIAS }}
+          KEPT_KEY_PASSWORD: ${{ secrets.KEPT_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease bundleRelease
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/out/Kept-for-Gig-Workers-v2.apk"
+          cp app/build/outputs/bundle/release/app-release.aab "$GITHUB_WORKSPACE/out/Kept-for-Gig-Workers-v2.aab"
+
+      - name: Build debug APK (no signing key set yet)
+        if: env.HAS_KEY != 'true'
+        working-directory: app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/out/Kept-debug.apk"
+
+      - name: Check the signed files
+        if: env.HAS_KEY == 'true'
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/aapt2" dump badging out/Kept-for-Gig-Workers-v2.apk | head -3
+          "$BT/apksigner" verify --print-certs out/Kept-for-Gig-Workers-v2.apk | grep -i "SHA-256" | head -2
+          ! unzip -l out/Kept-for-Gig-Workers-v2.apk | grep -i androidbrowserhelper
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kept-android
+          path: out/
+
+      - name: Attach to a GitHub release
+        if: env.HAS_KEY == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="android-v2-${{ github.run_number }}"
+          gh release create "$TAG" out/* --title "Kept Android v2 (build ${{ github.run_number }})" \
+            --notes "Signed Google Play app (Capacitor). Install the .apk on your phone to test; upload the .aab to Google Play." --prerelease
