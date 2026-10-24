@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.desertcircuitapps.kept",
+        "sha256_cert_fingerprints": ["8C:CE:E5:46:B8:E0:86:1F:72:A2:A9:D4:70:C3:48:C6:49:B7:B7:B1:32:87:D8:9A:B3:00:FA:DE:15:13:55:A6"]
+      }
+    }]
