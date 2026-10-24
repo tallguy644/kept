@@ -36,7 +36,8 @@ jobs:
 
       - name: Install Capacitor
         working-directory: app
-        run: "$GITHUB_WORKSPACE/.github/scripts/logged.sh" npm npm install --no-audit --no-fund
+        run: |
+          "$GITHUB_WORKSPACE/.github/scripts/logged.sh" npm npm install --no-audit --no-fund
 
       - name: Copy the web app and create the Android project
         working-directory: app
