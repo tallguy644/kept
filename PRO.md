@@ -48,3 +48,13 @@ Use these exact product IDs. The app looks for them by name.
 ## 5. Launch
 
 Set `enabled: true` in `pro.js` and push. Test a purchase with a Play license-tester account and a Microsoft Store test account first.
+
+## Gift Pro to someone
+
+1. Firebase console → **Authentication → Users**: find the person's email and copy their **User UID**.
+2. **Firestore Database → Data**: open (or create) the path `users` → *their UID* → `meta` → document `pro`, and set these fields:
+   - `active` (boolean) = `true`
+   - `gift` (boolean) = `true`
+   - `giftUntil` (null) = `null` for Pro for life, or (number) = the end date in milliseconds for a time-limited gift
+   - `expires` = the same as `giftUntil`
+3. It turns on immediately on every device they're signed in on. The daily recheck keeps gifted Pro (and ends a time-limited gift on its date). To take it back, set `active` and `gift` to `false`.

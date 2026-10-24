@@ -128,7 +128,17 @@ async function recompute(env, uid) {
     if (r.expires === null) { expires = null; sku = p.sku; store = p.store; break; }   // lifetime wins
     if (r.expires > expires) { expires = r.expires; sku = p.sku; store = p.store; }
   }
+  // Gifted Pro (set by the owner in the Firebase console: gift = true, optional giftUntil in ms) is kept on every recheck.
+  const cur = await fs(env, 'GET', `users/${uid}/meta/pro`);
+  const old = cur.ok ? plain((await cur.json()).fields) : {};
+  const gift = old.gift === true, giftUntil = old.giftUntil != null ? Number(old.giftUntil) : null;
+  if (gift && (giftUntil === null || giftUntil > Date.now()) && expires !== null) {
+    active = true;
+    if (giftUntil === null) { expires = null; sku = sku || 'gift'; store = store || 'gift'; }
+    else if (giftUntil > expires) { expires = giftUntil; sku = sku || 'gift'; store = store || 'gift'; }
+  }
   const fields = {
+    ...(gift ? { gift: { booleanValue: true }, giftUntil: giftUntil === null ? { nullValue: null } : { integerValue: String(giftUntil) } } : {}),
     active: { booleanValue: active }, sku: { stringValue: sku }, store: { stringValue: store },
     expires: expires === null ? { nullValue: null } : { integerValue: String(expires || 0) },
     updated: { timestampValue: new Date().toISOString() },
