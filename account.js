@@ -192,7 +192,7 @@ function updatePrompt(){
   prompt.hidden=!!user||!ready||!data.shifts.length||Date.now()-later<14*864e5;   // ask again after two weeks
 }
 
-let mode='signin', user=null, ready=false, status='synced', delArmed=false, busy=false;
+let justSigned=false, mode='signin', user=null, ready=false, status='synced', delArmed=false, busy=false;
 function draw(){
   if(!user){
     sec.innerHTML=`<div class="page-top"><button type="button" class="back" id="acctBack" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button><h1>${esc(w('title'))}</h1><span></span></div>
@@ -246,7 +246,7 @@ const load=Promise.all([import(SDK+'firebase-app.js'),import(SDK+'firebase-auth.
   try{ db=f.initializeFirestore(fb,{localCache:f.persistentLocalCache({tabManager:f.persistentMultipleTabManager()})}); }
   catch(e){ db=f.getFirestore(fb); }
   if(window.KEPT_FIREBASE_EMULATOR){ a.connectAuthEmulator&&a.connectAuthEmulator(auth,'http://127.0.0.1:9099'); f.connectFirestoreEmulator&&f.connectFirestoreEmulator(db,'127.0.0.1',8080); }
-  a.getRedirectResult(auth).catch(e=>{ setTimeout(()=>say(errMsg(e),true),0); });
+  a.getRedirectResult(auth).then(r=>{ if(r&&r.user){ if(user) window.dispatchEvent(new CustomEvent('kept-signed-in',{detail:{}})); else justSigned=true; } }).catch(e=>{ setTimeout(()=>say(errMsg(e),true),0); });
   a.onAuthStateChanged(auth,u=>{ ready=true; onUser(u); });
 });
 load.catch(()=>{ drawRow(); });
@@ -258,10 +258,10 @@ async function googleSignIn(){
   const standalone=matchMedia('(display-mode: standalone)').matches;
   try{
     if(standalone&&cfg.authDomain===location.hostname) await A.signInWithRedirect(auth,p);
-    else await A.signInWithPopup(auth,p);
+    else { justSigned=true; await A.signInWithPopup(auth,p); }
   }catch(e){
     if(/popup-blocked|operation-not-supported/.test(e.code||'')){ try{ await A.signInWithRedirect(auth,p); }catch(e2){ say(errMsg(e2),true); } }
-    else say(errMsg(e),true);
+    else { justSigned=false; say(errMsg(e),true); }
   }finally{ busy=false; }
 }
 async function emailAuth(){
@@ -270,8 +270,8 @@ async function emailAuth(){
   if(!/^\S+@\S+\.\S+$/.test(em)){ say(w('e_email'),true); return; }
   if(pw.length<6){ say(mode==='create'?w('e_weak'):w('e_cred'),true); return; }
   busy=true; $('acctSubmit').disabled=true; say('');
-  try{ if(mode==='create') await A.createUserWithEmailAndPassword(auth,em,pw); else await A.signInWithEmailAndPassword(auth,em,pw); }
-  catch(e){ say(errMsg(e),true); }
+  try{ justSigned=true; if(mode==='create') await A.createUserWithEmailAndPassword(auth,em,pw); else await A.signInWithEmailAndPassword(auth,em,pw); }
+  catch(e){ justSigned=false; say(errMsg(e),true); }
   finally{ busy=false; const b=$('acctSubmit'); if(b) b.disabled=false; }
 }
 async function forgot(){
@@ -348,6 +348,7 @@ async function onUser(u){
   drawRow(); updatePrompt();
   if(cur()==='acct'){ draw(); }
   if(!prev&&ready&&cur()==='acct'&&typeof toast==='function') toast(w('welcome'));
+  if(justSigned){ justSigned=false; window.dispatchEvent(new CustomEvent('kept-signed-in',{detail:{created:mode==='create'}})); }   // lock.js offers App lock
 }
 function applyCloud(list){
   const next=JSON.stringify(list.map(strip).sort()), now=JSON.stringify(data.shifts.map(strip).sort());
