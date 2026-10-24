@@ -1,7 +1,7 @@
 // Kept offline support: keeps the app cached so it opens with no signal.
 // The app's own files always load fresh when online (so every update reaches drivers right away)
 // and fall back to the cached copy offline. Fonts and the Firebase code are versioned, so they load from cache.
-const CACHE = 'kept-v18';
+const CACHE = 'kept-v19';
 const SHELL = ['./', './index.html', './privacy.html', './manifest.webmanifest', './pro.js', './account.js', './lock.js',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-192.png', './icons/maskable-512.png'];
 

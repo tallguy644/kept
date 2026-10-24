@@ -5,6 +5,10 @@
 (function(){
 'use strict';
 const KEYL=(typeof KEY!=='undefined'?KEY:'kept')+'-lock';
+// App lock is for the installed app only (Google Play, Microsoft Store or home-screen app), never the website in a browser tab.
+const isApp=['standalone','fullscreen','minimal-ui','window-controls-overlay'].some(m=>matchMedia(`(display-mode: ${m})`).matches)
+  ||navigator.standalone===true||document.referrer.startsWith('android-app://');
+if(!isApp){ document.documentElement.classList.remove('kept-locked'); window.keptLock={lockNow:()=>{},isOn:()=>false}; return; }
 const AWAY=60*1000;   // relock after this long in the background
 let cfg=null; try{ cfg=JSON.parse(localStorage.getItem(KEYL)||'null'); }catch(e){}
 const save=()=>{ try{ cfg?localStorage.setItem(KEYL,JSON.stringify(cfg)):localStorage.removeItem(KEYL); }catch(e){} };
