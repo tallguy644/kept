@@ -1,8 +1,15 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "com.desertcircuitapps.kept",
-        "sha256_cert_fingerprints": ["8C:CE:E5:46:B8:E0:86:1F:72:A2:A9:D4:70:C3:48:C6:49:B7:B7:B1:32:87:D8:9A:B3:00:FA:DE:15:13:55:A6"]
-      }
-    }]
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.desertcircuitapps.kept",
+      "sha256_cert_fingerprints": [
+        "3D:D4:2C:CD:7A:31:4F:3F:1A:E0:3A:23:CF:1A:FE:A3:54:50:36:85:C1:CD:C1:15:57:F2:EE:2C:33:BA:F2:ED",
+        "8C:CE:E5:46:B8:E0:86:1F:72:A2:A9:D4:70:C3:48:C6:49:B7:B7:B1:32:87:D8:9A:B3:00:FA:DE:15:13:55:A6"
+      ]
+    }
+  }
+]
