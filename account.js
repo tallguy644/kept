@@ -286,6 +286,18 @@ async function forgot(){
 // Local days stay in localStorage (works offline, instantly). When signed in, every change is mirrored to
 // users/{uid}/days and changes from other devices come back through a live listener.
 let unsub=null, synced=new Map(), applying=false;
+// Pro status (written only by the Pro server) and trial start (set once, by the server clock) for the signed-in driver.
+let metaUnsub=[], acctPro=null, trialStart=null;
+const acctState=()=>({user:user?{uid:user.uid,email:user.email}:null,pro:acctPro,trialStart});
+const emit=()=>window.dispatchEvent(new CustomEvent('kept-account',{detail:acctState()}));
+window.keptAccount={state:acctState,idToken:()=>auth&&auth.currentUser?auth.currentUser.getIdToken():Promise.reject(new Error('signed out'))};
+function stopMeta(){ metaUnsub.forEach(f=>f()); metaUnsub=[]; acctPro=null; trialStart=null; }
+async function watchMeta(u){
+  const proRef=F.doc(db,'users',u.uid,'meta','pro'), trialRef=F.doc(db,'users',u.uid,'meta','trial');
+  metaUnsub.push(F.onSnapshot(proRef,d=>{ const x=d.exists()?d.data():null; acctPro=x?{active:!!x.active,sku:x.sku||'',expires:x.expires==null?null:Number(x.expires)}:null; emit(); },()=>{}));
+  if(window.keptProEnabled) try{ const t=await F.getDoc(trialRef); if(!t.exists()) await F.setDoc(trialRef,{start:F.serverTimestamp()}); }catch(e){ console.warn('trial',e); }
+  metaUnsub.push(F.onSnapshot(trialRef,d=>{ const v=d.exists()&&d.data().start; trialStart=v&&v.toMillis?v.toMillis():null; if(trialStart) emit(); },()=>{}));
+}
 const OWNER=KEY+'-owner';
 const strip=s=>{ const o={...s}; delete o.u; return JSON.stringify(o,Object.keys(o).sort()); };
 const daysCol=()=>F.collection(db,'users',user.uid,'days');
@@ -315,7 +327,9 @@ async function writeOps(ops){
 async function onUser(u){
   const prev=user; user=u; delArmed=false;
   if(unsub){ unsub(); unsub=null; }
-  if(!u){ synced.clear(); drawRow(); updatePrompt(); if(cur()==='acct') draw(); return; }
+  stopMeta();
+  if(!u){ synced.clear(); drawRow(); updatePrompt(); if(cur()==='acct') draw(); emit(); return; }
+  emit(); watchMeta(u);
   // First sign-in on this device: merge days saved before the account with the ones already in it.
   let owner=''; try{ owner=localStorage.getItem(OWNER)||''; }catch(e){}
   const mine=!owner||owner===u.uid;
@@ -361,6 +375,9 @@ async function deleteNow(){
     if(pwUser){ const pw=($('acctDelPw')||{}).value||''; await A.reauthenticateWithCredential(u,A.EmailAuthProvider.credential(u.email,pw)); }
     else await A.reauthenticateWithPopup(u,new A.GoogleAuthProvider());
     if(unsub){ unsub(); unsub=null; }
+    stopMeta();
+    // Pro status, trial and linked purchases are server-only records: ask the Pro server to remove them too.
+    if(window.keptWorkerUrl){ try{ await fetch(window.keptWorkerUrl.replace(/\/$/,'')+'/account/delete',{method:'POST',headers:{Authorization:'Bearer '+await u.getIdToken()}}); }catch(e){} }
     const snap=await F.getDocs(daysCol());
     for(let i=0;i<snap.docs.length;i+=400){ const b=F.writeBatch(db); snap.docs.slice(i,i+400).forEach(d=>b.delete(d.ref)); await b.commit(); }
     await A.deleteUser(u);

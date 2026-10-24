@@ -9,6 +9,19 @@ service cloud.firestore {
         && request.resource.data.date is string
         && request.resource.data.size() < 60;   // fields per day: blocks junk documents
     }
+    // Pro status: written only by the Pro server (it checks the store purchase). Drivers can read their own.
+    match /users/{uid}/meta/pro {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+    // Free-trial start: created once, stamped with the server's clock, never changed (so it can't be reset).
+    match /users/{uid}/meta/trial {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['start'])
+        && request.resource.data.start == request.time;
+      allow update, delete: if false;
+    }
     // Everything else is closed.
     match /{document=**} {
       allow read, write: if false;

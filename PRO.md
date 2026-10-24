@@ -6,6 +6,9 @@ Pro is built and switched **off**. Nothing changes for anyone until step 5.
 - **Pro:** Taxes report, Google Drive auto-backup + Google Sheet, Export to Excel / Sheets
 - **Trial:** 30 days for everyone, starting the first time they open Kept after launch
 - **Prices:** $1.99/month, $14.99/year, $24.99 lifetime. Sold only in the Google Play and Microsoft Store apps.
+- **Tied to the Kept account:** buy once in the app, and Pro unlocks on every device and on keptforgigworkers.com wherever the driver signs in. The Pro server checks each purchase with the store and marks the account Pro (`users/{uid}/meta/pro`, which drivers can't write). One purchase links to one account only. The free trial also follows the account (`users/{uid}/meta/trial`, stamped once by the server clock), so reinstalling or a new device doesn't restart it.
+- **Without an account,** a purchase still works on that device, and links to the account automatically the first time they sign in.
+- **Microsoft Store:** purchases work on that device; linking them to accounts needs Microsoft's purchase-check service set up later (the server answers "not supported yet" until then).
 
 **Preview anytime:** add `?pro=preview` (trial running) or `?pro=expired` (trial over) to the site address.
 
@@ -23,22 +26,24 @@ Pro is built and switched **off**. Nothing changes for anyone until step 5.
 
 Use these exact product IDs. The app looks for them by name.
 
-## 3. Google Play confirmation server (required for Play)
+## 3. Pro server (required)
 
-Google refunds purchases not acknowledged within 3 days. `worker/` does this.
+`worker/` is a small free Cloudflare Worker. It checks Google Play purchases, acknowledges them (Google refunds unacknowledged purchases after 3 days), links them to Kept accounts, and re-checks every linked purchase daily so renewals, cancellations and refunds are picked up.
 
-1. Google Cloud: create a service account and download its JSON key. Play Console → Users and permissions: invite that account's email with "View financial data" and "Manage orders and subscriptions".
-2. Cloudflare (free account): in `worker/wrangler.toml` set `PACKAGE_NAME`, then run:
+1. **Play access:** Google Cloud → create a service account → JSON key. Play Console → Users and permissions → invite its email with "View financial data" and "Manage orders and subscriptions".
+2. **Firestore access:** in Google Cloud project `kept-b85c0`, give a service account the **Cloud Datastore User** role (it can be the same one, or a second one).
+3. **Deploy** (free Cloudflare account): `worker/wrangler.toml` already has the package name, project and allowed addresses.
    ```
    cd worker
    npx wrangler deploy
-   npx wrangler secret put GOOGLE_SA_JSON     # paste the whole JSON key
+   npx wrangler secret put GOOGLE_SA_JSON      # Play access key
+   npx wrangler secret put FIREBASE_SA_JSON    # Firestore key (skip if the first one has the role)
    ```
-3. Copy the Worker address (`https://kept-pro.<you>.workers.dev`).
+4. Copy the Worker address (`https://kept-pro.<you>.workers.dev`).
 
 ## 4. Fill in `pro.js` settings
 
-`ackUrl` (the Worker address), `playUrl`, `msStoreUrl`, `playPackage`.
+`workerUrl` (the Worker address), `playUrl`, `msStoreUrl`.
 
 ## 5. Launch
 

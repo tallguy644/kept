@@ -3,8 +3,14 @@ main = "index.js"
 compatibility_date = "2026-06-01"
 
 [vars]
-PACKAGE_NAME = ""                                  # fill in: the Play app's package name
-ALLOWED_ORIGIN = "https://tallguy644.github.io"
+PACKAGE_NAME = "com.desertcircuitapps.kept"
+FIREBASE_PROJECT_ID = "kept-b85c0"
+ALLOWED_ORIGINS = "https://keptforgigworkers.com,https://www.keptforgigworkers.com,https://kept-b85c0.web.app,https://tallguy644.github.io"
 
-# The service-account key is a secret, never put it in this file. Add it with:
-#   npx wrangler secret put GOOGLE_SA_JSON
+# Re-check every linked purchase once a day (renewals, cancellations, refunds).
+[triggers]
+crons = ["17 9 * * *"]
+
+# Keys are secrets, never put them in this file. Add them with:
+#   npx wrangler secret put GOOGLE_SA_JSON      (service account with Play Console access)
+#   npx wrangler secret put FIREBASE_SA_JSON    (service account with the "Cloud Datastore User" role in kept-b85c0; optional if the first one has it)

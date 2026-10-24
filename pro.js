@@ -1,5 +1,7 @@
 /* Kept Pro: 30-day free trial, then Taxes, Google Drive auto-backup and Excel export need Pro.
-   Pro is bought only inside the store apps (Google Play, Microsoft Store) through the Digital Goods API.
+   Pro is bought only inside the store apps (Google Play, Microsoft Store) through the Digital Goods API, and is tied to
+   the driver's Kept account: the Pro server (worker/) checks the purchase and marks the account Pro, so it unlocks on
+   every device and on the website where they sign in. The free trial follows the account too.
    Free forever: logging days, totals, Lyft vs Uber, Customize, saving a backup file, and both Restore buttons
    (so nobody's data is ever held back). */
 (function(){
@@ -11,11 +13,13 @@ const PRO={
   trialDays:30,
   skus:{monthly:'kept_pro_monthly',yearly:'kept_pro_yearly',lifetime:'kept_pro_lifetime'},
   prices:{monthly:'$1.99',yearly:'$14.99',lifetime:'$24.99'},   // shown until the store sends local prices
-  ackUrl:'',                // Cloudflare Worker that acknowledges Google Play purchases (see worker/README.md). Required before launch on Play.
+  workerUrl:'',             // Pro server (Cloudflare Worker in worker/): checks purchases, links them to accounts. Required before launch.
   playUrl:'',               // Google Play listing, e.g. https://play.google.com/store/apps/details?id=...
   msStoreUrl:'',            // Microsoft Store listing, e.g. https://apps.microsoft.com/detail/9N...
-  playPackage:''            // Android package name, for the "Manage subscription" link
+  playPackage:'com.desertcircuitapps.kept'   // Android package name, for the "Manage subscription" link
 };
+Object.assign(PRO,window.KEPT_PRO_SETTINGS||{});   // lets automated tests point at a stand-in server
+window.keptWorkerUrl=PRO.workerUrl;
 const STORES=[
   {name:'play',method:'https://play.google.com/billing'},
   {name:'microsoft',method:'https://store.microsoft.com/billing'}
@@ -26,6 +30,7 @@ const DAY=864e5, GRACE=7*DAY;
 /* Preview without launching: add ?pro=preview (trial running) or ?pro=expired (trial over) to the address. */
 const preview=new URLSearchParams(location.search).get('pro');
 const enabled=PRO.enabled||preview==='preview'||preview==='expired';
+window.keptProEnabled=enabled;   // account.js starts the account's trial clock only once Pro is live
 
 /* ---------- Words (English plus the app's six languages) ---------- */
 const T={
@@ -42,7 +47,7 @@ en:{pro:'Pro',goPro:'Go Pro',proOn:'Pro ✓',trialLeft:'Free trial · {n} days l
   getPlay:'Get it on Google Play',getMs:'Get it from Microsoft',
   working:'Opening the store…',thanks:'Pro unlocked. Thanks!',cancelled:'Purchase cancelled.',failed:'The purchase didn\'t go through. Try again.',
   restored:'Pro restored.',none:'No Pro purchase found for this store account.',
-  needPro:'That\'s a Pro feature.',driveNeedsPro:'Google Drive backup is a Pro feature. Your days are still saved on this device.'},
+  needPro:'That\'s a Pro feature.',driveNeedsPro:'Google Drive backup is a Pro feature. Your days are still saved on this device.',stAcct:'Pro is active on your Kept account, on all your devices.',signInPro:'Bought Pro in the Kept app? Sign in with the same account to use it here.',signIn:'Sign in',linked:'Pro is now linked to your account, so it works on all your devices.',other:'This purchase is already linked to a different Kept account.',signInFirst:'Sign in first so Pro follows you to all your devices.'},
 es:{pro:'Pro',goPro:'Hazte Pro',proOn:'Pro ✓',trialLeft:'Prueba gratis · quedan {n} días',trialLast:'Prueba gratis · último día',
   title:'Kept Pro',done:'Listo',
   stTrial:'A tu prueba gratis le quedan {n} días. Después, esto requiere Pro:',stTrialLast:'Tu prueba gratis termina hoy. Después, esto requiere Pro:',
@@ -56,7 +61,7 @@ es:{pro:'Pro',goPro:'Hazte Pro',proOn:'Pro ✓',trialLeft:'Prueba gratis · qued
   getPlay:'Disponible en Google Play',getMs:'Obtener en Microsoft',
   working:'Abriendo la tienda…',thanks:'Pro activado. ¡Gracias!',cancelled:'Compra cancelada.',failed:'La compra no se completó. Inténtalo de nuevo.',
   restored:'Pro restaurado.',none:'No se encontró una compra de Pro en esta cuenta de la tienda.',
-  needPro:'Esa función es de Pro.',driveNeedsPro:'El respaldo en Google Drive es una función de Pro. Tus días siguen guardados en este dispositivo.'},
+  needPro:'Esa función es de Pro.',driveNeedsPro:'El respaldo en Google Drive es una función de Pro. Tus días siguen guardados en este dispositivo.',stAcct:'Pro está activo en tu cuenta de Kept, en todos tus dispositivos.',signInPro:'¿Compraste Pro en la app Kept? Inicia sesión con la misma cuenta para usarlo aquí.',signIn:'Iniciar sesión',linked:'Pro ya está vinculado a tu cuenta y funciona en todos tus dispositivos.',other:'Esta compra ya está vinculada a otra cuenta de Kept.',signInFirst:'Inicia sesión primero para que Pro te siga en todos tus dispositivos.'},
 pt:{pro:'Pro',goPro:'Seja Pro',proOn:'Pro ✓',trialLeft:'Teste grátis · faltam {n} dias',trialLast:'Teste grátis · último dia',
   title:'Kept Pro',done:'Pronto',
   stTrial:'Seu teste grátis tem mais {n} dias. Depois disso, isto exige Pro:',stTrialLast:'Seu teste grátis termina hoje. Depois disso, isto exige Pro:',
@@ -70,7 +75,7 @@ pt:{pro:'Pro',goPro:'Seja Pro',proOn:'Pro ✓',trialLeft:'Teste grátis · falta
   getPlay:'Disponível no Google Play',getMs:'Baixe na Microsoft',
   working:'Abrindo a loja…',thanks:'Pro ativado. Obrigado!',cancelled:'Compra cancelada.',failed:'A compra não foi concluída. Tente de novo.',
   restored:'Pro restaurado.',none:'Nenhuma compra do Pro encontrada nesta conta da loja.',
-  needPro:'Esse recurso é do Pro.',driveNeedsPro:'O backup no Google Drive é um recurso Pro. Seus dias continuam salvos neste aparelho.'},
+  needPro:'Esse recurso é do Pro.',driveNeedsPro:'O backup no Google Drive é um recurso Pro. Seus dias continuam salvos neste aparelho.',stAcct:'O Pro está ativo na sua conta Kept, em todos os seus aparelhos.',signInPro:'Comprou o Pro no app Kept? Entre com a mesma conta para usá-lo aqui.',signIn:'Entrar',linked:'O Pro agora está vinculado à sua conta e funciona em todos os seus aparelhos.',other:'Esta compra já está vinculada a outra conta Kept.',signInFirst:'Entre primeiro para que o Pro acompanhe você em todos os aparelhos.'},
 fr:{pro:'Pro',goPro:'Passer Pro',proOn:'Pro ✓',trialLeft:'Essai gratuit · {n} jours restants',trialLast:'Essai gratuit · dernier jour',
   title:'Kept Pro',done:'Terminé',
   stTrial:'Il reste {n} jours à votre essai gratuit. Ensuite, ceci nécessite Pro :',stTrialLast:'Votre essai gratuit se termine aujourd\'hui. Ensuite, ceci nécessite Pro :',
@@ -84,7 +89,7 @@ fr:{pro:'Pro',goPro:'Passer Pro',proOn:'Pro ✓',trialLeft:'Essai gratuit · {n}
   getPlay:'Disponible sur Google Play',getMs:'Obtenir sur Microsoft',
   working:'Ouverture de la boutique…',thanks:'Pro activé. Merci !',cancelled:'Achat annulé.',failed:'L\'achat n\'a pas abouti. Réessayez.',
   restored:'Pro restauré.',none:'Aucun achat Pro trouvé pour ce compte de la boutique.',
-  needPro:'C\'est une fonction Pro.',driveNeedsPro:'La sauvegarde Google Drive est une fonction Pro. Vos journées restent enregistrées sur cet appareil.'},
+  needPro:'C\'est une fonction Pro.',driveNeedsPro:'La sauvegarde Google Drive est une fonction Pro. Vos journées restent enregistrées sur cet appareil.',stAcct:'Pro est actif sur votre compte Kept, sur tous vos appareils.',signInPro:'Vous avez acheté Pro dans l\'appli Kept ? Connectez-vous avec le même compte pour l\'utiliser ici.',signIn:'Se connecter',linked:'Pro est maintenant lié à votre compte et fonctionne sur tous vos appareils.',other:'Cet achat est déjà lié à un autre compte Kept.',signInFirst:'Connectez-vous d\'abord pour que Pro vous suive sur tous vos appareils.'},
 ru:{pro:'Pro',goPro:'Перейти на Pro',proOn:'Pro ✓',trialLeft:'Пробный период · осталось дней: {n}',trialLast:'Пробный период · последний день',
   title:'Kept Pro',done:'Готово',
   stTrial:'До конца пробного периода осталось дней: {n}. Потом для этого нужен Pro:',stTrialLast:'Пробный период заканчивается сегодня. Потом для этого нужен Pro:',
@@ -98,7 +103,7 @@ ru:{pro:'Pro',goPro:'Перейти на Pro',proOn:'Pro ✓',trialLeft:'Про�
   getPlay:'Скачать в Google Play',getMs:'Скачать в Microsoft Store',
   working:'Открываем магазин…',thanks:'Pro включён. Спасибо!',cancelled:'Покупка отменена.',failed:'Покупка не прошла. Попробуйте ещё раз.',
   restored:'Pro восстановлен.',none:'Покупка Pro для этого аккаунта магазина не найдена.',
-  needPro:'Это функция Pro.',driveNeedsPro:'Копия в Google Диск — функция Pro. Ваши дни по-прежнему сохранены на этом устройстве.'},
+  needPro:'Это функция Pro.',driveNeedsPro:'Копия в Google Диск — функция Pro. Ваши дни по-прежнему сохранены на этом устройстве.',stAcct:'Pro активен в вашем аккаунте Kept на всех устройствах.',signInPro:'Купили Pro в приложении Kept? Войдите в тот же аккаунт, чтобы пользоваться им здесь.',signIn:'Войти',linked:'Pro привязан к вашему аккаунту и работает на всех устройствах.',other:'Эта покупка уже привязана к другому аккаунту Kept.',signInFirst:'Сначала войдите, чтобы Pro работал на всех ваших устройствах.'},
 zh:{pro:'Pro',goPro:'升级 Pro',proOn:'Pro ✓',trialLeft:'免费试用 · 剩余 {n} 天',trialLast:'免费试用 · 最后一天',
   title:'Kept Pro',done:'完成',
   stTrial:'免费试用还剩 {n} 天。之后以下功能需要 Pro：',stTrialLast:'免费试用今天结束。之后以下功能需要 Pro：',
@@ -112,7 +117,7 @@ zh:{pro:'Pro',goPro:'升级 Pro',proOn:'Pro ✓',trialLeft:'免费试用 · 剩�
   getPlay:'在 Google Play 获取',getMs:'从 Microsoft 获取',
   working:'正在打开商店…',thanks:'Pro 已解锁。谢谢！',cancelled:'购买已取消。',failed:'购买未完成，请重试。',
   restored:'Pro 已恢复。',none:'此商店账户中未找到 Pro 购买记录。',
-  needPro:'这是 Pro 功能。',driveNeedsPro:'Google 云端硬盘备份是 Pro 功能。你的记录仍保存在此设备上。'},
+  needPro:'这是 Pro 功能。',driveNeedsPro:'Google 云端硬盘备份是 Pro 功能。你的记录仍保存在此设备上。',stAcct:'Pro 已在你的 Kept 账户中启用，适用于你的所有设备。',signInPro:'在 Kept 应用中购买了 Pro？用同一账户登录即可在这里使用。',signIn:'登录',linked:'Pro 已关联到你的账户，可在所有设备上使用。',other:'此购买已关联到另一个 Kept 账户。',signInFirst:'请先登录，这样 Pro 就能在你的所有设备上使用。'},
 vi:{pro:'Pro',goPro:'Nâng cấp Pro',proOn:'Pro ✓',trialLeft:'Dùng thử · còn {n} ngày',trialLast:'Dùng thử · ngày cuối',
   title:'Kept Pro',done:'Xong',
   stTrial:'Bản dùng thử còn {n} ngày. Sau đó, các tính năng này cần Pro:',stTrialLast:'Bản dùng thử kết thúc hôm nay. Sau đó, các tính năng này cần Pro:',
@@ -126,7 +131,7 @@ vi:{pro:'Pro',goPro:'Nâng cấp Pro',proOn:'Pro ✓',trialLeft:'Dùng thử · 
   getPlay:'Tải trên Google Play',getMs:'Tải từ Microsoft',
   working:'Đang mở cửa hàng…',thanks:'Đã mở khóa Pro. Cảm ơn bạn!',cancelled:'Đã hủy giao dịch.',failed:'Giao dịch chưa thành công. Hãy thử lại.',
   restored:'Đã khôi phục Pro.',none:'Không tìm thấy giao dịch Pro cho tài khoản cửa hàng này.',
-  needPro:'Đây là tính năng Pro.',driveNeedsPro:'Sao lưu Google Drive là tính năng Pro. Dữ liệu của bạn vẫn được lưu trên thiết bị này.'}
+  needPro:'Đây là tính năng Pro.',driveNeedsPro:'Sao lưu Google Drive là tính năng Pro. Dữ liệu của bạn vẫn được lưu trên thiết bị này.',stAcct:'Pro đang hoạt động trên tài khoản Kept của bạn, trên mọi thiết bị.',signInPro:'Đã mua Pro trong ứng dụng Kept? Đăng nhập cùng tài khoản để dùng tại đây.',signIn:'Đăng nhập',linked:'Pro đã được liên kết với tài khoản của bạn và dùng được trên mọi thiết bị.',other:'Giao dịch này đã được liên kết với một tài khoản Kept khác.',signInFirst:'Hãy đăng nhập trước để Pro theo bạn trên mọi thiết bị.'}
 };
 const lang=(typeof LANG!=='undefined'&&T[LANG])?LANG:'en';
 const w=(k,o)=>(T[lang][k]||T.en[k]).replace(/\{(\w+)\}/g,(_,x)=>o[x]);
@@ -138,10 +143,14 @@ const saveSt=()=>{ try{ localStorage.setItem(PK,JSON.stringify(st)); }catch(e){}
 if(enabled&&!st.trialStart){ st.trialStart=Date.now(); saveSt(); }
 if(preview==='expired') st.trialStart=Date.now()-(PRO.trialDays+1)*DAY;
 
-function daysLeft(){ return Math.max(0,PRO.trialDays-Math.floor((Date.now()-st.trialStart)/DAY)); }
+// Signed-in account (from account.js): its Pro status and trial start, both set where drivers can't change them.
+let acct={user:null,pro:null,trialStart:null};
+const trialStart=()=>acct.user&&acct.trialStart?Math.min(acct.trialStart,st.trialStart||acct.trialStart):st.trialStart;
+function daysLeft(){ return Math.max(0,PRO.trialDays-Math.floor((Date.now()-trialStart())/DAY)); }
 function owned(){ return !!(st.ent&&Date.now()-st.ent.checked<GRACE); }
+function acctPro(){ const p=acct.user&&acct.pro; return !!(p&&p.active&&(p.expires==null||p.expires>Date.now())); }
 function trialOn(){ return daysLeft()>0; }
-function isPro(){ return !enabled||owned()||trialOn(); }
+function isPro(){ return !enabled||owned()||acctPro()||trialOn(); }
 window.keptIsPro=isPro;
 
 /* ---------- Store connection (only inside the Google Play / Microsoft Store apps) ---------- */
@@ -162,19 +171,38 @@ function priceOf(plan){
   if(d&&d.price){ try{ return new Intl.NumberFormat(undefined,{style:'currency',currency:d.price.currency}).format(Number(d.price.value)); }catch(e){} }
   return PRO.prices[plan];
 }
-async function ackPlay(p){
-  if(store.name!=='play'||!PRO.ackUrl||(st.acked||[]).includes(p.purchaseToken)) return;
+async function ackPlay(p){   // purchase without an account: acknowledge it so Google doesn't refund it (Pro on this device)
+  if(store.name!=='play'||!PRO.workerUrl||(st.acked||[]).includes(p.purchaseToken)) return;
   const plan=planOf(p.itemId);
-  const r=await fetch(PRO.ackUrl.replace(/\/$/,'')+'/play/ack',{method:'POST',headers:{'Content-Type':'application/json'},
+  const r=await fetch(PRO.workerUrl.replace(/\/$/,'')+'/play/ack',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({sku:p.itemId,token:p.purchaseToken,type:plan==='lifetime'?'inapp':'sub'})});
   if(r.ok){ st.acked=[...(st.acked||[]),p.purchaseToken].slice(-20); saveSt(); }
+}
+// Link this store's purchases to the signed-in account (once per purchase), so Pro works everywhere they sign in.
+async function claim(p){
+  if(!acct.user||!PRO.workerUrl||!store||store.name!=='play') return 'skip';
+  st.claimed=st.claimed||{}; const key=acct.user.uid+':'+p.purchaseToken;
+  if(st.claimed[key]) return 'done';
+  const tok=await window.keptAccount.idToken();
+  const r=await fetch(PRO.workerUrl.replace(/\/$/,'')+'/pro/claim',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},
+    body:JSON.stringify({store:store.name,sku:p.itemId,token:p.purchaseToken})});
+  if(r.status===409) return 'other';
+  if(!r.ok) return 'fail';
+  st.claimed[key]=Date.now(); saveSt(); return 'linked';
+}
+async function claimAll(){
+  if(!acct.user||!store) return;
+  let list; try{ list=await store.svc.listPurchases(); }catch(e){ return; }
+  for(const p of list.filter(x=>skuList.includes(x.itemId))){
+    try{ const r=await claim(p); if(r==='linked') say(w('linked')); else if(r==='other') say(w('other')); }catch(e){}
+  }
 }
 async function refresh(){
   if(!store) return false;
   let list;
   try{ list=await store.svc.listPurchases(); }catch(e){ return owned(); }   // offline: keep what we knew (7-day grace)
   const mine=list.filter(p=>skuList.includes(p.itemId));
-  for(const p of mine){ try{ await ackPlay(p); }catch(e){} }
+  for(const p of mine){ try{ if(acct.user&&PRO.workerUrl) await claim(p); else await ackPlay(p); }catch(e){} }
   const best=mine.find(p=>p.itemId===PRO.skus.lifetime)||mine[0];
   st.ent=best?{sku:best.itemId,checked:Date.now()}:null; saveSt();
   return !!best;
@@ -186,10 +214,14 @@ async function buy(plan){
     const res=await req.show();
     const token=res.details&&(res.details.purchaseToken||res.details.token);
     await res.complete('success');
-    if(token) try{ await ackPlay({itemId:sku,purchaseToken:token}); }catch(e){}
+    let linkMsg='';
+    if(token) try{
+      if(acct.user&&PRO.workerUrl){ const c=await claim({itemId:sku,purchaseToken:token}); if(c==='linked') linkMsg=w('linked'); else if(c==='other') linkMsg=w('other'); }
+      else await ackPlay({itemId:sku,purchaseToken:token});
+    }catch(e){}
     const ok=await refresh()||!!token;
     if(ok&&!st.ent){ st.ent={sku,checked:Date.now()}; saveSt(); }
-    update(); say(ok?w('thanks'):w('failed'));
+    update(); say(ok?(linkMsg||w('thanks'))+(acct.user?'':' '+w('signInFirst')):w('failed'));
   }catch(e){ say(e&&e.name==='AbortError'?w('cancelled'):w('failed')); }
 }
 function manageUrl(){
@@ -230,10 +262,14 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 function say(t){ const m=document.getElementById('proMsg'); if(m) m.textContent=t||''; }
 
 function draw(){
-  const left=daysLeft(), life=owned()&&st.ent.sku===PRO.skus.lifetime;
-  const status= owned()?(life?w('stLife'):w('stPro')) : trialOn()?(left===1?w('stTrialLast'):w('stTrial',{n:left})) : w('stEnded');
+  const keepMsg=(document.getElementById('proMsg')||{}).textContent||'';
+  const left=daysLeft(), life=(owned()&&st.ent.sku===PRO.skus.lifetime)||(acctPro()&&acct.pro.expires==null);
+  const status= owned()?(life?w('stLife'):w('stPro')) : acctPro()?(life?w('stLife'):w('stAcct')) : trialOn()?(left===1?w('stTrialLast'):w('stTrial',{n:left})) : w('stEnded');
   let buyHtml='';
-  if(!owned()){
+  const signInHtml=!acct.user&&window.keptAccount?`<p class="pro-free">${esc(w('signInPro'))}</p><div class="pro-links"><button type="button" id="proSignIn">${esc(w('signIn'))}</button></div>`:'';
+  if(acctPro()&&!owned()){
+    buyHtml='';
+  }else if(!owned()){
     if(store){
       buyHtml=`<div class="pro-plans">
         <button type="button" data-plan="monthly"><span>${esc(w('monthly'))}</span><b>${esc(priceOf('monthly'))}</b><small>${esc(w('perMo'))}</small></button>
@@ -245,7 +281,7 @@ function draw(){
     }else{
       const links=[PRO.playUrl&&`<a class="btn primary" href="${esc(PRO.playUrl)}" target="_blank" rel="noopener">${esc(w('getPlay'))}</a>`,
                    PRO.msStoreUrl&&`<a class="btn primary" href="${esc(PRO.msStoreUrl)}" target="_blank" rel="noopener">${esc(w('getMs'))}</a>`].filter(Boolean).join('');
-      buyHtml=`<p class="pro-free">${esc(w('webOnly'))}</p>${links?`<div class="pro-links">${links}</div>`:''}`;
+      buyHtml=`<p class="pro-free">${esc(w('webOnly'))}</p>${links?`<div class="pro-links">${links}</div>`:''}`+signInHtml;
     }
   }else if(store&&!life){
     buyHtml=`<div class="pro-links"><a class="btn" href="${esc(manageUrl())}" target="_blank" rel="noopener">${esc(w('manage'))}</a></div>`;
@@ -258,10 +294,13 @@ function draw(){
       ${buyHtml}
       <p class="pro-msg" id="proMsg" role="status"></p>
     </div>`;
+  say(keepMsg);
   sec.querySelector('#proDone').onclick=()=>{ show(false); btn.focus(); };
   sec.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>buy(b.dataset.plan));
   const r=sec.querySelector('#proRestore');
   if(r) r.onclick=async()=>{ say(w('working')); const ok=await refresh(); update(); say(ok?w('restored'):w('none')); };
+  const si=sec.querySelector('#proSignIn');
+  if(si) si.onclick=()=>{ const row=document.getElementById('acctRow'); if(row) row.click(); };
 }
 function show(open,msg){
   if(open){ draw(); if(msg) say(msg); }
@@ -273,12 +312,12 @@ function update(){
   if(!enabled){ btn.hidden=true; return; }
   btn.hidden=false;
   const left=daysLeft();
-  btn.classList.toggle('on',owned());
-  btn.textContent= owned()?w('proOn') : trialOn()?(left===1?w('trialLast'):w('trialLeft',{n:left})) : w('goPro');
+  btn.classList.toggle('on',owned()||acctPro());
+  btn.textContent= (owned()||acctPro())?w('proOn') : trialOn()?(left===1?w('trialLast'):w('trialLeft',{n:left})) : w('goPro');
   const locked=!isPro();
   GATED.forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.toggle('pro-lock',locked); });
   if(locked&&!document.getElementById('taxSec').hidden&&typeof showTax==='function') showTax(false);
-  if(!sec.hidden) draw();
+  draw();   // keep the Pro screen current even while it's closed
 }
 
 if(bar){ bar.prepend(btn); }
@@ -309,6 +348,10 @@ if(enabled){
   // Show the upgrade screen once when the trial runs out.
   if(!isPro()&&!st.endShown){ st.endShown=true; saveSt(); setTimeout(()=>show(true),400); }
   connect().then(s=>{ if(s) return refresh(); }).then(()=>update()).catch(()=>{});
+  // Account changes (sign in/out, Pro status from the server, trial start): re-check, and link store purchases after sign-in.
+  const onAcct=d=>{ const was=acct.user&&acct.user.uid; acct=d||acct; update(); if(acct.user&&acct.user.uid!==was) claimAll().then(update); };
+  window.addEventListener('kept-account',e=>onAcct(e.detail));
+  if(window.keptAccount&&window.keptAccount.state) onAcct(window.keptAccount.state());
   // Re-check when the app comes back to the front (renewals, cancellations, the day ticking over).
   document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ refresh().catch(()=>{}).then(update); } });
 }
