@@ -1,0 +1,45 @@
+APP NAME (30 max)
+Kept for Gig Workers
+
+SHORT DESCRIPTION (80 max)
+Track Lyft & Uber earnings, gas, miles and what you really kept.
+
+FULL DESCRIPTION (4000 max)
+Kept is a simple daily tracker made for rideshare drivers. Log your Lyft and Uber day in under a minute, and see what you really earned after gas and costs.
+
+LOG YOUR DAY, NOT EVERY TRIP
+• One quick entry per day for Lyft and Uber: earnings, tips, rides and hours
+• Add gas, miles, tolls and parking, and bonuses
+• Edit or delete any day whenever you need to
+
+SEE WHAT YOU REALLY KEPT
+• Totals by day, week, month and year
+• Lyft vs Uber side by side: which app pays more per hour, per ride and per mile
+• Earnings trends and simple insights, compared with last week or last month
+
+TAX-TIME TOTALS
+• A yearly summary of your income, business miles and IRS standard mileage deduction
+• Estimated self-employment tax and quarterly estimates with due dates
+• A mileage log you can export or print for your records
+(Estimates to help you file, not tax advice.)
+
+YOUR DATA STAYS YOURS
+• Works without an account, and your days are saved on your phone
+• Optional free account (email or Google) keeps your days backed up and synced on all your devices and at keptforgigworkers.com
+• Lock the app with your fingerprint or face
+• Save a backup file anytime and restore it on any device
+• No ads. Your data is never sold or shared.
+
+KEPT PRO
+Try everything free for 30 days. Kept Pro unlocks the Taxes report, automatic Google Drive backup with a Google Sheet, and Excel export. Monthly, yearly or one-time lifetime options.
+
+Available in English, Español, Português, Français, Русский, 中文 and Tiếng Việt.
+
+Kept is an independent app and is not affiliated with, endorsed by, or sponsored by Lyft or Uber.
+
+Questions or ideas? support@keptforgigworkers.com
+
+CATEGORY: Finance
+CONTACT EMAIL: support@keptforgigworkers.com
+WEBSITE: https://keptforgigworkers.com
+PRIVACY POLICY: https://keptforgigworkers.com/privacy.html

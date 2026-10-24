@@ -8,7 +8,8 @@
       ".github/**",
       "**/node_modules/**",
       "worker/**",
-      "*.md"
+      "*.md",
+      "store/**"
     ],
     "headers": [
       {
