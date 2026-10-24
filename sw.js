@@ -1,6 +1,6 @@
 // Kept offline support: keeps the app shell cached so it opens with no signal.
 // Pages load fresh when online (so updates arrive) and fall back to the cached copy offline.
-const CACHE = 'kept-v13';
+const CACHE = 'kept-v14';
 const SHELL = ['./', './index.html', './privacy.html', './manifest.webmanifest', './pro.js', './account.js',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-192.png', './icons/maskable-512.png'];
 

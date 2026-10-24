@@ -6,7 +6,17 @@
 'use strict';
 
 /* ---------- Settings ---------- */
-const FIREBASE_CONFIG=null;   // paste the config object from Firebase console → Project settings → Your apps → Web app
+// Firebase project "Kept" (kept-b85c0). This config only identifies the project and is safe to publish;
+// firestore.rules is what keeps each driver's data private.
+const FIREBASE_CONFIG={
+  apiKey:'AIzaSyDNWezGzh2TrP1atLNJCC08JEVdu_h8R6o',
+  authDomain:'kept-b85c0.firebaseapp.com',
+  projectId:'kept-b85c0',
+  storageBucket:'kept-b85c0.firebasestorage.app',
+  messagingSenderId:'957643145067',
+  appId:'1:957643145067:web:0cfecd0fce56cae6e8562e',
+  measurementId:'G-HSV2Q3L7WX'
+};
 const SDK='https://www.gstatic.com/firebasejs/10.12.2/';
 const cfg=window.KEPT_FIREBASE_CONFIG||FIREBASE_CONFIG;
 if(!cfg) return;
