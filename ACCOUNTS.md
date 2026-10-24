@@ -31,12 +31,10 @@ Accounts go live as soon as that's pushed.
 
 ### Publish automatically from GitHub
 
-`.github/workflows/firebase-hosting.yml` deploys every push to `main`. It stays idle until you set:
+`.github/workflows/firebase-hosting.yml` deploys every push to `main` to project `kept-b85c0`. It skips quietly until one repository secret exists:
 
-- **Repository variable** `FIREBASE_PROJECT_ID`: your project ID (Project settings → General).
-- **Repository secret** `FIREBASE_SERVICE_ACCOUNT`: a service-account key. Google Cloud console → IAM & Admin → Service accounts → Create → role **Firebase Hosting Admin** → Keys → Add key → JSON → paste the whole file into the secret.
-
-(GitHub repo → Settings → Secrets and variables → Actions.)
+- **`FIREBASE_SERVICE_ACCOUNT`**: the JSON key of the `github-deploy` service account (Google Cloud console → IAM & Admin → Service accounts → github-deploy → Keys → Add key → JSON). Roles it needs: **Firebase Hosting Admin**, **API Keys Viewer**, **Cloud Run Viewer**.
+- Add it at GitHub → tallguy644/kept → Settings → Secrets and variables → Actions → New repository secret. Paste the whole JSON file, then delete the downloaded file.
 
 ### After moving
 

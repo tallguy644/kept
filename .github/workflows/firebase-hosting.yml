@@ -1,19 +1,22 @@
-# Publishes Kept to Firebase Hosting (your own address) on every push to main.
-# Needs two repository settings (see ACCOUNTS.md): secret FIREBASE_SERVICE_ACCOUNT and variable FIREBASE_PROJECT_ID.
-# Does nothing until they are set, so GitHub Pages keeps working in the meantime.
+# Publishes Kept to Firebase Hosting (keptforgigworkers.com) on every push to main.
+# Needs one repository secret: FIREBASE_SERVICE_ACCOUNT (see ACCOUNTS.md). Skips quietly until it's added.
 name: Deploy to Firebase Hosting
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 jobs:
   deploy:
-    if: ${{ vars.FIREBASE_PROJECT_ID != '' }}
     runs-on: ubuntu-latest
+    env:
+      HAS_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
     steps:
       - uses: actions/checkout@v4
+        if: env.HAS_KEY == 'true'
       - uses: FirebaseExtended/action-hosting-deploy@v0
+        if: env.HAS_KEY == 'true'
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          projectId: ${{ vars.FIREBASE_PROJECT_ID }}
+          projectId: kept-b85c0
           channelId: live
