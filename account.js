@@ -254,6 +254,12 @@ async function need(){ try{ await load; return true; }catch(e){ say(w('e_load'),
 
 async function googleSignIn(){
   if(busy||!await need()) return; busy=true; say('');
+  if(window.keptNative){   // Google Play app: Android's Google account picker, then the same Firebase account as the website
+    try{ const tok=await keptNative.googleIdToken(); justSigned=true; await A.signInWithCredential(auth,A.GoogleAuthProvider.credential(tok)); }
+    catch(e){ justSigned=false; if(e&&e.name!=='NotAllowedError') say(errMsg(e),true); }
+    finally{ busy=false; }
+    return;
+  }
   const p=new A.GoogleAuthProvider();
   const standalone=matchMedia('(display-mode: standalone)').matches;
   try{

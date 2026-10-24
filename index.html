@@ -285,8 +285,9 @@ table.cmp{width:100%;border-collapse:collapse}
   .card{box-shadow:none;padding:0}
 }
 </style>
-<script>try{var _app=["standalone","fullscreen","minimal-ui","window-controls-overlay"].some(function(m){return matchMedia("(display-mode: "+m+")").matches})||navigator.standalone===true||document.referrer.indexOf("android-app://")===0;if(_app&&localStorage.getItem("shift-ledger-v1-lock"))document.documentElement.classList.add("kept-locked")}catch(e){}</script>
+<script>try{var _app=["standalone","fullscreen","minimal-ui","window-controls-overlay"].some(function(m){return matchMedia("(display-mode: "+m+")").matches})||navigator.standalone===true||document.referrer.indexOf("android-app://")===0||!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());if(_app&&localStorage.getItem("shift-ledger-v1-lock"))document.documentElement.classList.add("kept-locked")}catch(e){}</script>
 <style>html.kept-locked .shell,html.kept-locked .nav{visibility:hidden}</style>
+<script src="native.js"></script>
 </head><body>
 <div class="shell" id="shell">
 
@@ -827,7 +828,7 @@ function taxCsv(y){
 }
 if($('taxYear')){
   $('taxYear').onchange=e=>{ taxYear=Number(e.target.value); renderTax(); };
-  $('taxPrint').onclick=()=>window.print();
+  $('taxPrint').onclick=()=>window.keptNative?keptNative.print('Kept tax report'):window.print();
   $('taxExport').onclick=async()=>{
     try{ await saveFile('kept-taxes-'+taxYear+'.csv',taxCsv(taxYear),'text/csv',false); }
     catch(e){ if(!(e&&(e.name==='AbortError'||e.code==='cancelled'))) console.warn(e); }
@@ -875,6 +876,7 @@ $('f').addEventListener('submit',async e=>{
 
 /* ---------- backup / export ---------- */
 async function saveFile(name,text,type,preferShare){
+  if(window.keptNative) return keptNative.share(name,text,type);   // Google Play app: Android share sheet (Drive, Files, email...)
   const file=new File([text],name,{type});
   if(preferShare&&navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:name}); return 'shared'; }
   const a=document.createElement('a'); a.href=URL.createObjectURL(file); a.download=name; document.body.appendChild(a); a.click();
@@ -977,7 +979,7 @@ $('gdRestore').onclick=()=>{
     data.shifts=[...m.values()]; save(); render(); setSync('Restored '+(d.shifts||[]).length+' days from Google Drive.','');
   }).catch(gdFail);
 };
-if(GOOGLE_CLIENT_ID){
+if(GOOGLE_CLIENT_ID&&!window.keptNative){   // Google's Drive sign-in popup doesn't run inside the Play app; backups use the share sheet there
   const sc=document.createElement('script'); sc.src='https://accounts.google.com/gsi/client'; sc.async=true;
   sc.onload=()=>{ gdClient=google.accounts.oauth2.initTokenClient({client_id:GOOGLE_CLIENT_ID,scope:'https://www.googleapis.com/auth/drive.file',
     callback:r=>{ const p=gdPending; gdPending=null; if(r.error){ p&&p.rej(r); return; } gdTok=r.access_token; gdExp=Date.now()+(Number(r.expires_in)-60)*1000; p&&p.res(); },
@@ -1457,5 +1459,5 @@ catch(e){ setSync('This browser is blocking storage, so entries won\'t be kept. 
 <script src="account.js"></script>
 <script src="lock.js"></script>
 <script src="moved.js"></script>
-<script>if('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+<script>if('serviceWorker' in navigator&&!window.keptNative) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </body></html>

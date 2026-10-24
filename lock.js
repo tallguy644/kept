@@ -7,7 +7,8 @@
 const KEYL=(typeof KEY!=='undefined'?KEY:'kept')+'-lock';
 // App lock is for the installed app only (Google Play, Microsoft Store or home-screen app), never the website in a browser tab.
 const isApp=['standalone','fullscreen','minimal-ui','window-controls-overlay'].some(m=>matchMedia(`(display-mode: ${m})`).matches)
-  ||navigator.standalone===true||document.referrer.startsWith('android-app://');
+  ||navigator.standalone===true||document.referrer.startsWith('android-app://')||!!window.keptNative;
+const N=window.keptNative;   // Google Play app: Android's own fingerprint / face / screen-lock prompt instead of a passkey
 if(!isApp){ document.documentElement.classList.remove('kept-locked'); window.keptLock={lockNow:()=>{},isOn:()=>false}; return; }
 const AWAY=60*1000;   // relock after this long in the background
 let cfg=null; try{ cfg=JSON.parse(localStorage.getItem(KEYL)||'null'); }catch(e){}
@@ -80,10 +81,12 @@ const unb64=s=>{ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='
 const rand=n=>crypto.getRandomValues(new Uint8Array(n));
 
 async function supported(){
+  if(N) return N.bioAvailable();
   try{ return !!(window.PublicKeyCredential&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); }catch(e){ return false; }
 }
 // A passkey that lives on this device; creating or using it requires the phone's fingerprint, face or screen lock.
 async function enroll(){
+  if(N){ await N.bio('Kept',w('unlockHint')); cfg={id:'android',since:Date.now()}; save(); return; }
   const cred=await navigator.credentials.create({publicKey:{
     challenge:rand(32), rp:{name:'Kept'}, user:{id:rand(16),name:'Kept app lock',displayName:'Kept app lock'},
     pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
@@ -92,6 +95,7 @@ async function enroll(){
   cfg={id:b64(cred.rawId),since:Date.now()}; save();
 }
 async function verify(){
+  if(N){ await N.bio(w('locked'),w('unlockHint')); return; }
   const a=await navigator.credentials.get({publicKey:{challenge:rand(32),allowCredentials:[{type:'public-key',id:unb64(cfg.id)}],userVerification:'required',timeout:60000}});
   // userVerification:'required' means the authenticator only answers after a fingerprint, face or PIN check; the UV flag confirms it.
   const flags=new Uint8Array(a.response.authenticatorData)[32];
