@@ -209,7 +209,11 @@ css.textContent=`
 .pro-free{margin:0;font-size:.88rem;color:var(--muted)}
 .pro-plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 @media (max-width:480px){.pro-plans{grid-template-columns:1fr}}
-.pro-plans button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 8px;position:relative}
+.pro-plans button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 8px;position:relative;border:1.5px solid var(--line);background:var(--surface);border-radius:16px;color:var(--fg)}
+.pro-plans button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.pro-links .btn,.pro-links button{flex:1;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);border-radius:14px;padding:12px;font-weight:600;text-align:center;text-decoration:none}
+.pro-links .btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+#proSlot:not(:has(button:not([hidden]))){display:none}
 .pro-plans b{font-size:1.25rem;font-family:var(--display)}
 .pro-plans small{font-size:.78rem;font-weight:500;opacity:.85}
 .pro-plans .tag{position:absolute;top:-9px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:.66rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:1px 7px;border-radius:99px;background:var(--fg);color:var(--bg)}
@@ -219,9 +223,9 @@ css.textContent=`
 @media print{#proSec{display:none!important}}`;
 document.head.appendChild(css);
 
-const bar=document.querySelector('.syncbar span[style]');
+const bar=document.getElementById('proSlot')||document.querySelector('.syncbar span[style]');
 const btn=document.createElement('button'); btn.type='button'; btn.id='proBtn'; btn.setAttribute('aria-controls','proSec');
-const sec=document.createElement('section'); sec.className='card cust'; sec.id='proSec'; sec.hidden=true; sec.setAttribute('aria-labelledby','proTitle');
+const sec=document.createElement('section'); sec.className='view'; sec.id='proSec'; sec.hidden=true; sec.setAttribute('aria-labelledby','proTitle');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function say(t){ const m=document.getElementById('proMsg'); if(m) m.textContent=t||''; }
 
@@ -246,8 +250,8 @@ function draw(){
   }else if(store&&!life){
     buyHtml=`<div class="pro-links"><a class="btn" href="${esc(manageUrl())}" target="_blank" rel="noopener">${esc(w('manage'))}</a></div>`;
   }
-  sec.innerHTML=`<div class="cust-head"><h3 id="proTitle">${esc(w('title'))}</h3><button type="button" class="primary" id="proDone">${esc(w('done'))}</button></div>
-    <div class="pro">
+  sec.innerHTML=`<div class="page-top"><button type="button" class="back" id="proDone" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button><h1 id="proTitle">${esc(w('title'))}</h1><span></span></div>
+    <div class="card pro">
       <p class="pro-status">${esc(status)}</p>
       <ul><li>${esc(w('f1'))}</li><li>${esc(w('f2'))}</li><li>${esc(w('f3'))}</li></ul>
       <p class="pro-free">${esc(w('free'))}</p>
@@ -261,8 +265,9 @@ function draw(){
 }
 function show(open,msg){
   if(open){ draw(); if(msg) say(msg); }
-  sec.hidden=!open; btn.setAttribute('aria-expanded',String(open));
-  if(open) sec.scrollIntoView({behavior:'smooth',block:'start'});
+  btn.setAttribute('aria-expanded',String(open));
+  if(window.keptGo){ if(open) window.keptGo('pro'); else window.keptBack(); return; }
+  sec.hidden=!open; if(open) sec.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function update(){
   if(!enabled){ btn.hidden=true; return; }
@@ -277,7 +282,7 @@ function update(){
 }
 
 if(bar){ bar.prepend(btn); }
-const app=document.getElementById('app'); app.parentNode.insertBefore(sec,app);
+const shell=document.getElementById('shell'); if(shell) shell.appendChild(sec); else { const app=document.getElementById('app'); app.parentNode.insertBefore(sec,app); }
 btn.onclick=()=>show(sec.hidden);
 
 /* Block Pro features when locked: this runs before each button's own handler. */

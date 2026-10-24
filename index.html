@@ -1,336 +1,486 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Kept</title>
-<meta name="theme-color" content="#1c6b47">
+<meta name="theme-color" content="#1e4a39">
 <meta name="description" content="Daily tracker for Lyft and Uber drivers.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
-/* Standalone copy. Layout: one narrow column — first-run Google Sheets setup, then the day's entry (Lyft and Uber side by side), totals, platform comparison, and the day log. Road-sign green on asphalt. */
+/* Kept: calm green on warm paper. Mobile-first app shell with bottom navigation. */
 :root{
-  --bg:#f3f4f2; --surface:#ffffff; --fg:#1d2320; --muted:#5d6762; --line:#d9ddd9;
-  --accent:#1c6b47; --accent-fg:#ffffff; --good:#1c6b47; --bad:#b4442b; --warn:#a86b0b;
-  --lyft:#c2187a; --uber:#1d2320; --well:rgba(0,0,0,.16); --lip:rgba(255,255,255,.7); --wellbg:linear-gradient(to bottom,#e6e8e5,#f6f7f5 60%); --ledge-card:#c9cec9; --drop:rgba(20,30,25,.14); --sheen:rgba(255,255,255,.9);
-  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
-  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --bg:#f4f3ee; --surface:#ffffff; --surface-2:#f0efe9; --fg:#16231d; --muted:#6b7570; --line:#e6e5df;
+  --accent:#1e4a39; --accent-fg:#ffffff; --good:#1e4a39; --bad:#c2412d; --warn:#a86b0b;
+  --bar:#bcd6c6; --bar-hi:#2f5e4a; --chip:#dcebdf; --chip-fg:#1e4a39; --sun:#f5e2a8;
+  --lyft:#c2187a; --uber:#16231d;
+  --shadow:0 1px 2px rgba(22,35,29,.05),0 6px 20px rgba(22,35,29,.06);
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --display:var(--font); --body:var(--font);
+  --navh:72px;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#151917; --surface:#1e2421; --fg:#e8ece9; --muted:#9aa49f; --line:#2f3733;
-  --accent:#3fae7a; --accent-fg:#0d1511; --good:#4fc08b; --bad:#e8775c; --warn:#e0a33c;
-  --lyft:#f06bb5; --uber:#e8ece9; --well:rgba(0,0,0,.6); --lip:rgba(255,255,255,.09); --wellbg:linear-gradient(to bottom,#0b0e0c,#1a201d 75%); --ledge-card:#0c0f0d; --drop:rgba(0,0,0,.55); --sheen:rgba(255,255,255,.07); color-scheme:dark}}
+  --bg:#0f1512; --surface:#18201c; --surface-2:#202a25; --fg:#e7ece9; --muted:#97a39d; --line:#26302b;
+  --accent:#5fb48a; --accent-fg:#0b120e; --good:#6cc095; --bad:#ef8a72; --warn:#e0a33c;
+  --bar:#2c4a3c; --bar-hi:#6cc095; --chip:#24402f; --chip-fg:#bfe6cf; --sun:#c9b26a;
+  --lyft:#f06bb5; --uber:#e7ece9;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#151917; --surface:#1e2421; --fg:#e8ece9; --muted:#9aa49f; --line:#2f3733;
-  --accent:#3fae7a; --accent-fg:#0d1511; --good:#4fc08b; --bad:#e8775c; --warn:#e0a33c;
-  --lyft:#f06bb5; --uber:#e8ece9; --well:rgba(0,0,0,.6); --lip:rgba(255,255,255,.09); --wellbg:linear-gradient(to bottom,#0b0e0c,#1a201d 75%); --ledge-card:#0c0f0d; --drop:rgba(0,0,0,.55); --sheen:rgba(255,255,255,.07); color-scheme:dark}
+  --bg:#0f1512; --surface:#18201c; --surface-2:#202a25; --fg:#e7ece9; --muted:#97a39d; --line:#26302b;
+  --accent:#5fb48a; --accent-fg:#0b120e; --good:#6cc095; --bad:#ef8a72; --warn:#e0a33c;
+  --bar:#2c4a3c; --bar-hi:#6cc095; --chip:#24402f; --chip-fg:#bfe6cf; --sun:#c9b26a;
+  --lyft:#f06bb5; --uber:#e7ece9;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45}
-.wrap{max-width:600px;margin:0 auto;padding-block:20px 48px;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
-  display:flex;flex-direction:column;gap:22px}
-#app{display:flex;flex-direction:column;gap:22px;min-width:0}
-#app>*{min-width:0}
-#setup{max-width:560px;width:100%;align-self:center}
-@media (min-width:960px){
-  .wrap{max-width:1180px;padding-block:32px 56px}
-  header{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
-  #app{display:grid;grid-template-columns:minmax(0,460px) minmax(0,1fr);column-gap:32px;row-gap:24px;align-items:start;
-    grid-template-areas:"sync sync" "form stand" "form cmp" "form days"}
-  .syncbar{grid-area:sync} .a-form{grid-area:form} .a-stand{grid-area:stand} .a-days{grid-area:days} .a-cmp{grid-area:cmp}
-  .a-days .log{max-height:calc(100vh - 120px);overflow-y:auto}
-  .sign{grid-template-columns:repeat(4,1fr)}
-  .sign .big strong{font-size:3rem}
-}
-h1{font-family:var(--display);font-weight:700;font-size:2rem;letter-spacing:.01em;margin:0;text-wrap:balance}
-.sub{color:var(--muted);margin:2px 0 0;font-size:.95rem}
-h2{font-family:var(--display);font-weight:600;font-size:1.05rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
-h2 span{letter-spacing:.02em;text-transform:none;font-family:var(--body);font-weight:600;font-size:.9rem;color:var(--fg)}
-.num{font-variant-numeric:tabular-nums}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
 a{color:var(--accent)}
+.num,input{font-variant-numeric:tabular-nums}
+button,.btn{font:inherit;color:inherit;cursor:pointer}
+button:disabled{opacity:.55;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
-/* 3D cards: lifted off the page with a solid edge and soft shadow */
-.card,.log{
-  background:linear-gradient(to bottom,color-mix(in srgb,var(--surface) 94%,#fff),var(--surface) 40%);
-  box-shadow:inset 0 1px 0 var(--sheen),0 4px 0 var(--ledge-card),0 8px 18px var(--drop),0 2px 4px var(--drop);
-}
-.sign{box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 4px 0 color-mix(in srgb,var(--accent) 62%,#000),0 8px 18px var(--drop),0 2px 4px var(--drop);
-  background:linear-gradient(to bottom,color-mix(in srgb,var(--accent) 90%,#fff),var(--accent) 45%)!important}
-form{display:grid;gap:12px;grid-template-columns:1fr 1fr}
-.field{display:flex;flex-direction:column;gap:4px;min-width:0}
-.field.full{grid-column:1/-1}
-label{font-size:.82rem;font-weight:600;color:var(--muted);letter-spacing:.03em}
-.inp{position:relative}
-.inp span{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
-.inp span.r{left:auto;right:11px}
-input,select{width:100%;font:inherit;font-size:1.05rem;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font-variant-numeric:tabular-nums}
-.inp.pre input{padding-left:24px}
-.inp.suf input{padding-right:40px}
-input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-/* 3D text fields: pressed into the card, so they read as "type here" next to raised buttons */
-input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]),select{
-  border-color:color-mix(in srgb,var(--line) 65%,var(--fg) 35%);
-  background:var(--wellbg);
-  box-shadow:inset 0 3px 6px var(--well),inset 0 1px 1px var(--well),0 1px 0 var(--lip);
-}
-input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]):focus,select:focus{
-  border-color:var(--accent);
-  box-shadow:inset 0 3px 6px var(--well),inset 0 1px 1px var(--well),0 0 0 3px color-mix(in srgb,var(--accent) 28%,transparent);
-}
-.plat{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.pcol{display:flex;flex-direction:column;gap:10px;min-width:0;border-top:3px solid var(--pc);padding-top:10px}
-.pcol h3{margin:0;font-family:var(--display);font-size:1.25rem;font-weight:700;color:var(--pc)}
-.pcol.lyft{--pc:var(--lyft)} .pcol.uber{--pc:var(--uber)}
-.pcol .calc{font-size:.82rem;color:var(--muted);min-height:1.2em}
-.preview{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;border-top:1px dashed var(--line);padding-top:10px;gap:8px;flex-wrap:wrap}
-.preview b{font-family:var(--display);font-size:1.6rem}
-.actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
-button,.btn{font:inherit;font-weight:600;border-radius:8px;padding:11px 16px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--fg);text-decoration:none;text-align:center;display:inline-block}
-button.primary,.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);flex:1}
-button:disabled{opacity:.6;cursor:default}
-.msg{grid-column:1/-1;font-size:.88rem;color:var(--muted);min-height:1.2em;margin:0}
+/* ---------- app frame ---------- */
+.shell{max-width:520px;margin:0 auto;min-height:100vh;min-height:100dvh;
+  padding:max(14px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) calc(var(--navh) + 28px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.view{display:flex;flex-direction:column;gap:16px;animation:in .18s ease-out}
+@keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.view{animation:none}}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px}
+.brand{display:flex;flex-direction:column;line-height:1}
+.brand b{font-size:2rem;font-weight:800;letter-spacing:-.04em;color:var(--accent)}
+.brand small{font-size:.72rem;font-weight:500;letter-spacing:.12em;color:var(--fg);margin-top:3px}
+.icon-btn{width:44px;height:44px;border-radius:50%;border:0;background:var(--surface-2);display:grid;place-items:center;color:var(--fg);flex:0 0 auto}
+.icon-btn svg{width:22px;height:22px}
+.page-top{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;min-height:52px}
+.page-top h1{margin:0;text-align:center;font-size:1.3rem;font-weight:700;letter-spacing:-.01em}
+.back{width:44px;height:44px;border:0;background:none;display:grid;place-items:center;color:var(--fg);margin-left:-10px}
+.back svg{width:24px;height:24px}
+h1.title{margin:0;font-size:1.6rem;font-weight:800;letter-spacing:-.02em}
+h2.sh{margin:6px 2px -4px;font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- segmented controls ---------- */
+.seg{display:flex;background:var(--surface-2);border-radius:14px;padding:4px;gap:2px}
+.seg button{flex:1;border:0;background:none;padding:9px 6px;border-radius:10px;font-size:.92rem;font-weight:600;color:var(--fg);white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.seg button[aria-pressed="true"],.seg button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg);box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.seg.small button{font-size:.85rem;padding:8px 4px}
+.datenav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.datenav b{font-weight:600;font-size:1rem;text-align:center}
+.datenav button{width:40px;height:40px;border:0;background:none;border-radius:50%;display:grid;place-items:center;color:var(--fg)}
+.datenav button:disabled{opacity:.25}
+.datenav svg{width:20px;height:20px}
+
+/* ---------- cards ---------- */
+.card{background:var(--surface);border-radius:20px;padding:18px;box-shadow:var(--shadow)}
+.hero{background:var(--accent);color:var(--accent-fg);border-radius:22px;padding:20px 20px 18px;box-shadow:0 10px 24px color-mix(in srgb,var(--accent) 30%,transparent)}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.hero .hlbl{font-size:.95rem;font-weight:500;opacity:.92}
+.hero .big{font-size:2.6rem;font-weight:700;letter-spacing:-.02em;line-height:1.1;margin-top:4px}
+.chg{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:0 0 auto}
+.chg .pill{background:var(--chip);color:var(--chip-fg);font-weight:700;font-size:.85rem;padding:4px 10px;border-radius:99px;white-space:nowrap}
+.chg .pill.down{background:#f7ddd6;color:#8a2a1a}
+.chg small{font-size:.8rem;opacity:.85;white-space:nowrap}
+.split{display:grid;grid-template-columns:1fr 1fr;margin-top:16px;padding-top:2px}
+.split>div{padding-right:12px}
+.split>div+div{border-left:1px solid color-mix(in srgb,var(--accent-fg) 30%,transparent);padding-left:16px}
+.split b{display:block;font-size:1.3rem;font-weight:600}
+.split small{font-size:.85rem;opacity:.85}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{background:var(--surface);border-radius:18px;padding:16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;min-width:0}
+.tile svg{width:26px;height:26px;flex:0 0 auto;color:var(--fg)}
+.tile b{display:block;font-size:1.35rem;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile small{display:block;font-size:.85rem;color:var(--muted)}
+.tile>div{min-width:0}
+.tile.hl{background:var(--chip)}
+.tile.hl svg,.tile.hl b{color:var(--chip-fg)}
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.card-h h3{margin:0;font-size:1.05rem;font-weight:700}
+.card-h span{font-size:.85rem;color:var(--muted)}
+
+/* ---------- bar chart ---------- */
+.chart{display:grid;grid-template-columns:auto 1fr;gap:0 8px;height:170px}
+.chart .yax{display:flex;flex-direction:column;justify-content:space-between;font-size:.72rem;color:var(--muted);text-align:right;padding-bottom:22px;margin-top:-6px}
+.chart .plot{position:relative;display:flex;align-items:flex-end;gap:8px;padding-bottom:22px}
+.chart .grid{position:absolute;inset:0 0 22px 0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
+.chart .grid i{border-top:1px solid var(--line)}
+.chart .col{position:relative;flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-width:0}
+.chart .bar{width:100%;max-width:38px;background:var(--bar);border-radius:6px 6px 2px 2px;min-height:2px;position:relative}
+.chart .col.hi .bar{background:var(--bar-hi)}
+.chart .col span{position:absolute;bottom:-21px;font-size:.75rem;color:var(--muted);white-space:nowrap}
+.chart .col.hi span{color:var(--fg);font-weight:700}
+.chart .bar[data-v]:hover::after{content:attr(data-v);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);font-size:.72rem;padding:2px 6px;border-radius:6px;white-space:nowrap}
+
+/* ---------- log day form ---------- */
+form{display:flex;flex-direction:column;gap:12px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fld{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;padding:12px 14px;min-width:0;position:relative}
+.fld.full{grid-column:1/-1}
+.fld>svg{width:24px;height:24px;color:var(--fg);flex:0 0 auto}
+.fld .in{flex:1;min-width:0;display:flex;flex-direction:column}
+.fld label{font-size:.8rem;color:var(--muted);font-weight:500}
+.fld .v{display:flex;align-items:baseline;gap:2px;font-size:1.15rem;font-weight:600}
+.fld .v i{font-style:normal;color:var(--muted);font-weight:500}
+.fld input{width:100%;min-width:0;border:0;background:none;padding:2px 0 0;font:inherit;font-size:1.15rem;font-weight:600;color:var(--fg);outline:none}
+.fld input::placeholder{color:color-mix(in srgb,var(--muted) 60%,transparent);font-weight:500}
+.fld:focus-within{box-shadow:var(--shadow),0 0 0 2px var(--accent)}
+.fld input[type=date]{font-size:1.1rem}
+.platseg button span{font-weight:500;opacity:.8;margin-left:4px;font-size:.82rem}
+.pcalc{font-size:.85rem;color:var(--muted);margin:-2px 4px 0;min-height:1.2em}
+details.more{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:2px 14px}
+details.more summary{list-style:none;cursor:pointer;padding:12px 0;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary svg{width:18px;height:18px;transition:transform .15s}
+details.more[open] summary svg{transform:rotate(90deg)}
+details.more .fgrid{padding-bottom:14px}
+details.more .fld{box-shadow:none;background:var(--surface-2)}
+.kept-row{display:flex;justify-content:space-between;align-items:baseline;padding:4px 4px 0}
+.kept-row span{color:var(--muted);font-weight:500}
+.kept-row b{font-size:1.7rem;font-weight:700;letter-spacing:-.01em}
+.btn-primary,.btn-ghost{display:block;width:100%;border-radius:16px;padding:16px;font-size:1.05rem;font-weight:600;text-align:center;text-decoration:none}
+.btn-primary{background:var(--accent);color:var(--accent-fg);border:0;box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 30%,transparent)}
+.btn-ghost{background:transparent;color:var(--fg);border:1.5px solid var(--line)}
+.btn-primary:active,.btn-ghost:active{transform:translateY(1px)}
+.msg{margin:0;min-height:1.2em;font-size:.9rem;color:var(--muted);text-align:center}
 .msg.err{color:var(--bad)}
 
-.setup{display:flex;flex-direction:column;gap:14px}
-.setup h3{font-family:var(--display);font-size:1.5rem;font-weight:700;margin:0;text-wrap:balance}
-.setup p{margin:0;color:var(--muted)}
-.steps{display:flex;gap:6px}
-.steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}
-.steps i.on{background:var(--accent)}
-.skip{background:none;border:0;padding:4px 0;color:var(--muted);text-decoration:underline;font-weight:500;align-self:flex-start}
+/* ---------- days list ---------- */
+.month-h{display:flex;justify-content:space-between;align-items:baseline;margin:8px 4px -4px}
+.month-h b{font-size:1rem}
+.month-h span{font-size:.9rem;color:var(--muted)}
+.day{background:var(--surface);border-radius:18px;box-shadow:var(--shadow);padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:4px 12px}
+.day .d{font-weight:700}
+.day .meta{grid-column:1;font-size:.86rem;color:var(--muted)}
+.day .meta b{font-weight:600}
+.day .meta .l{color:var(--lyft)} .day .meta .u{color:var(--uber)}
+.day .net{grid-column:2;grid-row:1/3;text-align:right;align-self:center;font-weight:700;font-size:1.2rem}
+.day .net em{display:block;font-style:normal;font-weight:500;font-size:.78rem;color:var(--muted)}
+.day .x{grid-column:1/-1;display:flex;gap:8px;margin-top:8px}
+.day .x button{border:1.5px solid var(--line);background:none;border-radius:10px;padding:6px 12px;font-size:.85rem;font-weight:600}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.empty{text-align:center;color:var(--muted);padding:28px 16px}
+.empty svg{width:44px;height:44px;opacity:.5;display:block;margin:0 auto 8px}
 
-.syncbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:.88rem;color:var(--muted)}
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:6px;vertical-align:middle}
-.dot.off{background:var(--muted)} .dot.warn{background:var(--warn)}
-.syncbar button{padding:5px 10px;font-size:.82rem}
-
-.tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
-.tabs button{padding:6px 12px;font-size:.9rem}
-.tabs button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
-.sign{background:var(--accent);color:var(--accent-fg);border-radius:12px;padding:16px 18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px 12px}
-.sign .big{grid-column:1/-1}
-.sign small{display:block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;opacity:.82;font-weight:600}
-.sign strong{font-family:var(--display);font-size:1.35rem;font-weight:700}
-.sign .big strong{font-size:2.6rem;line-height:1.05}
-@media (max-width:420px){.sign{grid-template-columns:1fr 1fr}}
-
-.cmp{margin-top:12px;overflow-x:auto}
-.cmp table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-.cmp th,.cmp td{padding:8px 10px;text-align:right;border-top:1px solid var(--line)}
+/* ---------- insights ---------- */
+.month-pick{position:relative}
+.month-pick select{appearance:none;-webkit-appearance:none;border:0;background:var(--surface);box-shadow:var(--shadow);border-radius:14px;padding:10px 34px 10px 14px;font:inherit;font-weight:600;color:var(--fg)}
+.month-pick svg{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;pointer-events:none}
+.stat3{display:grid;grid-template-columns:repeat(3,1fr);margin-top:14px}
+.stat3>div{text-align:center}
+.stat3>div+div{border-left:1px solid var(--line)}
+.stat3 b{display:block;font-size:1.25rem;font-weight:700}
+.stat3 small{color:var(--muted);font-size:.85rem}
+.ins-total{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ins-total .lbl{color:var(--muted);font-weight:500}
+.ins-total .big{font-size:2.1rem;font-weight:700;letter-spacing:-.02em;margin-top:4px}
+.ins-total .chg small{color:var(--muted);opacity:1}
+.mini{background:var(--surface);border-radius:18px;box-shadow:var(--shadow);padding:14px;display:flex;gap:12px;align-items:flex-start;min-width:0}
+.mini svg{width:26px;height:26px;flex:0 0 auto}
+.mini small{display:block;font-size:.8rem;color:var(--muted)}
+.mini b{display:block;font-size:1.2rem;font-weight:700;margin:2px 0}
+.mini>div{min-width:0}
+.mini.exp svg{color:var(--bad)}
+.insight{background:var(--chip);color:var(--chip-fg);border-radius:18px;padding:16px;display:flex;gap:14px;align-items:flex-start}
+.insight svg{width:28px;height:28px;flex:0 0 auto;padding:6px;border-radius:50%;background:color-mix(in srgb,var(--chip-fg) 12%,transparent);box-sizing:content-box}
+.insight b{display:block;margin-bottom:2px}
+.insight p{margin:0;font-size:.92rem;line-height:1.4}
+table.cmp{width:100%;border-collapse:collapse}
+.cmp th,.cmp td{padding:10px 6px;text-align:right;border-top:1px solid var(--line)}
 .cmp th:first-child,.cmp td:first-child{text-align:left;color:var(--muted);font-weight:500}
-.cmp thead th{border-top:0;font-family:var(--display);font-size:1.1rem}
+.cmp thead th{border-top:0;font-size:1rem}
 .cmp .l{color:var(--lyft)} .cmp .u{color:var(--uber)}
 .cmp td.win{font-weight:700}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vs .mini b.l{color:var(--lyft)} .vs .mini b.u{color:var(--uber)}
+.trend-list{display:flex;flex-direction:column}
+.trend-list div{display:flex;justify-content:space-between;padding:10px 2px;border-top:1px solid var(--line)}
+.trend-list div:first-child{border-top:0}
+.trend-list span{color:var(--muted)}
 
-.log{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
-.row{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:12px 14px;border-top:1px solid var(--line)}
-.row:first-child{border-top:0}
-.row .d{font-weight:600}
-.row .meta{color:var(--muted);font-size:.86rem;grid-column:1}
-.row .meta b{font-weight:600}
-.row .meta .l{color:var(--lyft)} .row .meta .u{color:var(--uber)}
-.row .net{font-family:var(--display);font-size:1.3rem;font-weight:700;text-align:right;grid-row:1/4;grid-column:2;align-self:center;display:flex;flex-direction:column;align-items:flex-end}
-.row .net em{font-style:normal;font-family:var(--body);font-size:.8rem;font-weight:500;color:var(--muted)}
-.row .x{grid-column:1/-1;display:flex;gap:6px;margin-top:6px}
-.row .x button{padding:4px 10px;font-size:.82rem}
-.pos{color:var(--good)} .neg{color:var(--bad)}
-.empty{padding:22px 16px;color:var(--muted);text-align:center}
-.chip{display:inline-block;font-size:.75rem;font-weight:600;padding:1px 8px;border-radius:99px;border:1px solid currentColor;margin-right:6px}
-/* 3D buttons: raised with a ledge underneath, press down when tapped */
-button,.btn{
-  --ledge:color-mix(in srgb,var(--line) 55%,var(--fg) 45%);
-  background:linear-gradient(to bottom,color-mix(in srgb,var(--surface) 88%,#fff),var(--surface));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 3px 0 var(--ledge),0 5px 10px rgba(0,0,0,.14);
-  -webkit-tap-highlight-color:transparent;
-}
-button.primary,.btn.primary{
-  --ledge:color-mix(in srgb,var(--accent) 62%,#000);
-  background:linear-gradient(to bottom,color-mix(in srgb,var(--accent) 90%,#fff),var(--accent));
-}
-button:not(:disabled):active,.btn:active{transform:translateY(3px);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 0 0 var(--ledge),0 1px 2px rgba(0,0,0,.14)}
-button:disabled{box-shadow:none}
-.seg button{box-shadow:none;background:transparent}
-.seg{box-shadow:0 3px 0 color-mix(in srgb,var(--line) 55%,var(--fg) 45%)}
-@media (prefers-reduced-motion:no-preference){button,.btn{transition:background .15s,color .15s,transform .08s,box-shadow .08s}}
-
-/* Taxes */
+/* ---------- taxes ---------- */
 .tax{display:flex;flex-direction:column;gap:14px}
 .tax-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.tax-top select{width:auto;min-width:110px}
-.tax h3{margin:4px 0 0;font-family:var(--display);font-size:1.15rem;font-weight:700}
-.tax table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-.tax td,.tax th{padding:7px 4px;border-top:1px solid var(--line);text-align:right;vertical-align:top}
+.tax-top select{border:1.5px solid var(--line);background:var(--surface);color:var(--fg);border-radius:12px;padding:8px 12px;font:inherit;font-weight:600}
+.tax h3{margin:4px 0 0;font-size:1.05rem;font-weight:700}
+.tax table{width:100%;border-collapse:collapse}
+.tax td,.tax th{padding:8px 4px;border-top:1px solid var(--line);text-align:right;vertical-align:top}
 .tax td:first-child,.tax th:first-child{text-align:left}
 .tax td:not(:first-child),.tax th:not(:first-child){white-space:nowrap;padding-left:10px}
+.tax .scroll{overflow-x:auto}
 .tax .scroll table{font-size:.92rem}
 @media (max-width:480px){.tax .scroll td:nth-child(2),.tax .scroll th:nth-child(2){display:none}}
-.tax th{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;border-top:0}
+.tax th{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;border-top:0}
 .tax tr.total td{font-weight:700}
 .tax tr.minus td:last-child{color:var(--muted)}
 .tax .hint{display:block;font-size:.8rem;color:var(--muted);font-weight:400}
-.tax .scroll{overflow-x:auto}
 .tax-note{margin:0;font-size:.82rem;color:var(--muted)}
-.tax-actions{margin-top:2px}
-@media print{
-  body{background:#fff;color:#000}
-  .wrap>header,#setup,#cust,#app,.foot,.tax-actions,.tax-top select,#taxClose{display:none!important}
-  .a-tax[hidden]{display:block!important}
-  .tax{border:0;padding:0;box-shadow:none!important;background:none!important}
-}
+.tax-actions{display:flex;gap:10px;flex-wrap:wrap}
+.tax-actions button{flex:1;border:1.5px solid var(--line);background:var(--surface);border-radius:14px;padding:12px;font-weight:600}
 
-/* Customize panel */
+/* ---------- more / settings ---------- */
+.list{background:var(--surface);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.list>*{display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px;border:0;border-top:1px solid var(--line);background:none;text-align:left;font-size:1rem;font-weight:500;color:var(--fg);text-decoration:none;min-height:54px}
+.list>*:first-child{border-top:0}
+.list>* svg{width:22px;height:22px;flex:0 0 auto;color:var(--muted)}
+.list>*::after{content:"";margin-left:auto;width:8px;height:8px;border-right:2px solid var(--muted);border-top:2px solid var(--muted);transform:rotate(45deg);opacity:.6;flex:0 0 auto}
+.list>.status::after{display:none}
+.list>.status{color:var(--muted);font-size:.9rem;cursor:default}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--good);margin-right:8px;vertical-align:middle;flex:0 0 auto}
+.dot.off{background:var(--muted)} .dot.warn{background:var(--warn)}
+#proBtn{font-weight:700;color:var(--accent)}
+#proBtn.on{color:var(--accent)}
+.foot{text-align:center;font-size:.82rem;color:var(--muted);margin-top:8px}
+
+/* customize */
 .cust{display:flex;flex-direction:column;gap:18px}
-.cust-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.cust-head h3{margin:0;font-family:var(--display);font-size:1.5rem}
-.cust-head button{flex:0 0 auto}
 .cust-grp{display:flex;flex-direction:column;gap:8px}
 .cust-grp.two{flex-direction:row;gap:16px;flex-wrap:wrap}
-.lbl{font-size:.82rem;font-weight:600;color:var(--muted);letter-spacing:.03em}
-.hint{margin:0;font-size:.85rem;color:var(--muted)}
-.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;width:max-content;max-width:100%}
-.seg button{border:0;border-radius:0;padding:8px 14px;font-size:.9rem}
-.seg button+button{border-left:1px solid var(--line)}
-.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.lbl{font-size:.82rem;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.cust select{border:1.5px solid var(--line);background:var(--surface);color:var(--fg);border-radius:12px;padding:10px 12px;font:inherit;max-width:280px}
 .swatches{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .sw{width:40px;height:40px;border-radius:50%;padding:0;border:2px solid var(--line);background:var(--c)}
 .sw[aria-pressed="true"]{outline:3px solid var(--fg);outline-offset:2px}
 .sw.custom{position:relative;overflow:hidden;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)}
 .sw.custom input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;padding:0;border:0}
 .pick{display:flex;flex-direction:column;gap:6px}
-.pick input{width:64px;height:40px;padding:2px;cursor:pointer}
-.order{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.order li{display:flex;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid var(--line)}
-.order li:first-child{border-top:0}
-.order li.off .nm{color:var(--muted);text-decoration:line-through}
-.order .nm{flex:1;font-weight:600;min-width:0}
-.order button{padding:4px 10px;font-size:1rem;line-height:1}
-.order label{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)}
-.order input[type=checkbox]{width:20px;height:20px;padding:0}
-.sec.off{display:none!important}
-@media (min-width:960px){
-  #app.custom-layout{grid-template-areas:none!important;grid-auto-flow:row}
-  #app.custom-layout>.syncbar{grid-column:1/-1;grid-row:1}
-  #app.custom-layout.one{grid-template-columns:minmax(0,1fr)}
+.pick input{width:64px;height:40px;padding:2px;cursor:pointer;border:1.5px solid var(--line);border-radius:10px;background:var(--surface)}
+.skip{background:none;border:0;padding:4px 0;color:var(--muted);text-decoration:underline;font-weight:500;align-self:flex-start}
+
+/* ---------- bottom nav ---------- */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.nav-in{max-width:520px;margin:0 auto;height:var(--navh);display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
+.nav button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.72rem;font-weight:500;color:var(--muted);padding:6px 0}
+.nav button svg{width:24px;height:24px}
+.nav button[aria-current="page"]{color:var(--fg);font-weight:700}
+.nav .plus{justify-self:center;width:60px;height:60px;border-radius:50%;background:var(--accent);color:var(--accent-fg);margin-top:-28px;box-shadow:0 8px 18px color-mix(in srgb,var(--accent) 40%,transparent);justify-content:center;padding:0}
+.nav .plus svg{width:28px;height:28px}
+
+/* ---------- welcome ---------- */
+.welcome{min-height:calc(100dvh - 40px);display:flex;flex-direction:column;gap:22px;padding-top:28px;padding-bottom:20px}
+.welcome .brand b{font-size:3.4rem}
+.welcome .brand small{font-size:1.05rem;letter-spacing:.1em}
+.welcome .art{width:100%;aspect-ratio:1.15;border-radius:20px;overflow:hidden}
+.welcome .art svg{width:100%;height:100%;display:block}
+.welcome h2{margin:0;font-size:1.75rem;font-weight:700;letter-spacing:-.02em;line-height:1.2;color:var(--accent)}
+.welcome p{margin:-8px 0 0;color:var(--muted);font-size:1.02rem}
+.dots{display:flex;gap:8px;justify-content:center}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--fg)}
+.welcome .btn-primary{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:auto}
+.welcome .btn-primary svg{width:20px;height:20px}
+.welcome-on .nav{display:none}
+
+/* ---------- toast ---------- */
+.toast{position:fixed;left:50%;bottom:calc(var(--navh) + 18px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.92rem;font-weight:500;z-index:30;max-width:calc(100% - 32px);box-shadow:0 8px 20px rgba(0,0,0,.2)}
+
+@media (min-width:700px){
+  .shell{padding-top:28px}
+  .hero .big{font-size:3rem}
+}
+@media print{
+  body{background:#fff;color:#000}
+  .nav,.top,.seg,.month-pick,.tax-actions,.tax-top select,.toast,.view:not(#vInsights){display:none!important}
+  #vInsights>*:not(#taxSec){display:none!important}
+  #taxSec{display:block!important}
+  .card{box-shadow:none;padding:0}
 }
 </style>
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}.foot{text-align:center;font-size:.82rem;color:var(--muted);padding:0 16px 32px}</style>
 </head><body>
-<div class="wrap">
-  <header>
-    <h1>Kept</h1>
-    <p class="sub">Lyft and Uber, side by side. Log the day, see what you kept. Everything stays on this device.</p>
-  </header>
+<div class="shell" id="shell">
 
-  <section class="card cust" id="cust" hidden aria-labelledby="custTitle">
-    <div class="cust-head"><h3 id="custTitle">Customize</h3><button type="button" class="primary" id="custDone">Done</button></div>
+<!-- Welcome (first run) -->
+<section class="view welcome" id="vWelcome" hidden>
+  <div class="brand"><b>Kept</b><small>for Gig Workers</small></div>
+  <div class="art" aria-hidden="true">
+    <svg viewBox="0 0 320 278" preserveAspectRatio="xMidYMid slice">
+      <rect width="320" height="278" fill="var(--chip)"/>
+      <circle cx="150" cy="70" r="34" fill="var(--sun)"/>
+      <path d="M0 90 C60 70 110 120 170 130 C230 140 260 60 320 40 L320 278 L0 278Z" fill="color-mix(in srgb,var(--accent) 35%,var(--chip))"/>
+      <path d="M0 150 C70 120 120 180 200 170 C260 162 290 110 320 100 L320 278 L0 278Z" fill="color-mix(in srgb,var(--accent) 60%,var(--chip))"/>
+      <path d="M250 0 L320 0 L320 278 L230 278 C240 200 250 120 250 0Z" fill="color-mix(in srgb,var(--accent) 55%,var(--chip))" opacity=".9"/>
+      <path d="M0 200 C80 170 150 230 230 215 C280 205 300 170 320 160 L320 278 L0 278Z" fill="var(--accent)"/>
+      <path d="M40 278 C90 240 170 235 200 205 C225 180 215 150 250 140 L262 148 C232 160 240 190 214 216 C182 248 120 252 82 278Z" fill="#f4f3ee"/>
+      <path d="M150 262 C180 250 200 236 212 218 M226 186 C232 170 240 160 254 150" stroke="color-mix(in srgb,var(--accent) 50%,#fff)" stroke-width="2" stroke-dasharray="8 8" fill="none"/>
+    </svg>
+  </div>
+  <h2 id="wHead">Track your rideshare work. Keep more of what you earn.</h2>
+  <p id="wSub">Log your Lyft and Uber days, track gas and miles, and get clear numbers for tax time — all in one simple app.</p>
+  <div class="dots" id="wDots"><i class="on"></i><i></i><i></i></div>
+  <button type="button" class="btn-primary" id="wNext"><span id="wBtn">Next</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+</section>
+
+<!-- Home -->
+<section class="view" id="vHome">
+  <div class="top">
+    <div class="brand"><b>Kept</b><small>for Gig Workers</small></div>
+    <button type="button" class="icon-btn" data-go="more" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button>
+  </div>
+  <div class="seg" role="group" aria-label="Period" id="spanSeg">
+    <button type="button" data-span="day" aria-pressed="true">Day</button>
+    <button type="button" data-span="week" aria-pressed="false">Week</button>
+    <button type="button" data-span="month" aria-pressed="false">Month</button>
+    <button type="button" data-span="year" aria-pressed="false">Year</button>
+  </div>
+  <div class="datenav">
+    <button type="button" id="prevP" aria-label="Previous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <b id="pLabel"></b>
+    <button type="button" id="nextP" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
+  <div class="hero num" id="hero"></div>
+  <div class="tiles num" id="tiles"></div>
+  <div class="card">
+    <div class="card-h"><h3>Earnings trend</h3><span id="trendSpan"></span></div>
+    <div class="chart num" id="trend"></div>
+  </div>
+</section>
+
+<!-- Days -->
+<section class="view" id="vDays" hidden>
+  <div class="top"><h1 class="title">Days</h1>
+    <button type="button" class="icon-btn" data-go="log" aria-label="Log a day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
+  <div id="log" style="display:flex;flex-direction:column;gap:10px"></div>
+</section>
+
+<!-- Log day -->
+<section class="view" id="vLog" hidden>
+  <div class="page-top">
+    <button type="button" class="back" id="logBack" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <h1 id="formTitle">Log Day</h1><span></span>
+  </div>
+  <form id="f" autocomplete="off">
+    <div class="fld full"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      <div class="in"><label for="date">Date</label><input id="date" type="date" required></div></div>
+
+    <div class="seg platseg" role="tablist" aria-label="Platform" id="platSeg">
+      <button type="button" role="tab" data-plat="l" aria-selected="true" aria-controls="pl">Lyft<span id="lTab"></span></button>
+      <button type="button" role="tab" data-plat="u" aria-selected="false" aria-controls="pu">Uber<span id="uTab"></span></button>
+    </div>
+    <div id="pl" role="tabpanel">
+      <div class="fgrid">
+        <div class="fld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v20M17 6.5c0-1.9-2.2-3-5-3s-5 1.3-5 3.3c0 4.7 10 2.4 10 7.4 0 2-2.2 3.3-5 3.3s-5-1.2-5-3.2"/></svg><div class="in"><label for="le">Earnings</label><div class="v"><i>$</i><input id="le" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div></div>
+        <div class="fld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v9H5v-9M7.5 8a2.5 2.5 0 010-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 010 5"/></svg><div class="in"><label for="lt">Tips</label><div class="v"><i>$</i><input id="lt" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div></div>
+        <div class="fld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.6-4.4A2 2 0 018.5 5h7a2 2 0 011.9 1.6L19 11M4 11h16v6H4zM6 17v2M18 17v2"/><circle cx="7.5" cy="14" r="1"/><circle cx="16.5" cy="14" r="1"/></svg><div class="in"><label for="lr">Rides</label><input id="lr" type="number" inputmode="numeric" step="1" min="0" placeholder="0"></div></div>
+        <div class="fld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div class="in"><label for="lh">Hours</label><div class="v"><input id="lh" type="number" inputmode="decimal" step="0.25" min="0" placeholder="0"><i>hr</i></div></div></div>
+      </div>
+      <p class="pcalc num" id="lcalc"></p>
+    </div>
+    <div id="pu" role="tabpanel" hidden>
+      <div class="fgrid">
+        <div class="fld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v20M17 6.5c0-1.9-2.2-3-5-3s-5 1.3-5 3.3c0 4.7 10 2.4 10 7.4 0 2-2.2 3.3-5 3.3s-5-1.2-5-3.2"/></svg><div class="in"><label for="ue">Earnings</label><div class="v"><i>$</i><input id="ue" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div></div>
+        <div class="fld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v9H5v-9M7.5 8a2.5 2.5 0 010-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 010 5"/></svg><div class="in"><label for="ut">Tips</label><div class="v"><i>$</i><input id="ut" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div></div>
+        <div class="fld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.6-4.4A2 2 0 018.5 5h7a2 2 0 011.9 1.6L19 11M4 11h16v6H4zM6 17v2M18 17v2"/><circle cx="7.5" cy="14" r="1"/><circle cx="16.5" cy="14" r="1"/></svg><div class="in"><label for="ur">Rides</label><input id="ur" type="number" inputmode="numeric" step="1" min="0" placeholder="0"></div></div>
+        <div class="fld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div class="in"><label for="uh">Hours</label><div class="v"><input id="uh" type="number" inputmode="decimal" step="0.25" min="0" placeholder="0"><i>hr</i></div></div></div>
+      </div>
+      <p class="pcalc num" id="ucalc"></p>
+    </div>
+
+    <h2 class="sh">Car &amp; costs</h2>
+    <div class="fgrid">
+      <div class="fld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V5a2 2 0 012-2h6a2 2 0 012 2v16M3 21h12M4 11h10M14 8h2a2 2 0 012 2v6a1.5 1.5 0 003 0V9l-3-3"/></svg><div class="in"><label for="gas">Gas</label><div class="v"><i>$</i><input id="gas" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div></div>
+      <div class="fld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-12a7 7 0 00-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg><div class="in"><label for="miles">Total miles</label><div class="v"><input id="miles" type="number" inputmode="decimal" step="0.1" min="0" placeholder="0"><i>mi</i></div></div></div>
+      <div class="fld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4zM9 16V8h4a2.5 2.5 0 010 5H9"/></svg><div class="in"><label for="tolls">Tolls &amp; parking</label><div class="v"><i>$</i><input id="tolls" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div></div>
+      <div class="fld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg><div class="in"><label for="bonus">Bonus earned / other</label><div class="v"><i>$</i><input id="bonus" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div></div>
+    </div>
+
+    <details class="more" id="depBox">
+      <summary><span>Deposits</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></summary>
+      <div class="fgrid">
+        <div class="fld"><div class="in"><label for="ld">Lyft deposit</label><div class="v"><i>$</i><input id="ld" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div></div>
+        <div class="fld"><div class="in"><label for="ud">Uber deposit</label><div class="v"><i>$</i><input id="ud" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div></div>
+        <div class="fld"><div class="in"><label for="dtype">Deposit type</label><input id="dtype" list="dtypes" placeholder="e.g. Express Pay"><datalist id="dtypes"><option value="Weekly"><option value="Express Pay"><option value="Instant Cash Out"><option value="Direct deposit"></datalist></div></div>
+        <div class="fld"><div class="in"><label for="ddate">Deposit date</label><input id="ddate" type="date"></div></div>
+      </div>
+    </details>
+
+    <div class="kept-row"><span>You kept</span><b class="num" id="pv">$0.00</b></div>
+    <button class="btn-primary" type="submit" id="saveBtn">Save Day</button>
+    <button class="btn-ghost" type="button" id="cancelBtn" hidden>Cancel</button>
+    <p class="msg" id="msg" role="status"></p>
+  </form>
+</section>
+
+<!-- Insights -->
+<section class="view" id="vInsights" hidden>
+  <div class="top">
+    <div class="brand"><b>Kept</b><small>for Gig Workers</small></div>
+    <label class="month-pick"><span hidden>Month</span><select id="insMonth" aria-label="Month"></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></label>
+  </div>
+  <div class="seg small" role="tablist" aria-label="Insights" id="insSeg">
+    <button type="button" role="tab" data-ins="overview" aria-selected="true">Overview</button>
+    <button type="button" role="tab" data-ins="taxes" id="taxBtn" aria-selected="false" aria-controls="taxSec">Taxes</button>
+    <button type="button" role="tab" data-ins="compare" aria-selected="false">Compare</button>
+    <button type="button" role="tab" data-ins="trends" aria-selected="false">Trends</button>
+  </div>
+  <div id="insOverview" class="view" style="gap:14px"></div>
+  <div id="taxSec" class="card tax" hidden>
+    <div class="tax-top"><label class="lbl" for="taxYear">Tax year</label><select id="taxYear"></select></div>
+    <div id="taxBody"></div>
+    <div class="tax-actions"><button type="button" id="taxExport" hidden>Export tax report</button><button type="button" id="taxPrint" hidden>Print / save as PDF</button></div>
+    <p class="tax-note">Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.</p>
+  </div>
+  <div id="insCompare" class="view" style="gap:14px" hidden></div>
+  <div id="insTrends" class="view" style="gap:14px" hidden></div>
+</section>
+
+<!-- More -->
+<section class="view" id="vMore" hidden>
+  <div class="top"><h1 class="title">More</h1></div>
+  <div class="list" id="proSlot"></div>
+  <h2 class="sh">Backup &amp; sync</h2>
+  <div class="list">
+    <div class="status"><span id="syncText"></span></div>
+    <button type="button" id="gdBtn" hidden>Connect Google Drive</button>
+    <a class="btn" id="gdSheet" hidden target="_blank" rel="noopener">Open my Google Sheet</a>
+    <button type="button" id="gdRestore" hidden>Restore from Drive</button>
+    <button type="button" id="driveBtn">Back up to Google Drive</button>
+    <label class="btn" for="importFile">Restore backup</label>
+  </div>
+  <input type="file" id="importFile" accept=".json,application/json" hidden>
+  <h2 class="sh">Your data</h2>
+  <div class="list">
+    <button type="button" id="exportBtn">Export to Excel / Sheets</button>
+    <button type="button" id="custBtn">Customize</button>
+    <a href="privacy.html">Privacy policy</a>
+  </div>
+  <p class="foot">Kept for Gig Workers · Everything stays on this device.</p>
+</section>
+
+<!-- Customize -->
+<section class="view cust" id="cust" hidden aria-labelledby="custTitle">
+  <div class="page-top">
+    <button type="button" class="back" id="custDone" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <h1 id="custTitle">Customize</h1><span></span>
+  </div>
+  <div class="card cust">
     <div class="cust-grp">
       <span class="lbl">Appearance</span>
-      <div class="seg" role="group" aria-label="Appearance">
+      <div class="seg" role="group" aria-label="Appearance" id="modeSeg">
         <button type="button" data-mode="system">Match phone</button><button type="button" data-mode="light">Light</button><button type="button" data-mode="dark">Dark</button>
       </div>
     </div>
-    <div class="cust-grp">
-      <label class="lbl" for="langSel">Language</label>
-      <select id="langSel" style="max-width:280px"></select>
-    </div>
-    <div class="cust-grp">
-      <span class="lbl">Main color</span>
-      <div class="swatches" id="swatches"></div>
-    </div>
+    <div class="cust-grp"><label class="lbl" for="langSel">Language</label><select id="langSel"></select></div>
+    <div class="cust-grp"><span class="lbl">Main color</span><div class="swatches" id="swatches"></div></div>
     <div class="cust-grp two">
       <label class="pick"><span class="lbl">Lyft color</span><input type="color" id="lyftColor"></label>
       <label class="pick"><span class="lbl">Uber color</span><input type="color" id="uberColor"></label>
     </div>
-    <div class="cust-grp">
-      <span class="lbl">Layout</span>
-      <p class="hint">Use the arrows to reorder. Turn off anything you don't need. On a computer, the first section sits on the left.</p>
-      <ol class="order" id="order"></ol>
-    </div>
     <button type="button" class="skip" id="custReset">Reset to original look</button>
-  </section>
-
-  <section class="a-tax" id="taxSec" hidden aria-labelledby="taxTitle">
-    <div class="card tax">
-      <div class="cust-head"><h3 id="taxTitle">Taxes</h3><button type="button" class="primary" id="taxClose">Done</button></div>
-        <div class="tax-top">
-          <label class="lbl" for="taxYear">Tax year</label>
-          <select id="taxYear"></select>
-        </div>
-        <div id="taxBody"></div>
-        <div class="actions tax-actions">
-          <button type="button" id="taxExport" hidden>Export tax report</button>
-          <button type="button" id="taxPrint" hidden>Print / save as PDF</button>
-        </div>
-        <p class="tax-note">Estimates to help you file, not tax advice. Check the numbers against the tax summaries in your Lyft and Uber apps, and ask a tax professional if you're unsure.</p>
-    </div>
-  </section>
-
-  <div id="app">
-    <div class="syncbar"><span id="syncText"></span><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" id="taxBtn" aria-expanded="false" aria-controls="taxSec">Taxes</button><button type="button" id="custBtn">Customize</button><button type="button" id="gdBtn" hidden>Connect Google Drive</button><a class="btn" id="gdSheet" hidden target="_blank" rel="noopener" style="padding:5px 10px;font-size:.82rem">Open my Google Sheet</a><button type="button" id="gdRestore" hidden>Restore from Drive</button><button type="button" id="driveBtn">Back up to Google Drive</button><button type="button" id="exportBtn">Export to Excel / Sheets</button><label class="btn" for="importFile" style="padding:5px 10px;font-size:.82rem">Restore backup</label><input type="file" id="importFile" accept=".json,application/json" hidden></span></div>
-
-    <section class="a-form sec" data-sec="form">
-      <h2 id="formTitle">Log a day</h2>
-      <form id="f" class="card" autocomplete="off">
-        <div class="field full"><label for="date">Date</label><input id="date" type="date" required></div>
-        <div class="plat">
-          <div class="pcol lyft">
-            <h3>Lyft</h3>
-            <div class="field"><label for="le">Earnings</label><div class="inp pre"><span>$</span><input id="le" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
-            <div class="field"><label for="lt">Tips</label><div class="inp pre"><span>$</span><input id="lt" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
-            <div class="field"><label for="lr">Rides</label><input id="lr" type="number" inputmode="numeric" step="1" min="0" placeholder="0"></div>
-            <div class="field"><label for="lh">Hours</label><div class="inp suf"><input id="lh" type="number" inputmode="decimal" step="0.25" min="0" placeholder="0"><span class="r">hr</span></div></div>
-            <div class="field"><label for="ld">Deposit amount</label><div class="inp pre"><span>$</span><input id="ld" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
-            <div class="calc num" id="lcalc"></div>
-          </div>
-          <div class="pcol uber">
-            <h3>Uber</h3>
-            <div class="field"><label for="ue">Earnings</label><div class="inp pre"><span>$</span><input id="ue" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
-            <div class="field"><label for="ut">Tips</label><div class="inp pre"><span>$</span><input id="ut" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
-            <div class="field"><label for="ur">Rides</label><input id="ur" type="number" inputmode="numeric" step="1" min="0" placeholder="0"></div>
-            <div class="field"><label for="uh">Hours</label><div class="inp suf"><input id="uh" type="number" inputmode="decimal" step="0.25" min="0" placeholder="0"><span class="r">hr</span></div></div>
-            <div class="field"><label for="ud">Deposit amount</label><div class="inp pre"><span>$</span><input id="ud" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
-            <div class="calc num" id="ucalc"></div>
-          </div>
-        </div>
-        <div class="field"><label for="gas">Gas</label><div class="inp pre"><span>$</span><input id="gas" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
-        <div class="field"><label for="miles">Total miles</label><div class="inp suf"><input id="miles" type="number" inputmode="decimal" step="0.1" min="0" placeholder="0"><span class="r">mi</span></div></div>
-        <div class="field"><label for="bonus">Bonus earned / other</label><div class="inp pre"><span>$</span><input id="bonus" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
-        <div class="field"><label for="tolls">Tolls &amp; parking</label><div class="inp pre"><span>$</span><input id="tolls" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div></div>
-        <div class="field"><label for="dtype">Deposit type</label><input id="dtype" list="dtypes" placeholder="e.g. Express Pay"><datalist id="dtypes"><option value="Weekly"><option value="Express Pay"><option value="Instant Cash Out"><option value="Direct deposit"></datalist></div>
-        <div class="field"><label for="ddate">Deposit date</label><input id="ddate" type="date"></div>
-        <div class="preview"><span>You kept</span><b class="num" id="pv">$0.00</b></div>
-        <div class="actions"><button class="primary" type="submit" id="saveBtn">Save day</button><button type="button" id="cancelBtn" hidden>Cancel</button></div>
-        <p class="msg" id="msg" role="status"></p>
-      </form>
-    </section>
-
-    <section class="a-stand sec" data-sec="stand">
-      <h2>Where you stand</h2>
-      <div class="tabs" role="group" aria-label="Period">
-        <button type="button" data-p="week" aria-pressed="true">This week</button>
-        <button type="button" data-p="month" aria-pressed="false">This month</button>
-        <button type="button" data-p="year" aria-pressed="false">This year</button>
-        <button type="button" data-p="all" aria-pressed="false">All time</button>
-      </div>
-      <div class="sign num" id="sum"></div>
-    </section>
-
-    <section class="a-cmp sec" data-sec="cmp">
-      <h2>Lyft vs Uber</h2>
-      <div class="card cmp"><table id="cmp"></table></div>
-    </section>
-
-    <section class="a-days sec" data-sec="days">
-      <h2>Days</h2>
-      <div class="log" id="log"></div>
-    </section>
-
-
   </div>
+</section>
+
 </div>
 
-<p class="foot"><a href="privacy.html">Privacy policy</a></p>
+<nav class="nav" aria-label="Main">
+  <div class="nav-in">
+    <button type="button" data-go="home" aria-current="page"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.2 3 10.4V21h6.5v-6h5v6H21V10.4z"/></svg><span>Home</span></button>
+    <button type="button" data-go="days"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.6-4.4A2 2 0 018.5 5h7a2 2 0 011.9 1.6L19 11M4 11h16v6H4zM6 17v2M18 17v2"/><circle cx="7.5" cy="14" r="1"/><circle cx="16.5" cy="14" r="1"/></svg><span>Days</span></button>
+    <button type="button" class="plus" data-go="log" aria-label="Log a day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button type="button" data-go="insights"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="12" width="4" height="8" rx="1"/><rect x="10" y="8" width="4" height="12" rx="1"/><rect x="16" y="4" width="4" height="16" rx="1"/></svg><span>Insights</span></button>
+    <button type="button" data-go="more"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg><span>More</span></button>
+  </div>
+</nav>
+<div class="toast" id="toast" role="status" hidden></div>
+
 <script>
 const $ = id => document.getElementById(id);
 const SERVER='Google Sheets';
@@ -374,55 +524,230 @@ function armDelete(btn,fn){
   };
 }
 function alertMsg(el,t){ el.className='msg err'; el.textContent=t; }
-function render(){
-  const days=data.shifts.slice().sort((a,b)=>b.date.localeCompare(a.date)||(b.row||0)-(a.row||0));
-  const p=days.filter(s=>inPeriod(s.date));
-  const T=p.reduce((a,s)=>{ for(const k of ['le','ue','lt','ut','lh','uh','lr','ur','gas','miles','bonus','ld','ud','tolls']) a[k]+=s[k]||0; return a; },
-    {le:0,ue:0,lt:0,ut:0,lh:0,uh:0,lr:0,ur:0,gas:0,miles:0,bonus:0,ld:0,ud:0,tolls:0});
-  const LP=T.le+T.lt, UP=T.ue+T.ut, M=LP+UP+T.bonus, K=M-T.gas-T.tolls, H=T.lh+T.uh, R=T.lr+T.ur;
-  $('sum').innerHTML=`
-    <div class="big"><small>Kept after gas · ${p.length} day${p.length===1?'':'s'}</small><strong>${money(K)}</strong></div>
-    <div><small>Made</small><strong>${money(M)}</strong></div>
-    <div><small>Tips</small><strong>${money(T.lt+T.ut)}</strong></div>
-    <div><small>Gas</small><strong>${money(T.gas)}</strong></div>
-    <div><small>Bonus / other</small><strong>${money(T.bonus)}</strong></div>
-    <div><small>Miles</small><strong>${T.miles.toLocaleString(LOC,{maximumFractionDigits:1})}</strong></div>
-    <div><small>Kept per mile</small><strong>${per(K,T.miles)}</strong></div>
-    <div><small>Kept per hour</small><strong>${per(K,H)}</strong></div>
-    <div><small>Rides</small><strong>${R.toLocaleString()}</strong></div>`;
-  const rowsC=[
-    ['Earnings',T.le,T.ue,money],
-    ['Tips',T.lt,T.ut,money],
-    ['Hours',T.lh,T.uh,v=>v.toLocaleString(LOC,{maximumFractionDigits:2})],
-    ['Hourly wage',T.lh?LP/T.lh:null,T.uh?UP/T.uh:null,money,true],
-    ['Rides',T.lr,T.ur,v=>v.toLocaleString()],
-    ['Amount per ride',T.lr?LP/T.lr:null,T.ur?UP/T.ur:null,money,true],
-    ['Deposits',T.ld,T.ud,money],
-  ];
-  $('cmp').innerHTML='<thead><tr><th></th><th class="l">Lyft</th><th class="u">Uber</th></tr></thead><tbody>'+
-    rowsC.map(([n,a,b,f,cmp])=>{ const wa=cmp&&a!=null&&b!=null&&a>b, wb=cmp&&a!=null&&b!=null&&b>a;
-      return `<tr><td>${n}</td><td class="${wa?'win':''}">${a==null?'—':f(a)}</td><td class="${wb?'win':''}">${b==null?'—':f(b)}</td></tr>`; }).join('')+'</tbody>';
-
-  const log=$('log');
-  if(!days.length) log.innerHTML='<div class="empty">No days logged yet. Fill in today above and your totals show up here.</div>';
-  else { log.innerHTML='';
-    for(const s of days){
-      const n=kept(s), r=document.createElement('div'); r.className='row';
-      r.innerHTML=`<div class="d"></div><div class="net num ${n<0?'neg':'pos'}">${money(n)}<em>${s.miles?money(n/s.miles)+'/mi':''}</em></div><div class="meta num"></div><div class="meta num"></div>
-        <div class="x"><button type="button" data-a="edit">Edit</button><button type="button" data-a="del">Delete</button></div>`;
-      r.querySelector('.d').textContent=fmtDate(s.date);
-      const [m1,m2]=r.querySelectorAll('.meta');
-      const pl=(cls,name,e,t,rides,h)=> (e||t||rides||h) ? `<b class="${cls}">${name}</b> ${money(e)}${t?` + ${money(t)} tips`:''}${rides?` · ${rides} rides`:''}${h?` · ${h} hr`:''}` : '';
-      m1.innerHTML=[pl('l','Lyft',s.le,s.lt,s.lr,s.lh),pl('u','Uber',s.ue,s.ut,s.ur,s.uh)].filter(Boolean).join('<br>')||'No platform earnings';
-      m2.textContent=[money(s.gas)+' gas', s.miles+' mi', s.bonus?money(s.bonus)+' bonus':'', s.tolls?money(s.tolls)+' tolls':''].filter(Boolean).join(' · ');
-      if(s.ld||s.ud){ const m3=document.createElement('div'); m3.className='meta num'; m3.textContent='Deposited '+[s.ld?'Lyft '+money(s.ld):'',s.ud?'Uber '+money(s.ud):''].filter(Boolean).join(' · ')+(s.dtype?' ('+s.dtype+')':'')+(s.ddate&&s.ddate!==s.date?' on '+fmtDate(s.ddate):''); m2.after(m3); }
-      r.querySelector('[data-a=edit]').onclick=()=>startEdit(s);
-      armDelete(r.querySelector('[data-a=del]'),async()=>{ await remove('shifts',s.id); gdAuto(); if(editing===s.id) resetForm(); });
-      log.appendChild(r);
-    }
-  }
-  renderTax();
+/* ---------- screens & navigation ---------- */
+let span='day', offset=0, insTab='overview', insMonth=null, platTab='l', cur='home', lastView='home';
+const VIEWS={welcome:'vWelcome',home:'vHome',days:'vDays',log:'vLog',insights:'vInsights',more:'vMore',cust:'cust',pro:'proSec'};
+const NAVOF={home:'home',days:'days',insights:'insights',more:'more',cust:'more',pro:'more'};
+function go(v){
+  if(v!=='pro'&&v!=='cust') lastView=v; else if(cur!=='pro'&&cur!=='cust') lastView=cur;
+  cur=v;
+  for(const [k,id] of Object.entries(VIEWS)){ const el=$(id); if(el) el.hidden=k!==v; }
+  document.querySelectorAll('.nav [data-go]').forEach(b=>{ if(b.dataset.go===NAVOF[v]) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+  document.body.classList.toggle('welcome-on',v==='welcome');
+  if(v==='insights') renderIns();
+  window.scrollTo(0,0);
 }
+function goBack(){ go(lastView&&lastView!==cur?lastView:'more'); }
+window.keptGo=go; window.keptBack=goBack;
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-go]'); if(!b) return;
+  const v=b.dataset.go;
+  if(v==='log'&&!editing) resetForm();
+  go(v);
+});
+
+let toastT;
+function toast(t){ const el=$('toast'); el.textContent=t; el.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>{ el.hidden=true; },2800); }
+
+/* ---------- dates & totals ---------- */
+const isoD=d=>{ const x=new Date(d); x.setMinutes(x.getMinutes()-x.getTimezoneOffset()); return x.toISOString().slice(0,10); };
+const parseD=s=>{ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const addD=(d,n)=>{ const x=new Date(d); x.setDate(x.getDate()+n); return x; };
+const today0=()=>{ const t=new Date(); t.setHours(0,0,0,0); return t; };
+function range(sp,off){
+  const t=today0(); let s,e;
+  if(sp==='day'){ s=addD(t,off); e=addD(s,1); }
+  else if(sp==='week'){ s=addD(t,-((t.getDay()+6)%7)+7*off); e=addD(s,7); }
+  else if(sp==='month'){ s=new Date(t.getFullYear(),t.getMonth()+off,1); e=new Date(s.getFullYear(),s.getMonth()+1,1); }
+  else { s=new Date(t.getFullYear()+off,0,1); e=new Date(s.getFullYear()+1,0,1); }
+  return {s,e,a:isoD(s),b:isoD(e)};
+}
+const rangeAB=(s,e)=>({s,e,a:isoD(s),b:isoD(e)});
+// The period before, cut to the same number of days when the current one isn't over yet (so a half-done month isn't compared to a full one)
+function prevRange(sp,off,r){
+  const p=range(sp,off-1), t=today0();
+  if(sp==='day'||!(t>=r.s&&t<r.e)) return p;
+  const elapsed=Math.round((t-r.s)/864e5)+1, e=addD(p.s,elapsed);
+  return rangeAB(p.s,e<p.e?e:p.e);
+}
+const FIELDS=['le','ue','lt','ut','lh','uh','lr','ur','gas','miles','bonus','ld','ud','tolls'];
+function totals(r){
+  const T={}; FIELDS.forEach(k=>T[k]=0);
+  const list=data.shifts.filter(x=>x.date>=r.a&&x.date<r.b);
+  for(const s of list) for(const k of FIELDS) T[k]+=s[k]||0;
+  T.days=list.length; T.LP=T.le+T.lt; T.UP=T.ue+T.ut; T.M=T.LP+T.UP+T.bonus; T.X=T.gas+T.tolls; T.K=T.M-T.X; T.H=T.lh+T.uh; T.R=T.lr+T.ur;
+  return T;
+}
+const fmtD=(d,o)=>d.toLocaleDateString(LOC,o);
+const n1=v=>v.toLocaleString(LOC,{maximumFractionDigits:1});
+const money0=v=>{ const a=Math.abs(v); return (v<0?'-':'')+'$'+(a>=10000?Math.round(a/1000)+'k':Math.round(a).toLocaleString(LOC)); };
+function change(now,prev,label){
+  if(!prev||!now) return '';
+  const p=Math.round((now-prev)/prev*100);
+  return `<div class="chg"><span class="pill ${p<0?'down':''}">${p<0?'↓':'↑'} ${Math.abs(p)}%</span><small>${label}</small></div>`;
+}
+const ICON={
+  car:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.6-4.4A2 2 0 018.5 5h7a2 2 0 011.9 1.6L19 11M4 11h16v6H4zM6 17v2M18 17v2"/><circle cx="7.5" cy="14" r="1"/><circle cx="16.5" cy="14" r="1"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-12a7 7 0 00-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>',
+  wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 012-2h11v4M4 7v11a2 2 0 002 2h14V9H6a2 2 0 01-2-2z"/><circle cx="16" cy="14.5" r="1.2" fill="currentColor"/></svg>',
+  cash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.8"/><path d="M6 9.5v5M18 9.5v5"/></svg>',
+  rate:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>',
+  doc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>',
+  bulb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>'
+};
+const tile=(icon,val,label,hl)=>`<div class="tile ${hl?'hl':''}">${ICON[icon]}<div><b>${val}</b><small>${label}</small></div></div>`;
+
+/* ---------- bar chart ---------- */
+function niceStep(x){ if(x<=0) return 100; const p=Math.pow(10,Math.floor(Math.log10(x))); for(const m of [1,2,2.5,5,10]) if(m*p>=x) return m*p; return 10*p; }
+function chart(el,items){
+  const max=Math.max(0,...items.map(i=>i.v)), step=niceStep(max/3), top=step*3;
+  el.innerHTML=`<div class="yax">${[3,2,1,0].map(i=>`<span>${money0(step*i)}</span>`).join('')}</div>
+    <div class="plot"><div class="grid"><i></i><i></i><i></i><i></i></div>
+    ${items.map(i=>`<div class="col ${i.hi?'hi':''}"><div class="bar" style="height:${top?Math.max(0,i.v)/top*100:0}%" data-v="${money(i.v)}"></div><span>${i.l}</span></div>`).join('')}</div>`;
+}
+function weeksOf(ms){   // 7-day buckets from the 1st of the month
+  const out=[]; const me=new Date(ms.getFullYear(),ms.getMonth()+1,1);
+  for(let s=new Date(ms),i=1;s<me;s=addD(s,7),i++){ const e=addD(s,7)<me?addD(s,7):me; out.push({r:rangeAB(s,e),l:'W'+i}); }
+  return out;
+}
+
+/* ---------- Home ---------- */
+const VS={day:['vs. yesterday','vs. previous day'],week:['vs. last week','vs. previous week'],month:['vs. last month','vs. previous month'],year:['vs. last year','vs. previous year']};
+function renderHome(){
+  const r=range(span,offset), T=totals(r), P=totals(prevRange(span,offset,r));
+  let label;
+  if(span==='day') label=fmtD(r.s,{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  else if(span==='week') label=fmtD(r.s,{month:'short',day:'numeric'})+' – '+fmtD(addD(r.e,-1),{month:'short',day:'numeric',year:'numeric'});
+  else if(span==='month') label=fmtD(r.s,{month:'long',year:'numeric'});
+  else label=String(r.s.getFullYear());
+  $('pLabel').textContent=label; $('nextP').disabled=offset>=0;
+  $('hero').innerHTML=`<div class="hero-top"><div><div class="hlbl">Total earnings</div><div class="big">${money(T.M)}</div></div>${change(T.M,P.M,VS[span][offset===0?0:1])}</div>
+    <div class="split"><div><b>${money(T.LP)}</b><small>Lyft</small></div><div><b>${money(T.UP)}</b><small>Uber</small></div></div>`;
+  $('tiles').innerHTML=tile('car',T.R.toLocaleString(LOC),'Rides')+tile('clock',n1(T.H),'Hours driven')+tile('pin',n1(T.miles),'Miles')+
+    tile('wallet',money(T.X),'Expenses')+tile('cash',money(T.K),'You kept',true)+tile('rate',per(T.K,T.H),'Kept per hour');
+  let items=[], sub='';
+  if(span==='day'){ for(let i=6;i>=0;i--){ const d=addD(r.s,-i); items.push({l:fmtD(d,{weekday:'short'}),v:totals(rangeAB(d,addD(d,1))).M,hi:i===0}); } sub='Last 7 days'; }
+  else if(span==='week'){ const t=isoD(today0()); for(let i=0;i<7;i++){ const d=addD(r.s,i); items.push({l:fmtD(d,{weekday:'short'}),v:totals(rangeAB(d,addD(d,1))).M,hi:isoD(d)===t}); } }
+  else if(span==='month'){ const t=isoD(today0()); items=weeksOf(r.s).map(w=>({l:w.l,v:totals(w.r).M,hi:t>=w.r.a&&t<w.r.b})); sub='By week'; }
+  else { const t=today0(); for(let m=0;m<12;m++){ const s=new Date(r.s.getFullYear(),m,1); items.push({l:fmtD(s,{month:'narrow'}),v:totals(rangeAB(s,new Date(s.getFullYear(),m+1,1))).M,hi:s.getFullYear()===t.getFullYear()&&m===t.getMonth()}); } sub='By month'; }
+  $('trendSpan').textContent=sub; chart($('trend'),items);
+}
+document.querySelectorAll('#spanSeg button').forEach(b=>b.onclick=()=>{
+  span=b.dataset.span; offset=0; document.querySelectorAll('#spanSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b)); renderHome();
+});
+$('prevP').onclick=()=>{ offset--; renderHome(); };
+$('nextP').onclick=()=>{ if(offset<0){ offset++; renderHome(); } };
+function showDay(iso){   // jump Home to the day just saved
+  span='day'; offset=Math.round((parseD(iso)-today0())/864e5); if(offset>0) offset=0;
+  document.querySelectorAll('#spanSeg button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.span==='day'));
+}
+
+/* ---------- Days ---------- */
+function renderDays(){
+  const days=data.shifts.slice().sort((a,b)=>b.date.localeCompare(a.date)), log=$('log');
+  if(!days.length){ log.innerHTML=`<div class="empty card">${ICON.cal}No days logged yet. Tap + to log your first day.</div>`; return; }
+  log.innerHTML=''; let mk='';
+  for(const s of days){
+    const m=s.date.slice(0,7);
+    if(m!==mk){ mk=m; const ms=parseD(m+'-01'), T=totals(rangeAB(ms,new Date(ms.getFullYear(),ms.getMonth()+1,1)));
+      const h=document.createElement('div'); h.className='month-h num'; h.innerHTML=`<b></b><span>${money(T.K)}</span>`; h.querySelector('b').textContent=fmtD(ms,{month:'long',year:'numeric'}); log.appendChild(h); }
+    const n=kept(s), r=document.createElement('div'); r.className='day';
+    r.innerHTML=`<div class="d"></div><div class="net num ${n<0?'neg':'pos'}">${money(n)}<em>${s.miles?money(n/s.miles)+'/mi':''}</em></div><div class="meta num"></div><div class="meta num"></div>
+      <div class="x"><button type="button" data-a="edit">Edit</button><button type="button" data-a="del">Delete</button></div>`;
+    r.querySelector('.d').textContent=fmtDate(s.date);
+    const [m1,m2]=r.querySelectorAll('.meta');
+    const pl=(cls,name,e,t,rides,h)=> (e||t||rides||h) ? `<b class="${cls}">${name}</b> ${money(e)}${t?` + ${money(t)} tips`:''}${rides?` · ${rides} rides`:''}${h?` · ${h} hr`:''}` : '';
+    m1.innerHTML=[pl('l','Lyft',s.le,s.lt,s.lr,s.lh),pl('u','Uber',s.ue,s.ut,s.ur,s.uh)].filter(Boolean).join('<br>')||'No platform earnings';
+    m2.textContent=[money(s.gas)+' gas', s.miles+' mi', s.bonus?money(s.bonus)+' bonus':'', s.tolls?money(s.tolls)+' tolls':''].filter(Boolean).join(' · ');
+    if(s.ld||s.ud){ const m3=document.createElement('div'); m3.className='meta num'; m3.textContent='Deposited '+[s.ld?'Lyft '+money(s.ld):'',s.ud?'Uber '+money(s.ud):''].filter(Boolean).join(' · ')+(s.dtype?' ('+s.dtype+')':'')+(s.ddate&&s.ddate!==s.date?' on '+fmtDate(s.ddate):''); m2.after(m3); }
+    r.querySelector('[data-a=edit]').onclick=()=>startEdit(s);
+    armDelete(r.querySelector('[data-a=del]'),async()=>{ await remove('shifts',s.id); gdAuto(); if(editing===s.id) resetForm(); });
+    log.appendChild(r);
+  }
+}
+
+/* ---------- Insights ---------- */
+function monthOpts(){
+  const set=new Set(data.shifts.map(s=>s.date.slice(0,7))); set.add(isoD(today0()).slice(0,7));
+  return [...set].sort().reverse();
+}
+function setIns(tab){
+  insTab=tab;
+  document.querySelectorAll('#insSeg button').forEach(b=>b.setAttribute('aria-selected',b.dataset.ins===tab));
+  $('insOverview').hidden=tab!=='overview'; $('taxSec').hidden=tab!=='taxes'; $('insCompare').hidden=tab!=='compare'; $('insTrends').hidden=tab!=='trends';
+  $('taxBtn').setAttribute('aria-expanded',String(tab==='taxes'));
+  $('insMonth').parentNode.style.visibility=tab==='taxes'?'hidden':'';
+  renderIns();
+}
+document.querySelectorAll('#insSeg button').forEach(b=>b.addEventListener('click',()=>setIns(b.dataset.ins)));
+$('insMonth').onchange=e=>{ insMonth=e.target.value; renderIns(); };
+function insightText(T,P){
+  if(!T.days) return ['Insight','Log a few days this month to see your insights.'];
+  const lh=T.lh?T.LP/T.lh:0, uh=T.uh?T.UP/T.uh:0;
+  if(lh&&uh&&Math.abs(lh-uh)>=0.5){ const w=lh>uh; return ['Insight',`${w?'Lyft':'Uber'} paid ${money(Math.abs(lh-uh))} more per hour than ${w?'Uber':'Lyft'} this month.`]; }
+  const kh=T.H?T.K/T.H:0, ph=P.H?P.K/P.H:0;
+  if(kh&&ph){ const p=Math.round((kh-ph)/ph*100); return ['Insight',`You kept ${money(kh)} per hour this month, ${p>=0?'up':'down'} ${Math.abs(p)}% from last month.`]; }
+  return ['Insight',`You kept ${money(T.K)} this month after gas and tolls.`];
+}
+function renderIns(){
+  const opts=monthOpts(); if(!insMonth||!opts.includes(insMonth)) insMonth=opts[0];
+  $('insMonth').innerHTML=opts.map(m=>`<option value="${m}" ${m===insMonth?'selected':''}>${fmtD(parseD(m+'-01'),{month:'short',year:'numeric'})}</option>`).join('');
+  const ms=parseD(insMonth+'-01'), r=rangeAB(ms,new Date(ms.getFullYear(),ms.getMonth()+1,1));
+  const pm=new Date(ms.getFullYear(),ms.getMonth()-1,1), T=totals(r), t0=today0();
+  const P=totals(t0>=r.s&&t0<r.e?(()=>{ const e=addD(pm,Math.round((t0-ms)/864e5)+1); return rangeAB(pm,e<ms?e:ms); })():rangeAB(pm,ms));
+  if(insTab==='overview'){
+    const R=rateFor(ms.getFullYear()), ded=T.miles*R.rate+T.tolls, [ih,it]=insightText(T,P);
+    $('insOverview').innerHTML=`
+      <div class="card num"><div class="ins-total"><div><div class="lbl">Total earnings</div><div class="big">${money(T.M)}</div></div>${change(T.M,P.M,'vs. last month')}</div>
+        <div class="stat3"><div><b>${T.R.toLocaleString(LOC)}</b><small>Rides</small></div><div><b>${n1(T.H)}</b><small>Hours</small></div><div><b>${n1(T.miles)}</b><small>Miles</small></div></div></div>
+      <div class="card"><div class="card-h"><h3>Earnings by week</h3></div><div class="chart num" id="insChart"></div></div>
+      <div class="tiles num">
+        <div class="mini exp">${ICON.wallet}<div><small>Expenses</small><b>${money(T.X)}</b><small>${T.M?Math.round(T.X/T.M*100)+'% of earnings':'—'}</small></div></div>
+        <div class="mini">${ICON.doc}<div><small>Est. tax deduction</small><b>${money(ded)}</b><small>Based on mileage</small></div></div>
+      </div>
+      <div class="insight">${ICON.bulb}<div><b>${ih}</b><p class="num">${it}</p></div></div>`;
+    const t=isoD(today0());
+    chart($('insChart'),weeksOf(ms).map(w=>({l:w.l,v:totals(w.r).M,hi:t>=w.r.a&&t<w.r.b})));
+  }else if(insTab==='compare'){
+    const rowsC=[
+      ['Earnings',T.le,T.ue,money],['Tips',T.lt,T.ut,money],['Hours',T.lh,T.uh,n1],
+      ['Hourly wage',T.lh?T.LP/T.lh:null,T.uh?T.UP/T.uh:null,money,true],['Rides',T.lr,T.ur,v=>v.toLocaleString(LOC)],
+      ['Amount per ride',T.lr?T.LP/T.lr:null,T.ur?T.UP/T.ur:null,money,true],['Deposits',T.ld,T.ud,money]];
+    $('insCompare').innerHTML=`
+      <div class="vs num">
+        <div class="mini"><div><small>Lyft</small><b class="l">${per(T.LP,T.lh)}</b><small>Hourly wage</small></div></div>
+        <div class="mini"><div><small>Uber</small><b class="u">${per(T.UP,T.uh)}</b><small>Hourly wage</small></div></div>
+      </div>
+      <div class="card"><table class="cmp num"><thead><tr><th></th><th class="l">Lyft</th><th class="u">Uber</th></tr></thead><tbody>${
+        rowsC.map(([n,a,b,f,c])=>{ const wa=c&&a!=null&&b!=null&&a>b, wb=c&&a!=null&&b!=null&&b>a;
+          return `<tr><td>${n}</td><td class="${wa?'win':''}">${a==null?'—':f(a)}</td><td class="${wb?'win':''}">${b==null?'—':f(b)}</td></tr>`; }).join('')}</tbody></table></div>`;
+  }else if(insTab==='trends'){
+    const months=[]; for(let i=5;i>=0;i--){ const s=new Date(ms.getFullYear(),ms.getMonth()-i,1), e=new Date(s.getFullYear(),s.getMonth()+1,1); months.push({s,T:totals(rangeAB(s,e))}); }
+    $('insTrends').innerHTML=`
+      <div class="card"><div class="card-h"><h3>Kept by month</h3><span>Last 6 months</span></div><div class="chart num" id="trChart"></div></div>
+      <div class="card"><div class="card-h"><h3>Kept per hour</h3></div><div class="trend-list num">${
+        months.slice().reverse().map(m=>`<div><span>${fmtD(m.s,{month:'long',year:'numeric'})}</span><b>${per(m.T.K,m.T.H)}</b></div>`).join('')}</div></div>`;
+    chart($('trChart'),months.map((m,i)=>({l:fmtD(m.s,{month:'short'}),v:m.T.K,hi:i===5})));
+  }
+}
+
+function render(){ renderHome(); renderDays(); renderTax(); if(cur==='insights') renderIns(); }
+function showTax(open){ if(open){ go('insights'); setIns('taxes'); } else setIns('overview'); }
+
+/* ---------- Welcome ---------- */
+const WSLIDES=[
+  ['Track your rideshare work. Keep more of what you earn.','Log your Lyft and Uber days, track gas and miles, and get clear numbers for tax time — all in one simple app.'],
+  ['Lyft and Uber, side by side.','See which app really pays more per hour, per ride and per mile.'],
+  ['Your data stays yours.','Everything is saved on this device. Back it up to your own Google Drive whenever you like.']];
+let wi=0;
+function drawWelcome(){
+  $('wHead').textContent=WSLIDES[wi][0]; $('wSub').textContent=WSLIDES[wi][1];
+  $('wDots').querySelectorAll('i').forEach((d,i)=>d.classList.toggle('on',i===wi));
+  $('wBtn').textContent=wi<WSLIDES.length-1?'Next':'Get Started';
+}
+$('wNext').onclick=()=>{ if(wi<WSLIDES.length-1){ wi++; drawWelcome(); return; } try{ localStorage.setItem(KEY+'-welcomed','1'); }catch(e){} go('home'); };
 
 
 /* ---------- Taxes: yearly summary for Schedule C / SE tax ---------- */
@@ -492,12 +817,6 @@ function taxCsv(y){
   c.rows.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>row(s.date,s.miles||0,'Rideshare driving'+(s.le||s.lr?' - Lyft':'')+(s.ue||s.ur?(s.le||s.lr?' & Uber':' - Uber'):''),s.lh||'',s.uh||'',s.lr||'',s.ur||'',s.tolls||''));
   return L.join('\n');
 }
-function showTax(open){
-  $('taxSec').hidden=!open; $('taxBtn').setAttribute('aria-expanded',String(open));
-  if(open){ renderTax(); $('taxSec').scrollIntoView({behavior:'smooth',block:'start'}); }
-}
-$('taxBtn').onclick=()=>showTax($('taxSec').hidden);
-$('taxClose').onclick=()=>{ showTax(false); $('taxBtn').focus(); };
 if($('taxYear')){
   $('taxYear').onchange=e=>{ taxYear=Number(e.target.value); renderTax(); };
   $('taxPrint').onclick=()=>window.print();
@@ -512,35 +831,38 @@ const F=['le','ue','lt','ut','lh','uh','lr','ur','gas','miles','bonus','ld','ud'
 function readForm(){ const s={date:$('date').value,dtype:$('dtype').value.trim(),ddate:$('ddate').value}; F.forEach(k=>s[k]=num($(k).value)); return s; }
 function updatePreview(){
   const s=readForm(); $('pv').textContent=money(kept(s));
+  $('lTab').textContent=lpay(s)?' '+money(lpay(s)):''; $('uTab').textContent=upay(s)?' '+money(upay(s)):'';
   const c=(e,h,r)=>[h?money(e/h)+'/hr':'', r?money(e/r)+'/ride':''].filter(Boolean).join(' · ');
   $('lcalc').textContent=c(lpay(s),s.lh,s.lr); $('ucalc').textContent=c(upay(s),s.uh,s.ur);
 }
 F.forEach(k=>$(k).addEventListener('input',updatePreview));
 function resetForm(){
-  editing=null; $('f').reset(); $('date').value=todayStr(); updatePreview();
-  $('formTitle').textContent='Log a day'; $('saveBtn').textContent='Save day'; $('cancelBtn').hidden=true;
+  editing=null; $('f').reset(); $('date').value=todayStr(); setPlat('l'); $('depBox').open=false; $('msg').textContent=''; updatePreview();
+  $('formTitle').textContent='Log Day'; $('saveBtn').textContent='Save Day'; $('cancelBtn').hidden=true;
 }
 function startEdit(s){
   editing=s.id; $('date').value=s.date; F.forEach(k=>$(k).value=s[k]||''); $('dtype').value=s.dtype||''; $('ddate').value=s.ddate||'';
-  updatePreview(); $('formTitle').textContent='Edit day'; $('saveBtn').textContent='Save changes'; $('cancelBtn').hidden=false; $('msg').textContent='';
-  $('f').scrollIntoView({behavior:'smooth',block:'start'});
+  setPlat(!(s.le||s.lt||s.lr||s.lh)&&(s.ue||s.ut||s.ur||s.uh)?'u':'l'); $('depBox').open=!!(s.ld||s.ud||s.dtype||s.ddate);
+  updatePreview(); $('formTitle').textContent='Edit Day'; $('saveBtn').textContent='Save changes'; $('cancelBtn').hidden=false; $('msg').textContent='';
+  go('log');
 }
-$('cancelBtn').onclick=resetForm;
+function setPlat(p){ platTab=p; document.querySelectorAll('#platSeg button').forEach(b=>b.setAttribute('aria-selected',b.dataset.plat===p)); $('pl').hidden=p!=='l'; $('pu').hidden=p!=='u'; }
+document.querySelectorAll('#platSeg button').forEach(b=>b.onclick=()=>setPlat(b.dataset.plat));
+$('cancelBtn').onclick=()=>{ resetForm(); go('days'); };
+$('logBack').onclick=()=>{ const was=editing; resetForm(); go(was?'days':(lastView==='log'?'home':lastView)); };
 $('f').addEventListener('submit',async e=>{
   e.preventDefault();
   const s={...readForm(), id: editing||newId('s')};
   if(!s.date){ alertMsg($('msg'),'Pick a date for this day.'); return; }
   if(!s.le&&!s.ue&&!s.lt&&!s.ut&&!s.bonus&&!s.tolls&&!s.gas&&!s.miles&&!s.ld&&!s.ud){ alertMsg($('msg'),'Enter at least your earnings, gas or miles.'); return; }
   $('saveBtn').disabled=true; $('msg').className='msg'; $('msg').textContent=mode==='sheets'?'Saving to your sheet…':'';
-  try{ const was=editing; const pr=persist('shifts',s); gdAuto(); await pr; resetForm(); $('msg').textContent=was?'Day updated.':'Saved. You kept '+money(kept(s))+'.'; }
+  try{ const was=editing; const pr=persist('shifts',s); gdAuto(); await pr; resetForm(); showDay(s.date); render(); go(was?'days':'home'); toast(was?'Day updated.':'Saved. You kept '+money(kept(s))+'.'); }
   catch(err){ alertMsg($('msg'),mode==='sheets'?errText(err):'Couldn\'t save. Try again in a moment.'); }
   finally{ $('saveBtn').disabled=false; }
 });
 
 
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
-  period=b.dataset.p; document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b)); render();
-});
+
 
 
 /* ---------- backup / export ---------- */
@@ -659,8 +981,8 @@ if(GOOGLE_CLIENT_ID){
 /* ---------- Customization: colors, theme, layout (saved on this device) ---------- */
 const PK=KEY+'-prefs';
 const SECS={form:'Log a day',stand:'Where you stand',cmp:'Lyft vs Uber',days:'Days'};
-const PRESETS=[['Road green','#1c6b47'],['Ocean','#1f5fa8'],['Grape','#6b3fa0'],['Sunset','#c4511f'],['Cherry','#b3263a'],['Gold','#a77a00'],['Teal','#127a7a'],['Slate','#3f4a5a']];
-const DEF={lang:'auto',mode:'system',accent:'#1c6b47',lyft:'',uber:'',order:['form','stand','cmp','days'],hidden:[]};
+const PRESETS=[['Kept green','#1e4a39'],['Road green','#1c6b47'],['Ocean','#1f5fa8'],['Grape','#6b3fa0'],['Sunset','#c4511f'],['Cherry','#b3263a'],['Gold','#a77a00'],['Teal','#127a7a'],['Slate','#3f4a5a']];
+const DEF={lang:'auto',mode:'system',accent:'#1e4a39',lyft:'',uber:'',order:['form','stand','cmp','days'],hidden:[]};
 let prefs={...DEF}; try{ prefs={...DEF,...JSON.parse(localStorage.getItem(PK)||'{}')}; }catch(e){}
 const savePrefs=()=>{ try{ localStorage.setItem(PK,JSON.stringify(prefs)); }catch(e){} };
 
@@ -676,8 +998,8 @@ function isDark(){ const t=document.documentElement.getAttribute('data-theme'); 
 function applyPrefs(){
   const root=document.documentElement;
   if(prefs.mode==='system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme',prefs.mode);
-  const dark=isDark(), bg=dark?'#151917':'#f3f4f2', surf=dark?'#1e2421':'#ffffff';
-  let acc=prefs.accent||DEF.accent; if(dark) acc=mix(acc,'#ffffff',.25);
+  const dark=isDark(), bg=dark?'#0f1512':'#f4f3ee', surf=dark?'#18201c':'#ffffff';
+  let acc=prefs.accent||DEF.accent; if(dark) acc=String(acc).toLowerCase()===DEF.accent?'#3d8a66':mix(acc,'#ffffff',.25);
   acc=readable(acc,bg,3);
   root.style.setProperty('--accent',acc);
   root.style.setProperty('--accent-fg', contrast(acc,'#ffffff')>=contrast(acc,'#111111')?'#ffffff':'#111111');
@@ -685,24 +1007,21 @@ function applyPrefs(){
   if(prefs.lyft) root.style.setProperty('--lyft',readable(prefs.lyft,surf,3)); else root.style.removeProperty('--lyft');
   if(prefs.uber) root.style.setProperty('--uber',readable(prefs.uber,surf,3)); else root.style.removeProperty('--uber');
   const tm=document.querySelector('meta[name=theme-color]'); if(tm) tm.content=acc;
-  // layout
-  const app=$('app'), order=prefs.order.filter(k=>SECS[k]).concat(Object.keys(SECS).filter(k=>!prefs.order.includes(k)));
-  const hid=prefs.hidden.filter(k=>SECS[k]), visible=order.filter(k=>!hid.includes(k));
-  const custom=JSON.stringify(order)!==JSON.stringify(DEF.order)||hid.length>0;
-  app.classList.toggle('custom-layout',custom); app.classList.toggle('one',visible.length<2);
-  order.forEach((k,i)=>{ const el=document.querySelector(`.sec[data-sec="${k}"]`); if(!el) return;
-    el.classList.toggle('off',prefs.hidden.includes(k)); el.style.order=i+1;
-    if(custom&&innerWidth>=960){ const vi=visible.indexOf(k);
-      el.style.gridColumn = visible.length<2 ? '1' : (vi===0?'1':'2');
-      el.style.gridRow = vi===0 ? `2 / span ${Math.max(1,visible.length-1)}` : String(1+vi);
-    } else { el.style.gridColumn=''; el.style.gridRow=''; } });
-  $('app').querySelector('.syncbar').style.order=0;
+  // chart bars and soft chips follow the main color (the default green keeps the hand-tuned palette)
+  if(String(prefs.accent||DEF.accent).toLowerCase()===DEF.accent){ ['--bar','--bar-hi','--chip','--chip-fg'].forEach(v=>root.style.removeProperty(v)); }
+  else {
+  const deep=dark?mix(acc,'#ffffff',.15):acc;
+  root.style.setProperty('--bar-hi',dark?readable(mix(acc,'#ffffff',.35),surf,3):acc);
+  root.style.setProperty('--bar',dark?mix(acc,surf,.6):mix(acc,surf,.7));
+  const chip=dark?mix(deep,bg,.72):mix(acc,surf,.84);
+  root.style.setProperty('--chip',chip);
+  root.style.setProperty('--chip-fg',readable(dark?mix(acc,'#ffffff',.6):acc,chip,4.5));
+  }
 }
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',applyPrefs);
-addEventListener('resize',()=>{ clearTimeout(applyPrefs.t); applyPrefs.t=setTimeout(applyPrefs,150); });
 
 function drawCust(){
-  document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===prefs.mode));
+  document.querySelectorAll('#modeSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===prefs.mode));
   const sw=$('swatches'); sw.innerHTML='';
   let matched=false;
   PRESETS.forEach(([name,c])=>{ const b=document.createElement('button'); b.type='button'; b.className='sw'; b.style.setProperty('--c',c);
@@ -716,23 +1035,13 @@ function drawCust(){
   const cs=getComputedStyle(document.documentElement);
   $('lyftColor').value=prefs.lyft||rgbish(cs.getPropertyValue('--lyft'))||'#c2187a';
   $('uberColor').value=prefs.uber||rgbish(cs.getPropertyValue('--uber'))||'#1d2320';
-  const ol=$('order'); ol.innerHTML='';
-  const order=prefs.order.filter(k=>SECS[k]).concat(Object.keys(SECS).filter(k=>!prefs.order.includes(k)));
-  order.forEach((k,i)=>{ const li=document.createElement('li'); if(prefs.hidden.includes(k)) li.className='off';
-    li.innerHTML=`<span class="nm"></span><label><input type="checkbox" ${prefs.hidden.includes(k)?'':'checked'}> Show</label><button type="button" aria-label="Move up" ${i?'':'disabled'}>↑</button><button type="button" aria-label="Move down" ${i<order.length-1?'':'disabled'}>↓</button>`;
-    li.querySelector('.nm').textContent=SECS[k];
-    const [up,down]=li.querySelectorAll('button');
-    const mv=d=>{ const o=order.slice(); [o[i],o[i+d]]=[o[i+d],o[i]]; prefs.order=o; savePrefs(); applyPrefs(); drawCust(); ol.querySelectorAll('li')[i+d].querySelectorAll('button')[d<0?0:1].focus(); };
-    up.onclick=()=>mv(-1); down.onclick=()=>mv(1);
-    li.querySelector('input').onchange=e=>{ prefs.hidden=e.target.checked?prefs.hidden.filter(x=>x!==k):[...prefs.hidden,k]; savePrefs(); applyPrefs(); drawCust(); };
-    ol.appendChild(li); });
 }
 function rgbish(v){ v=String(v||'').trim(); return /^#[0-9a-f]{6}$/i.test(v)?v:''; }
-document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{ prefs.mode=b.dataset.mode; savePrefs(); applyPrefs(); drawCust(); });
+document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{ prefs.mode=b.dataset.mode; savePrefs(); applyPrefs(); drawCust(); });
 $('lyftColor').oninput=e=>{ prefs.lyft=e.target.value; savePrefs(); applyPrefs(); };
 $('uberColor').oninput=e=>{ prefs.uber=e.target.value; savePrefs(); applyPrefs(); };
-$('custBtn').onclick=()=>{ drawCust(); $('cust').hidden=false; $('cust').scrollIntoView({behavior:'smooth',block:'start'}); };
-$('custDone').onclick=()=>{ $('cust').hidden=true; $('custBtn').focus(); };
+$('custBtn').onclick=()=>{ drawCust(); go('cust'); };
+$('custDone').onclick=()=>go('more');
 $('custReset').onclick=()=>{ prefs={...DEF,order:[...DEF.order],hidden:[]}; savePrefs(); applyPrefs(); drawCust(); };
 applyPrefs();
 
@@ -741,6 +1050,7 @@ const LANGS={en:'English',es:'Español',pt:'Português',fr:'Français',ru:'Ру�
 // Each language: S = exact phrases (keyed by the English text), P = sentence templates, W = small words used inside mixed text
 const I18N={
 es:{S:{
+"Back":"Atrás","Backup & sync":"Respaldo y sincronización","Based on mileage":"Según el millaje","Car & costs":"Auto y gastos","Compare":"Comparar","Day":"Día","Week":"Semana","Month":"Mes","Year":"Año","Earnings by week":"Ganancias por semana","Earnings trend":"Tendencia de ganancias","Est. tax deduction":"Deducción fiscal est.","Expenses":"Gastos","Home":"Inicio","Hours driven":"Horas manejadas","Insight":"Dato clave","Insights":"Análisis","Kept by month":"Lo que te quedó por mes","Kept for Gig Workers · Everything stays on this device.":"Kept for Gig Workers · Todo se queda en este dispositivo.","Last 6 months":"Últimos 6 meses","Last 7 days":"Últimos 7 días","By week":"Por semana","By month":"Por mes","Log Day":"Registrar día","Edit Day":"Editar día","Save Day":"Guardar día","Lyft deposit":"Depósito de Lyft","Uber deposit":"Depósito de Uber","Main":"Principal","More":"Más","Next":"Siguiente","Get Started":"Comenzar","Overview":"Resumen","Platform":"Plataforma","Previous":"Anterior","Settings":"Ajustes","Total earnings":"Ganancias totales","Trends":"Tendencias","Your data":"Tus datos","vs. yesterday":"vs. ayer","vs. previous day":"vs. día anterior","vs. last week":"vs. semana pasada","vs. previous week":"vs. semana anterior","vs. last month":"vs. mes pasado","vs. previous month":"vs. mes anterior","vs. last year":"vs. año pasado","vs. previous year":"vs. año anterior","Track your rideshare work. Keep more of what you earn.":"Lleva el control de tus viajes. Quédate con más de lo que ganas.","Log your Lyft and Uber days, track gas and miles, and get clear numbers for tax time — all in one simple app.":"Registra tus días en Lyft y Uber, controla la gasolina y las millas, y ten cifras claras para los impuestos, todo en una app sencilla.","Lyft and Uber, side by side.":"Lyft y Uber, lado a lado.","See which app really pays more per hour, per ride and per mile.":"Mira qué app paga más por hora, por viaje y por milla.","Your data stays yours.":"Tus datos son tuyos.","Everything is saved on this device. Back it up to your own Google Drive whenever you like.":"Todo se guarda en este dispositivo. Respáldalo en tu propio Google Drive cuando quieras.","No days logged yet. Tap + to log your first day.":"Aún no hay días registrados. Toca + para registrar tu primer día.","Log a few days this month to see your insights.":"Registra algunos días este mes para ver tus análisis.","Kept green":"Verde Kept",
 "Tolls & parking":"Peajes y estacionamiento",
 "Taxes":"Impuestos",
 "Tax year":"Año fiscal",
@@ -788,10 +1098,11 @@ es:{S:{
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Respaldo guardado. Para tenerlo en Google Drive, sube el archivo .json de tus Descargas a drive.google.com.',
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Ese archivo no es un respaldo de Kept. Elige el archivo .json de "Respaldar en Google Drive".',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Este navegador está bloqueando el almacenamiento, así que no se guardarán los datos. Usa una ventana normal (no privada).'},
-P:{noyear:'Aún no hay días registrados en {y}.',gascov:'La gasolina ({x}) ya está cubierta por la tarifa por milla, así que no se deduce otra vez.',norate:'Esta app aún no tiene la tarifa del IRS para {y}, así que usa la de {r}.',kept:'Neto después de gasolina · {n} {days}',saved:'Guardado. Te quedó {x}.',restored:'Respaldo restaurado: {n} {days}.',restoredDrive:'Se restauraron {n} {days} desde Google Drive.',last:'Guardado en este dispositivo. Último respaldo: {d}.'},
+P:{"pctEarn":"{n}% de las ganancias","insPlat":"{p} pagó {x} más por hora que {q} este mes.","insUp":"Te quedaron {x} por hora este mes, {n}% más que el mes pasado.","insDown":"Te quedaron {x} por hora este mes, {n}% menos que el mes pasado.","insKept":"Te quedaron {x} este mes después de gasolina y peajes.",noyear:'Aún no hay días registrados en {y}.',gascov:'La gasolina ({x}) ya está cubierta por la tarifa por milla, así que no se deduce otra vez.',norate:'Esta app aún no tiene la tarifa del IRS para {y}, así que usa la de {r}.',kept:'Neto después de gasolina · {n} {days}',saved:'Guardado. Te quedó {x}.',restored:'Respaldo restaurado: {n} {days}.',restoredDrive:'Se restauraron {n} {days} desde Google Drive.',last:'Guardado en este dispositivo. Último respaldo: {d}.'},
 W:{due:'Vence',tolls:'peajes',irs:'tarifa del IRS',tips:'propinas',day:'día',days:'días',rides:'{n} viajes',hr:'h',mi:'mi',gas:'gasolina',bonus:'bono',deposited:'Depositado',on:' el ',ride:'viaje'}},
 
 pt:{S:{
+"Back":"Voltar","Backup & sync":"Backup e sincronização","Based on mileage":"Com base na quilometragem","Car & costs":"Carro e custos","Compare":"Comparar","Day":"Dia","Week":"Semana","Month":"Mês","Year":"Ano","Earnings by week":"Ganhos por semana","Earnings trend":"Tendência de ganhos","Est. tax deduction":"Dedução fiscal est.","Expenses":"Despesas","Home":"Início","Hours driven":"Horas dirigidas","Insight":"Destaque","Insights":"Análises","Kept by month":"Líquido por mês","Kept for Gig Workers · Everything stays on this device.":"Kept for Gig Workers · Tudo fica neste aparelho.","Last 6 months":"Últimos 6 meses","Last 7 days":"Últimos 7 dias","By week":"Por semana","By month":"Por mês","Log Day":"Registrar dia","Edit Day":"Editar dia","Save Day":"Salvar dia","Lyft deposit":"Depósito da Lyft","Uber deposit":"Depósito da Uber","Main":"Principal","More":"Mais","Next":"Próximo","Get Started":"Começar","Overview":"Resumo","Platform":"Plataforma","Previous":"Anterior","Settings":"Configurações","Total earnings":"Ganhos totais","Trends":"Tendências","Your data":"Seus dados","vs. yesterday":"vs. ontem","vs. previous day":"vs. dia anterior","vs. last week":"vs. semana passada","vs. previous week":"vs. semana anterior","vs. last month":"vs. mês passado","vs. previous month":"vs. mês anterior","vs. last year":"vs. ano passado","vs. previous year":"vs. ano anterior","Track your rideshare work. Keep more of what you earn.":"Acompanhe suas corridas. Fique com mais do que você ganha.","Log your Lyft and Uber days, track gas and miles, and get clear numbers for tax time — all in one simple app.":"Registre seus dias na Lyft e na Uber, acompanhe combustível e milhas e tenha números claros na hora dos impostos, tudo em um app simples.","Lyft and Uber, side by side.":"Lyft e Uber, lado a lado.","See which app really pays more per hour, per ride and per mile.":"Veja qual app paga mais por hora, por corrida e por milha.","Your data stays yours.":"Seus dados são seus.","Everything is saved on this device. Back it up to your own Google Drive whenever you like.":"Tudo fica salvo neste aparelho. Faça backup no seu próprio Google Drive quando quiser.","No days logged yet. Tap + to log your first day.":"Nenhum dia registrado ainda. Toque em + para registrar seu primeiro dia.","Log a few days this month to see your insights.":"Registre alguns dias este mês para ver suas análises.","Kept green":"Verde Kept",
 "Tolls & parking":"Pedágios e estacionamento",
 "Taxes":"Impostos",
 "Tax year":"Ano fiscal",
@@ -839,10 +1150,11 @@ pt:{S:{
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Backup salvo. Para guardá-lo no Google Drive, envie o arquivo .json da pasta Downloads para drive.google.com.',
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Esse arquivo não é um backup do Kept. Escolha o arquivo .json de "Fazer backup no Google Drive".',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Este navegador está bloqueando o armazenamento, então os dados não serão salvos. Use uma janela normal (não anônima).'},
-P:{noyear:'Nenhum dia registrado em {y} ainda.',gascov:'O combustível ({x}) já está coberto pela taxa por milha, então não é deduzido de novo.',norate:'Este app ainda não tem a taxa do IRS de {y}, então usa a de {r}.',kept:'Líquido após combustível · {n} {days}',saved:'Salvo. Sobrou {x}.',restored:'Backup restaurado: {n} {days}.',restoredDrive:'{n} {days} restaurados do Google Drive.',last:'Salvo neste aparelho. Último backup: {d}.'},
+P:{"pctEarn":"{n}% dos ganhos","insPlat":"A {p} pagou {x} a mais por hora que a {q} este mês.","insUp":"Você ficou com {x} por hora este mês, {n}% a mais que no mês passado.","insDown":"Você ficou com {x} por hora este mês, {n}% a menos que no mês passado.","insKept":"Você ficou com {x} este mês depois de combustível e pedágios.",noyear:'Nenhum dia registrado em {y} ainda.',gascov:'O combustível ({x}) já está coberto pela taxa por milha, então não é deduzido de novo.',norate:'Este app ainda não tem a taxa do IRS de {y}, então usa a de {r}.',kept:'Líquido após combustível · {n} {days}',saved:'Salvo. Sobrou {x}.',restored:'Backup restaurado: {n} {days}.',restoredDrive:'{n} {days} restaurados do Google Drive.',last:'Salvo neste aparelho. Último backup: {d}.'},
 W:{due:'Vence',tolls:'pedágios',irs:'taxa do IRS',tips:'gorjetas',day:'dia',days:'dias',rides:'{n} corridas',hr:'h',mi:'mi',gas:'combustível',bonus:'bônus',deposited:'Depositado',on:' em ',ride:'corrida'}},
 
 fr:{S:{
+"Back":"Retour","Backup & sync":"Sauvegarde et synchro","Based on mileage":"Selon le kilométrage","Car & costs":"Voiture et frais","Compare":"Comparer","Day":"Jour","Week":"Semaine","Month":"Mois","Year":"Année","Earnings by week":"Gains par semaine","Earnings trend":"Évolution des gains","Est. tax deduction":"Déduction fiscale est.","Expenses":"Dépenses","Home":"Accueil","Hours driven":"Heures de conduite","Insight":"À retenir","Insights":"Analyses","Kept by month":"Net par mois","Kept for Gig Workers · Everything stays on this device.":"Kept for Gig Workers · Tout reste sur cet appareil.","Last 6 months":"6 derniers mois","Last 7 days":"7 derniers jours","By week":"Par semaine","By month":"Par mois","Log Day":"Noter la journée","Edit Day":"Modifier la journée","Save Day":"Enregistrer la journée","Lyft deposit":"Virement Lyft","Uber deposit":"Virement Uber","Main":"Principal","More":"Plus","Next":"Suivant","Get Started":"Commencer","Overview":"Aperçu","Platform":"Plateforme","Previous":"Précédent","Settings":"Réglages","Total earnings":"Gains totaux","Trends":"Tendances","Your data":"Vos données","vs. yesterday":"vs hier","vs. previous day":"vs jour précédent","vs. last week":"vs semaine dernière","vs. previous week":"vs semaine précédente","vs. last month":"vs mois dernier","vs. previous month":"vs mois précédent","vs. last year":"vs année dernière","vs. previous year":"vs année précédente","Track your rideshare work. Keep more of what you earn.":"Suivez vos courses. Gardez plus de ce que vous gagnez.","Log your Lyft and Uber days, track gas and miles, and get clear numbers for tax time — all in one simple app.":"Notez vos journées Lyft et Uber, suivez l'essence et les miles, et obtenez des chiffres clairs pour les impôts, le tout dans une appli simple.","Lyft and Uber, side by side.":"Lyft et Uber, côte à côte.","See which app really pays more per hour, per ride and per mile.":"Voyez quelle appli paie vraiment le plus par heure, par course et par mile.","Your data stays yours.":"Vos données restent à vous.","Everything is saved on this device. Back it up to your own Google Drive whenever you like.":"Tout est enregistré sur cet appareil. Sauvegardez-le sur votre propre Google Drive quand vous voulez.","No days logged yet. Tap + to log your first day.":"Aucune journée notée. Touchez + pour noter votre première journée.","Log a few days this month to see your insights.":"Notez quelques journées ce mois-ci pour voir vos analyses.","Kept green":"Vert Kept",
 "Tolls & parking":"Péages et stationnement",
 "Taxes":"Impôts",
 "Tax year":"Année fiscale",
@@ -890,10 +1202,11 @@ fr:{S:{
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Sauvegarde enregistrée. Pour la garder sur Google Drive, importez le fichier .json de vos Téléchargements sur drive.google.com.',
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":"Ce fichier n'est pas une sauvegarde Kept. Choisissez le fichier .json créé par « Sauvegarder sur Google Drive ».",
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Ce navigateur bloque le stockage : vos données ne seront pas conservées. Utilisez une fenêtre normale (non privée).'},
-P:{noyear:'Aucune journée notée en {y} pour l\'instant.',gascov:'L\'essence ({x}) est déjà couverte par le taux au mile, elle n\'est donc pas déduite une seconde fois.',norate:'Le taux de l\'IRS pour {y} n\'est pas encore dans l\'appli, celui de {r} est utilisé.',kept:'Net après essence · {n} {days}',saved:'Enregistré. Il vous reste {x}.',restored:'Sauvegarde restaurée : {n} {days}.',restoredDrive:'{n} {days} restaurées depuis Google Drive.',last:'Enregistré sur cet appareil. Dernière sauvegarde : {d}.'},
+P:{"pctEarn":"{n} % des gains","insPlat":"{p} a payé {x} de plus par heure que {q} ce mois-ci.","insUp":"Il vous est resté {x} par heure ce mois-ci, {n} % de plus que le mois dernier.","insDown":"Il vous est resté {x} par heure ce mois-ci, {n} % de moins que le mois dernier.","insKept":"Il vous est resté {x} ce mois-ci après l'essence et les péages.",noyear:'Aucune journée notée en {y} pour l\'instant.',gascov:'L\'essence ({x}) est déjà couverte par le taux au mile, elle n\'est donc pas déduite une seconde fois.',norate:'Le taux de l\'IRS pour {y} n\'est pas encore dans l\'appli, celui de {r} est utilisé.',kept:'Net après essence · {n} {days}',saved:'Enregistré. Il vous reste {x}.',restored:'Sauvegarde restaurée : {n} {days}.',restoredDrive:'{n} {days} restaurées depuis Google Drive.',last:'Enregistré sur cet appareil. Dernière sauvegarde : {d}.'},
 W:{due:'Échéance :',tolls:'péages',irs:'taux IRS',tips:'pourboires',day:'journée',days:'journées',rides:'{n} courses',hr:'h',mi:'mi',gas:'essence',bonus:'bonus',deposited:'Viré',on:' le ',ride:'course'}},
 
 ru:{S:{
+"Back":"Назад","Backup & sync":"Копии и синхронизация","Based on mileage":"По пробегу","Car & costs":"Машина и расходы","Compare":"Сравнение","Day":"День","Week":"Неделя","Month":"Месяц","Year":"Год","Earnings by week":"Заработок по неделям","Earnings trend":"Динамика заработка","Est. tax deduction":"Налоговый вычет (оценка)","Expenses":"Расходы","Home":"Главная","Hours driven":"Часов за рулём","Insight":"Вывод","Insights":"Аналитика","Kept by month":"Чистыми по месяцам","Kept for Gig Workers · Everything stays on this device.":"Kept for Gig Workers · Все данные остаются на этом устройстве.","Last 6 months":"Последние 6 месяцев","Last 7 days":"Последние 7 дней","By week":"По неделям","By month":"По месяцам","Log Day":"Записать день","Edit Day":"Изменить день","Save Day":"Сохранить день","Lyft deposit":"Выплата Lyft","Uber deposit":"Выплата Uber","Main":"Основное","More":"Ещё","Next":"Далее","Get Started":"Начать","Overview":"Обзор","Platform":"Платформа","Previous":"Назад","Settings":"Настройки","Total earnings":"Общий заработок","Trends":"Динамика","Your data":"Ваши данные","vs. yesterday":"к вчера","vs. previous day":"к прошлому дню","vs. last week":"к прошлой неделе","vs. previous week":"к пред. неделе","vs. last month":"к прошлому месяцу","vs. previous month":"к пред. месяцу","vs. last year":"к прошлому году","vs. previous year":"к пред. году","Track your rideshare work. Keep more of what you earn.":"Учитывайте свои поездки. Оставляйте себе больше.","Log your Lyft and Uber days, track gas and miles, and get clear numbers for tax time — all in one simple app.":"Записывайте дни в Lyft и Uber, учитывайте бензин и мили и получайте понятные цифры для налогов — всё в одном простом приложении.","Lyft and Uber, side by side.":"Lyft и Uber рядом.","See which app really pays more per hour, per ride and per mile.":"Смотрите, какое приложение платит больше за час, поездку и милю.","Your data stays yours.":"Ваши данные — только ваши.","Everything is saved on this device. Back it up to your own Google Drive whenever you like.":"Всё хранится на этом устройстве. Сохраняйте копию в свой Google Диск, когда захотите.","No days logged yet. Tap + to log your first day.":"Пока нет записанных дней. Нажмите +, чтобы записать первый день.","Log a few days this month to see your insights.":"Запишите несколько дней в этом месяце, чтобы увидеть аналитику.","Kept green":"Зелёный Kept",
 "Tolls & parking":"Платные дороги и парковка",
 "Taxes":"Налоги",
 "Tax year":"Налоговый год",
@@ -941,10 +1254,11 @@ ru:{S:{
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Копия сохранена. Чтобы хранить её в Google Диске, загрузите файл .json из папки «Загрузки» на drive.google.com.',
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Этот файл не является копией Kept. Выберите файл .json, созданный кнопкой «Копия в Google Диск».',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Браузер блокирует хранилище, поэтому данные не сохранятся. Откройте обычное (не приватное) окно.'},
-P:{noyear:'За {y} год пока нет записей.',gascov:'Бензин ({x}) уже учтён в ставке за милю, поэтому повторно не вычитается.',norate:'Ставки IRS на {y} год в приложении пока нет, используется ставка {r} года.',kept:'Чистыми после бензина · дней: {n}',saved:'Сохранено. Осталось {x}.',restored:'Копия восстановлена, дней: {n}.',restoredDrive:'Восстановлено с Google Диска, дней: {n}.',last:'Сохранено на этом устройстве. Последняя копия: {d}.'},
+P:{"pctEarn":"{n}% заработка","insPlat":"{p} платил на {x} в час больше, чем {q}, в этом месяце.","insUp":"В этом месяце чистыми {x} в час — на {n}% больше, чем в прошлом.","insDown":"В этом месяце чистыми {x} в час — на {n}% меньше, чем в прошлом.","insKept":"В этом месяце после бензина и платных дорог осталось {x}.",noyear:'За {y} год пока нет записей.',gascov:'Бензин ({x}) уже учтён в ставке за милю, поэтому повторно не вычитается.',norate:'Ставки IRS на {y} год в приложении пока нет, используется ставка {r} года.',kept:'Чистыми после бензина · дней: {n}',saved:'Сохранено. Осталось {x}.',restored:'Копия восстановлена, дней: {n}.',restoredDrive:'Восстановлено с Google Диска, дней: {n}.',last:'Сохранено на этом устройстве. Последняя копия: {d}.'},
 W:{due:'Срок:',tolls:'платные дороги',irs:'ставка IRS',tips:'чаевых',day:'день',days:'дней',rides:'поездок: {n}',hr:'ч',mi:'миль',gas:'бензин',bonus:'бонус',deposited:'Выплачено',on:', ',ride:'поездка'}},
 
 zh:{S:{
+"Back":"返回","Backup & sync":"备份与同步","Based on mileage":"按里程计算","Car & costs":"车辆与开销","Compare":"对比","Day":"日","Week":"周","Month":"月","Year":"年","Earnings by week":"每周收入","Earnings trend":"收入趋势","Est. tax deduction":"预计税务扣除","Expenses":"开销","Home":"首页","Hours driven":"驾驶时长","Insight":"洞察","Insights":"分析","Kept by month":"每月净收入","Kept for Gig Workers · Everything stays on this device.":"Kept for Gig Workers · 所有数据都保存在此设备上。","Last 6 months":"最近 6 个月","Last 7 days":"最近 7 天","By week":"按周","By month":"按月","Log Day":"记录一天","Edit Day":"编辑这一天","Save Day":"保存这一天","Lyft deposit":"Lyft 到账","Uber deposit":"Uber 到账","Main":"主菜单","More":"更多","Next":"下一步","Get Started":"开始使用","Overview":"概览","Platform":"平台","Previous":"上一个","Settings":"设置","Total earnings":"总收入","Trends":"趋势","Your data":"你的数据","vs. yesterday":"较昨天","vs. previous day":"较前一天","vs. last week":"较上周","vs. previous week":"较前一周","vs. last month":"较上月","vs. previous month":"较前一月","vs. last year":"较去年","vs. previous year":"较前一年","Track your rideshare work. Keep more of what you earn.":"记录你的网约车工作，留住更多收入。","Log your Lyft and Uber days, track gas and miles, and get clear numbers for tax time — all in one simple app.":"记录 Lyft 和 Uber 的每一天，追踪油费和里程，报税时数字一目了然——一个简单的应用全搞定。","Lyft and Uber, side by side.":"Lyft 和 Uber，并排对比。","See which app really pays more per hour, per ride and per mile.":"看看哪个应用每小时、每单、每英里真正赚得更多。","Your data stays yours.":"你的数据只属于你。","Everything is saved on this device. Back it up to your own Google Drive whenever you like.":"所有数据都保存在此设备上，可随时备份到你自己的 Google 云端硬盘。","No days logged yet. Tap + to log your first day.":"还没有记录。点按 + 记录第一天。","Log a few days this month to see your insights.":"本月记录几天后即可查看分析。","Kept green":"Kept 绿",
 "Tolls & parking":"过路费和停车费",
 "Taxes":"税务",
 "Tax year":"纳税年度",
@@ -992,10 +1306,11 @@ zh:{S:{
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'备份已保存。要保存到 Google 云端硬盘，请把“下载”中的 .json 文件上传到 drive.google.com。',
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'这个文件不是 Kept 备份。请选择“备份到 Google 云端硬盘”生成的 .json 文件。',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'此浏览器阻止了存储，数据不会被保存。请使用普通（非无痕）窗口。'},
-P:{noyear:'{y} 年还没有记录。',gascov:'油费（{x}）已包含在里程标准中，因此不会重复扣除。',norate:'应用中还没有 {y} 年的 IRS 里程标准，暂用 {r} 年的标准。',kept:'扣除油费后净收入 · {n} 天',saved:'已保存。净收入 {x}。',restored:'已恢复备份：{n} 天。',restoredDrive:'已从 Google 云端硬盘恢复 {n} 天的记录。',last:'已保存在此设备上。上次备份：{d}。'},
+P:{"pctEarn":"占收入 {n}%","insPlat":"本月 {p} 每小时比 {q} 多付 {x}。","insUp":"本月每小时净收入 {x}，比上月高 {n}%。","insDown":"本月每小时净收入 {x}，比上月低 {n}%。","insKept":"本月扣除油费和过路费后净收入 {x}。",noyear:'{y} 年还没有记录。',gascov:'油费（{x}）已包含在里程标准中，因此不会重复扣除。',norate:'应用中还没有 {y} 年的 IRS 里程标准，暂用 {r} 年的标准。',kept:'扣除油费后净收入 · {n} 天',saved:'已保存。净收入 {x}。',restored:'已恢复备份：{n} 天。',restoredDrive:'已从 Google 云端硬盘恢复 {n} 天的记录。',last:'已保存在此设备上。上次备份：{d}。'},
 W:{due:'截止',tolls:'过路费',irs:'IRS 标准',tips:'小费',day:'天',days:'天',rides:'{n} 单',hr:'小时',mi:'英里',gas:'油费',bonus:'奖励',deposited:'到账',on:' · ',ride:'单'}},
 
 vi:{S:{
+"Back":"Quay lại","Backup & sync":"Sao lưu và đồng bộ","Based on mileage":"Theo số dặm","Car & costs":"Xe và chi phí","Compare":"So sánh","Day":"Ngày","Week":"Tuần","Month":"Tháng","Year":"Năm","Earnings by week":"Thu nhập theo tuần","Earnings trend":"Xu hướng thu nhập","Est. tax deduction":"Khấu trừ thuế ước tính","Expenses":"Chi phí","Home":"Trang chủ","Hours driven":"Giờ lái xe","Insight":"Nhận định","Insights":"Phân tích","Kept by month":"Còn lại theo tháng","Kept for Gig Workers · Everything stays on this device.":"Kept for Gig Workers · Mọi dữ liệu đều ở trên thiết bị này.","Last 6 months":"6 tháng qua","Last 7 days":"7 ngày qua","By week":"Theo tuần","By month":"Theo tháng","Log Day":"Ghi ngày","Edit Day":"Sửa ngày","Save Day":"Lưu ngày","Lyft deposit":"Tiền rút Lyft","Uber deposit":"Tiền rút Uber","Main":"Chính","More":"Thêm","Next":"Tiếp","Get Started":"Bắt đầu","Overview":"Tổng quan","Platform":"Nền tảng","Previous":"Trước","Settings":"Cài đặt","Total earnings":"Tổng thu nhập","Trends":"Xu hướng","Your data":"Dữ liệu của bạn","vs. yesterday":"so với hôm qua","vs. previous day":"so với ngày trước","vs. last week":"so với tuần trước","vs. previous week":"so với tuần trước đó","vs. last month":"so với tháng trước","vs. previous month":"so với tháng trước đó","vs. last year":"so với năm ngoái","vs. previous year":"so với năm trước đó","Track your rideshare work. Keep more of what you earn.":"Theo dõi công việc chạy xe. Giữ lại nhiều hơn số tiền bạn kiếm được.","Log your Lyft and Uber days, track gas and miles, and get clear numbers for tax time — all in one simple app.":"Ghi lại ngày chạy Lyft và Uber, theo dõi xăng và số dặm, có số liệu rõ ràng khi khai thuế — tất cả trong một ứng dụng đơn giản.","Lyft and Uber, side by side.":"Lyft và Uber, đặt cạnh nhau.","See which app really pays more per hour, per ride and per mile.":"Xem ứng dụng nào thực sự trả nhiều hơn mỗi giờ, mỗi chuyến và mỗi dặm.","Your data stays yours.":"Dữ liệu là của bạn.","Everything is saved on this device. Back it up to your own Google Drive whenever you like.":"Mọi thứ được lưu trên thiết bị này. Sao lưu lên Google Drive của bạn bất cứ lúc nào.","No days logged yet. Tap + to log your first day.":"Chưa có ngày nào. Chạm + để ghi ngày đầu tiên.","Log a few days this month to see your insights.":"Ghi vài ngày trong tháng này để xem phân tích.","Kept green":"Xanh Kept",
 "Tolls & parking":"Phí cầu đường và đỗ xe",
 "Taxes":"Thuế",
 "Tax year":"Năm tính thuế",
@@ -1043,7 +1358,7 @@ vi:{S:{
 'Backup saved. To keep it in Google Drive, upload the .json file from your Downloads to drive.google.com.':'Đã lưu bản sao lưu. Để giữ trên Google Drive, hãy tải tệp .json trong mục Tải xuống lên drive.google.com.',
 "That file isn't a Kept backup. Pick the .json file from \"Back up to Google Drive\".":'Tệp này không phải bản sao lưu Kept. Hãy chọn tệp .json từ "Sao lưu lên Google Drive".',
 "This browser is blocking storage, so entries won't be kept. Try a regular (not private) window.":'Trình duyệt này đang chặn bộ nhớ nên dữ liệu sẽ không được lưu. Hãy dùng cửa sổ thường (không ẩn danh).'},
-P:{noyear:'Chưa có ngày nào trong năm {y}.',gascov:'Tiền xăng ({x}) đã được tính trong mức theo dặm nên không khấu trừ thêm.',norate:'Ứng dụng chưa có mức IRS năm {y}, nên dùng mức năm {r}.',kept:'Còn lại sau xăng · {n} ngày',saved:'Đã lưu. Còn lại {x}.',restored:'Đã khôi phục: {n} ngày.',restoredDrive:'Đã khôi phục {n} ngày từ Google Drive.',last:'Đã lưu trên thiết bị này. Lần sao lưu gần nhất: {d}.'},
+P:{"pctEarn":"{n}% thu nhập","insPlat":"Tháng này {p} trả nhiều hơn {q} {x} mỗi giờ.","insUp":"Tháng này bạn còn lại {x} mỗi giờ, tăng {n}% so với tháng trước.","insDown":"Tháng này bạn còn lại {x} mỗi giờ, giảm {n}% so với tháng trước.","insKept":"Tháng này bạn còn lại {x} sau xăng và phí cầu đường.",noyear:'Chưa có ngày nào trong năm {y}.',gascov:'Tiền xăng ({x}) đã được tính trong mức theo dặm nên không khấu trừ thêm.',norate:'Ứng dụng chưa có mức IRS năm {y}, nên dùng mức năm {r}.',kept:'Còn lại sau xăng · {n} ngày',saved:'Đã lưu. Còn lại {x}.',restored:'Đã khôi phục: {n} ngày.',restoredDrive:'Đã khôi phục {n} ngày từ Google Drive.',last:'Đã lưu trên thiết bị này. Lần sao lưu gần nhất: {d}.'},
 W:{due:'Hạn',tolls:'phí cầu đường',irs:'mức IRS',tips:'tiền tip',day:'ngày',days:'ngày',rides:'{n} chuyến',hr:'giờ',mi:'dặm',gas:'xăng',bonus:'thưởng',deposited:'Đã rút',on:' ngày ',ride:'chuyến'}}
 };
 
@@ -1069,6 +1384,11 @@ const PATTERNS=L?[
   [/^Gas \((.+)\) is covered by the mileage rate, so it isn't deducted again\.$/, m=>fill(L.P.gascov,{x:m[1]})],
   [/^The IRS hasn't set a (\d{4}) mileage rate in this app yet, so this uses the (\d{4}) rate\.$/, m=>fill(L.P.norate,{y:m[1],r:m[2]})],
   [/^Saved on this device\. Last backup (.+)\.$/, m=>fill(L.P.last,{d:m[1]})],
+  [/^(\d+)% of earnings$/, m=>fill(L.P.pctEarn,{n:m[1]})],
+  [/^(Lyft|Uber) paid (.+) more per hour than (Lyft|Uber) this month\.$/, m=>fill(L.P.insPlat,{p:m[1],x:m[2],q:m[3]})],
+  [/^You kept (.+) per hour this month, up (\d+)% from last month\.$/, m=>fill(L.P.insUp,{x:m[1],n:m[2]})],
+  [/^You kept (.+) per hour this month, down (\d+)% from last month\.$/, m=>fill(L.P.insDown,{x:m[1],n:m[2]})],
+  [/^You kept (.+) this month after gas and tolls\.$/, m=>fill(L.P.insKept,{x:m[1]})],
 ]:[];
 function trMixed(t){   // numbers mixed with words, e.g. "$30.00 gas · 100 mi"
   const W=L.W; let o=t;
@@ -1118,6 +1438,8 @@ if(L){
 })();
 
 load(); resetForm(); render();
+let welcomed=false; try{ welcomed=!!localStorage.getItem(KEY+'-welcomed'); }catch(e){}
+if(!data.shifts.length&&!welcomed){ drawWelcome(); go('welcome'); } else go('home');
 try{ localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t');
   const lb=localStorage.getItem(KEY+'-lastBackup');
   setSync(lb?'Saved on this device. Last backup '+fmtDate(lb)+'.':'Saved on this device only. Back up to Google Drive now and then.','off'); }
