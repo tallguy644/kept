@@ -285,6 +285,8 @@ table.cmp{width:100%;border-collapse:collapse}
   .card{box-shadow:none;padding:0}
 }
 </style>
+<script>try{if(localStorage.getItem("shift-ledger-v1-lock"))document.documentElement.classList.add("kept-locked")}catch(e){}</script>
+<style>html.kept-locked .shell,html.kept-locked .nav{visibility:hidden}</style>
 </head><body>
 <div class="shell" id="shell">
 
@@ -1447,5 +1449,6 @@ catch(e){ setSync('This browser is blocking storage, so entries won\'t be kept. 
 </script>
 <script src="pro.js"></script>
 <script src="account.js"></script>
+<script src="lock.js"></script>
 <script>if('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </body></html>
