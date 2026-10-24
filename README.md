@@ -10,3 +10,7 @@ A simple daily tracker for Lyft and Uber drivers. Log each day's earnings, rides
 - **Export to Excel / Sheets** saves a `.csv` you can open in Excel or Google Sheets.
 - Use **Restore backup** with that `.json` file to restore your data on a new phone or computer.
 - Tip: on your phone, use your browser's "Add to Home Screen" so it opens like an app.
+
+## Support
+
+support@keptforgigworkers.com
