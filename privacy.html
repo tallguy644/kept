@@ -13,7 +13,7 @@ h1{font-size:1.8rem;margin:0 0 4px}h2{font-size:1.15rem;margin:28px 0 6px}
 p,li{color:var(--fg)}.muted{color:var(--muted)}a{color:var(--accent)}
 </style></head><body><main>
 <h1>Privacy Policy</h1>
-<p class="muted">Kept for Gig Workers · Effective October 21, 2026 (updated to cover the Google Sheet)</p>
+<p class="muted">Kept for Gig Workers · Effective October 24, 2026 (updated to cover optional Kept accounts)</p>
 
 <p>Kept for Gig Workers ("Kept") is a daily tracker for rideshare drivers. This policy explains what the app stores, where it stores it, and what it does with Google Drive if you choose to connect it.</p>
 
@@ -21,7 +21,17 @@ p,li{color:var(--fg)}.muted{color:var(--muted)}a{color:var(--accent)}
 <p>You can enter, for each day: date, earnings, tips, number of rides and hours for Lyft and Uber, gas spending, miles driven, tolls and parking, bonus or other income, and deposit type, date and amounts. The app uses these to show yearly tax estimates on your device; nothing is sent to the developer or to any tax service. The app does not ask for your name, phone number, location, or any account login for Lyft or Uber.</p>
 
 <h2>Where your data is kept</h2>
-<p>Everything you enter is saved only on your own device, in the app's local storage. The developer has no server and does not collect, receive, or see your data. Uninstalling the app or clearing its data deletes it from your device.</p>
+<p>Everything you enter is saved on your own device, in the app's local storage. If you don't create a Kept account, it stays only on your device. Uninstalling the app or clearing its data deletes it from your device.</p>
+
+<h2>Kept account (optional)</h2>
+<p>You can create a free Kept account with your email address and a password, or with your Google account. If you do, your account email and the days you log are stored in Google Firebase (Firebase Authentication and Cloud Firestore), so they are backed up and available on every device where you sign in.</p>
+<ul>
+<li><b>Private to you.</b> Your days are stored under your account, and the database's security rules only allow you, while signed in, to read or change them. Other users cannot see them.</li>
+<li><b>Protected.</b> Data is encrypted in transit (HTTPS) and at rest by Google. Passwords are handled by Firebase Authentication; Kept never sees or stores your password.</li>
+<li><b>Not used for anything else.</b> Your data is used only to run Kept for you. It is not sold, shared, or used for ads.</li>
+<li><b>Signing out</b> removes your days from that device; they stay in your account.</li>
+<li><b>Deleting your account:</b> in Kept, open More → your account → Delete account. This permanently deletes your account and every day stored in it, in the app or on the website. If you can't access the app, contact the developer (below) to have your account and data deleted.</li>
+</ul>
 
 <h2>Google Drive backup (optional)</h2>
 <p>If you tap <b>Connect Google Drive</b>, you sign in with your own Google account and allow access using Google's most limited Drive permission (<code>drive.file</code>). With it, the app can only create and update the two files it makes itself in your Drive: a backup file named <b>Kept backup.json</b> and a Google Sheet named <b>Kept</b> that mirrors your log. It cannot see, open, or change any other files in your Drive.</p>
@@ -35,6 +45,7 @@ p,li{color:var(--fg)}.muted{color:var(--muted)}a{color:var(--accent)}
 <ul>
 <li><b>Google Fonts</b> supplies the app's typefaces. Your device requests the font files from Google, which receives standard request information such as your IP address.</li>
 <li><b>Google Sign-In and Google Drive</b> are used only if you connect Drive, as described above.</li>
+<li><b>Google Firebase</b> stores your account and synced days only if you create a Kept account, as described above.</li>
 </ul>
 <p>Kept has no ads, no analytics, and no tracking, and it does not sell or share your data.</p>
 

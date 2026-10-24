@@ -1,0 +1,17 @@
+rules_version = '2';
+// Kept: each driver can only read and write their own data, and only while signed in.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/days/{dayId} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.id == dayId
+        && request.resource.data.date is string
+        && request.resource.data.size() < 60;   // fields per day: blocks junk documents
+    }
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
