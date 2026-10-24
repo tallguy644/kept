@@ -700,7 +700,7 @@ function renderIns(){
   const pm=new Date(ms.getFullYear(),ms.getMonth()-1,1), T=totals(r), t0=today0();
   const P=totals(t0>=r.s&&t0<r.e?(()=>{ const e=addD(pm,Math.round((t0-ms)/864e5)+1); return rangeAB(pm,e<ms?e:ms); })():rangeAB(pm,ms));
   if(insTab==='overview'){
-    const R=rateFor(ms.getFullYear()), ded=T.miles*R.rate+T.tolls, [ih,it]=insightText(T,P);
+    const ded=T.miles*rateOn(ms.getFullYear()+'-'+String(ms.getMonth()+1).padStart(2,'0')+'-01')+T.tolls, [ih,it]=insightText(T,P);
     $('insOverview').innerHTML=`
       <div class="card num"><div class="ins-total"><div><div class="lbl">Total earnings</div><div class="big">${money(T.M)}</div></div>${change(T.M,P.M,'vs. last month')}</div>
         <div class="stat3"><div><b>${T.R.toLocaleString(LOC)}</b><small>Rides</small></div><div><b>${n1(T.H)}</b><small>Hours</small></div><div><b>${n1(T.miles)}</b><small>Miles</small></div></div></div>
@@ -753,10 +753,14 @@ $('wNext').onclick=()=>{ if(wi<WSLIDES.length-1){ wi++; drawWelcome(); return; }
 
 
 /* ---------- Taxes: yearly summary for Schedule C / SE tax ---------- */
-// IRS business standard mileage rates (dollars per mile)
-const IRS_RATE={2023:0.655,2024:0.67,2025:0.70,2026:0.725};
-const rateFor=y=>{ if(IRS_RATE[y]) return {rate:IRS_RATE[y],year:y,exact:true};
-  const ks=Object.keys(IRS_RATE).map(Number).sort((a,b)=>a-b); const k=ks.filter(x=>x<=y).pop()||ks[0]; return {rate:IRS_RATE[k],year:k,exact:false}; };
+// IRS business standard mileage rates (dollars per mile), by the date they start.
+// 2026 changed mid-year: 72.5¢ Jan 1 – Jun 30 (Notice 2026-10), 76¢ from Jul 1 (IRB 2026-29).
+const IRS_RATES=[['2023-01-01',0.655],['2024-01-01',0.67],['2025-01-01',0.70],['2026-01-01',0.725],['2026-07-01',0.76]];
+const rateOn=iso=>{ let r=IRS_RATES[0][1]; for(const [d,v] of IRS_RATES) if(d<=iso) r=v; return r; };
+const rateFor=y=>{ const ys=IRS_RATES.map(x=>Number(x[0].slice(0,4))), last=Math.max(...ys);
+  return {rate:rateOn(y+'-12-31'),year:Math.min(y,last),exact:y<=last}; };
+// Miles at each rate for a list of days: [[rate, miles], ...] in date order
+const milesByRate=list=>{ const m=new Map(); list.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>{ if(s.miles){ const r=rateOn(s.date); m.set(r,(m.get(r)||0)+s.miles); } }); return [...m]; };
 const QTRS=[{n:'Q1',from:'01-01',to:'03-31',due:y=>`${y}-04-15`},{n:'Q2',from:'04-01',to:'05-31',due:y=>`${y}-06-15`},
   {n:'Q3',from:'06-01',to:'08-31',due:y=>`${y}-09-15`},{n:'Q4',from:'09-01',to:'12-31',due:y=>`${y+1}-01-15`}];
 const SE_RATE=0.153, SE_BASE=0.9235;
@@ -764,13 +768,13 @@ function taxYears(){ const ys=new Set(data.shifts.map(s=>Number(s.date.slice(0,4
 let taxYear=new Date().getFullYear();
 function taxCalc(y){
   const rows=data.shifts.filter(s=>s.date.startsWith(y+'-'));
-  const sum=list=>list.reduce((a,s)=>{ for(const k of ['le','ue','lt','ut','bonus','gas','miles','tolls','lh','uh','lr','ur']) a[k]+=s[k]||0; return a; },
-    {le:0,ue:0,lt:0,ut:0,bonus:0,gas:0,miles:0,tolls:0,lh:0,uh:0,lr:0,ur:0});
+  const sum=list=>list.reduce((a,s)=>{ for(const k of ['le','ue','lt','ut','bonus','gas','miles','tolls','lh','uh','lr','ur']) a[k]+=s[k]||0; a.mded+=(s.miles||0)*rateOn(s.date); return a; },
+    {le:0,ue:0,lt:0,ut:0,bonus:0,gas:0,miles:0,tolls:0,lh:0,uh:0,lr:0,ur:0,mded:0});
   const R=rateFor(y), t=sum(rows);
-  const fig=t=>{ const lyft=t.le+t.lt, uber=t.ue+t.ut, gross=lyft+uber+t.bonus, mileage=t.miles*R.rate, net=Math.max(0,gross-mileage-t.tolls);
+  const fig=t=>{ const lyft=t.le+t.lt, uber=t.ue+t.ut, gross=lyft+uber+t.bonus, mileage=t.mded, net=Math.max(0,gross-mileage-t.tolls);
     return {lyft,uber,gross,mileage,net,se:net*SE_BASE*SE_RATE}; };
   const q=QTRS.map(Q=>{ const qt=sum(rows.filter(s=>{ const md=s.date.slice(5); return md>=Q.from&&md<=Q.to; })); return {...Q,t:qt,f:fig(qt)}; });
-  return {y,rows,t,R,f:fig(t),q};
+  return {y,rows,t,R,f:fig(t),q,byRate:milesByRate(rows)};
 }
 const fmtShort=(iso,ty)=>{ const [y,m,d]=iso.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString(LOCX(),y===ty?{month:'short',day:'numeric'}:{month:'short',day:'numeric',year:'numeric'}); };
 function LOCX(){ return typeof LOC!=='undefined'?LOC:undefined; }
@@ -779,7 +783,8 @@ function renderTax(){
   const ys=taxYears(); if(!ys.includes(taxYear)) taxYear=ys[0];
   sel.innerHTML=ys.map(y=>`<option value="${y}" ${y===taxYear?'selected':''}>${y}</option>`).join('');
   const c=taxCalc(taxYear), t=c.t, f=c.f, mi=v=>v.toLocaleString(LOCX(),{maximumFractionDigits:1});
-  const cents=(c.R.rate*100).toLocaleString(LOCX(),{maximumFractionDigits:1});
+  const cents=r=>(r*100).toLocaleString(LOCX(),{maximumFractionDigits:1})+'¢';
+  const mhint=(c.byRate.length>1?c.byRate.map(([r,m])=>`${mi(m)} mi × ${cents(r)}`).join(' + '):`${mi(t.miles)} mi × ${cents(c.byRate.length?c.byRate[0][0]:c.R.rate)}`)+' IRS rate';
   $('taxBody').innerHTML = !c.rows.length ? `<p class="tax-note">No days logged in ${taxYear} yet.</p>` : `
     <h3>Income</h3>
     <table>
@@ -790,7 +795,7 @@ function renderTax(){
     </table>
     <h3>Deductions</h3>
     <table>
-      <tr class="minus"><td>Business miles<span class="hint">${mi(t.miles)} mi × ${cents}¢ IRS rate</span></td><td>−${money(f.mileage)}</td></tr>
+      <tr class="minus"><td>Business miles<span class="hint">${mhint}</span></td><td>−${money(f.mileage)}</td></tr>
       <tr class="minus"><td>Tolls &amp; parking</td><td>−${money(t.tolls)}</td></tr>
       <tr class="total"><td>Estimated net profit</td><td>${money(f.net)}</td></tr>
       <tr><td>Estimated self-employment tax<span class="hint">15.3% of 92.35% of net profit</span></td><td>${money(f.se)}</td></tr>
@@ -811,7 +816,7 @@ function taxCsv(y){
   const row=(...a)=>L.push(a.map(v=>{ const x=String(v??''); return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x; }).join(','));
   row('Kept for Gig Workers - Tax report',y); row('Estimates only, not tax advice. Compare with your Lyft and Uber tax summaries.'); row();
   row('INCOME'); row('Lyft fares',r2(t.le)); row('Lyft tips',r2(t.lt)); row('Uber fares',r2(t.ue)); row('Uber tips',r2(t.ut)); row('Bonus / other',r2(t.bonus)); row('Total income',r2(f.gross)); row();
-  row('DEDUCTIONS'); row('Business miles',r2(t.miles)); row('IRS standard mileage rate ($/mile)',c.R.rate+(c.R.exact?'':' (rate from '+c.R.year+')')); row('Mileage deduction',r2(f.mileage)); row('Tolls & parking',r2(t.tolls));
+  row('DEDUCTIONS'); row('Business miles',r2(t.miles)); (c.byRate.length>1?c.byRate:[[c.byRate.length?c.byRate[0][0]:c.R.rate,t.miles]]).forEach(([r,m])=>row('Miles at IRS rate $'+r+'/mile'+(c.R.exact?'':' (rate from '+c.R.year+')'),r2(m))); row('Mileage deduction',r2(f.mileage)); row('Tolls & parking',r2(t.tolls));
   row('Gas spent (covered by mileage rate)',r2(t.gas)); row('Estimated net profit',r2(f.net)); row('Estimated self-employment tax',r2(f.se)); row();
   row('QUARTERLY'); row('Quarter','Months','Income','Miles','Net profit','Est. SE tax','Due date');
   c.q.forEach(q=>row(q.n,y+'-'+q.from+' to '+y+'-'+q.to,r2(q.f.gross),r2(q.t.miles),r2(q.f.net),r2(q.f.se),q.due(y))); row();
