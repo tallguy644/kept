@@ -42,6 +42,7 @@ for(const f of ['MainActivity.java','KeptNativePlugin.java']) fs.copyFileSync(pa
 // 3) Resources: icons, theme/splash, file sharing paths (overwrites template files of the same name)
 const res=path.join(mod,'src','main','res'); must(fs.existsSync(res),'res folder missing');
 for(const d of fs.readdirSync(res)) if(/^mipmap-/.test(d)) fs.rmSync(path.join(res,d),{recursive:true,force:true});
+fs.rmSync(path.join(res,'values','ic_launcher_background.xml'),{force:true});   // our kept_colors.xml defines this colour
 fs.cpSync(path.join(app,'native','res'),res,{recursive:true});
 
 // 4) Manifest sanity: still the same package, launch theme, file provider
