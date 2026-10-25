@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kept ad: Lyft vs Uber</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1e4a39}a:hover{color:#16231d}
+</style>
+</helmet>
+<div style="width: 1080px; height: 1080px; box-sizing: border-box; background: #f4f3ee; font-family: Inter, system-ui, sans-serif; color: #16231d; position: relative; overflow: hidden; display: flex; flex-direction: column; padding: 84px 84px 0">
+<div style="display: flex; align-items: center; gap: 16px">
+<img src="/_blob/e84b0d04a36e3adcfae3d1a77de64a41" alt="Kept app icon" style="width: 64px; height: 64px; border-radius: 15px">
+<span style="font-size: 34px; font-weight: 900; letter-spacing: -0.04em; color: #1e4a39">Kept</span>
+<span style="font-size: 22px; font-weight: 600; color: #4e5a54; margin-left: auto">keptforgigworkers.com</span>
+</div>
+<div style="display: flex; align-items: center; gap: 22px; margin-top: 64px">
+<span style="background: {{lyft}}; color: #ffffff; font-size: 44px; font-weight: 900; padding: 14px 34px; border-radius: 999px; letter-spacing: -0.02em">Lyft</span>
+<span style="font-size: 40px; font-weight: 800; color: #4e5a54">or</span>
+<span style="background: #16231d; color: #ffffff; font-size: 44px; font-weight: 900; padding: 14px 34px; border-radius: 999px; letter-spacing: -0.02em">Uber</span>
+</div>
+<h1 style="margin: 36px 0 0; font-size: 92px; line-height: 0.98; font-weight: 900; letter-spacing: -0.045em; max-width: 880px">Which one really pays you more?</h1>
+<p style="margin: 28px 0 0; font-size: 32px; line-height: 1.35; font-weight: 500; color: #3d4843; max-width: 560px">Kept puts them side by side: per hour, per ride and per mile.</p>
+<div style="margin-top: 44px; display: flex; align-items: center; gap: 16px">
+<span style="background: #1e4a39; color: #ffffff; font-size: 26px; font-weight: 800; padding: 16px 30px; border-radius: 999px">Free for drivers</span>
+</div>
+<div style="position: absolute; right: 70px; bottom: -330px; width: 400px; height: 760px; box-sizing: border-box; padding: 12px; background: #16231d; border-radius: 56px; transform: rotate(-5deg); box-shadow: 0 30px 70px rgba(22,35,29,0.3)">
+<img src="/_blob/08f3a7c2236608099c8d53929e96da52" alt="Kept Insights screen with monthly earnings, rides, hours and miles" style="width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 46px; display: block">
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"lyft":{"editor":"color","default":"#c2187a"},"$preview":{"width":1080,"height":1080}}'>
+class Component extends DCLogic {
+renderVals() {
+return { lyft: this.props.lyft ?? '#c2187a' };
+}
+}
+</script>
+</body>
+</html>

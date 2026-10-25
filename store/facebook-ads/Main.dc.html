@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kept ad: what you really kept</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#f5e2a8}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 1080px; height: 1080px; box-sizing: border-box; background: {{ground}}; font-family: Inter, system-ui, sans-serif; color: #ffffff; position: relative; overflow: hidden; display: flex">
+<div style="width: 560px; box-sizing: border-box; padding: 84px 0 80px 84px; display: flex; flex-direction: column; gap: 32px; position: relative; z-index: 2">
+<div style="display: flex; align-items: center; gap: 18px">
+<img src="/_blob/e84b0d04a36e3adcfae3d1a77de64a41" alt="Kept app icon" style="width: 76px; height: 76px; border-radius: 18px">
+<div style="display: flex; flex-direction: column; line-height: 1">
+<span style="font-size: 40px; font-weight: 900; letter-spacing: -0.04em">Kept</span>
+<span style="font-size: 17px; font-weight: 600; letter-spacing: 0.12em; margin-top: 4px; opacity: 0.85">for Gig Workers</span>
+</div>
+</div>
+<p style="margin: 40px 0 0; font-size: 30px; font-weight: 600; color: #f5e2a8; letter-spacing: -0.01em">Your payout isn't what you keep.</p>
+<h1 style="margin: 0; font-size: 84px; line-height: 0.98; font-weight: 900; letter-spacing: -0.045em">See what you really kept after gas.</h1>
+<p style="margin: 0; font-size: 28px; line-height: 1.35; font-weight: 500; opacity: 0.9">Lyft and Uber earnings, gas, miles and costs in one quick entry a day.</p>
+<div style="margin-top: auto; display: flex; align-items: center; gap: 16px">
+<span style="background: #f5e2a8; color: #16231d; font-size: 26px; font-weight: 800; padding: 16px 28px; border-radius: 999px">Free · No ads</span>
+<span style="font-size: 24px; font-weight: 600; opacity: 0.9">keptforgigworkers.com</span>
+</div>
+</div>
+<div style="position: absolute; right: -40px; top: 120px; width: 470px; height: 900px; box-sizing: border-box; padding: 14px; background: #0b120e; border-radius: 64px; transform: rotate(6deg); box-shadow: 0 40px 80px rgba(0,0,0,0.35)">
+<img src="/_blob/f4fef2cfa56dafaa7e7ca4d4a113324a" alt="Kept Home screen showing total earnings, rides, hours, miles and what you kept" style="width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 52px; display: block">
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"ground":{"editor":"color","default":"#1e4a39","options":["#1e4a39","#16231d","#1c6b47"]},"$preview":{"width":1080,"height":1080}}'>
+class Component extends DCLogic {
+renderVals() {
+return { ground: this.props.ground ?? '#1e4a39' };
+}
+}
+</script>
+</body>
+</html>

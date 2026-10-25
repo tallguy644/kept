@@ -1,0 +1,51 @@
+Kept Facebook ads: ad text
+Designs are on the "Kept Facebook Ads" canvas in Claude (export PNGs from there). The .dc.html files here are the design sources.
+
+AD 1 · What you really kept (feed + story)
+
+Primary text:
+Driving for Lyft and Uber? Your payout isn't what you keep. Kept tracks your earnings, gas, miles and costs in one quick entry a day, so you can see what you really made. Free, no ads, and your data stays yours.
+
+Headline: See what you really kept
+Description: Free daily tracker for rideshare drivers
+Button: Learn more
+Link: https://keptforgigworkers.com
+
+-----
+
+AD 2 · Lyft vs Uber
+
+Primary text:
+Lyft or Uber: which one actually pays you more per hour? Log your day in Kept and see them side by side, per hour, per ride and per mile, with totals for the week, month and year.
+
+Headline: Lyft vs Uber, side by side
+Description: Free for rideshare drivers
+Button: Learn more
+Link: https://keptforgigworkers.com
+
+-----
+
+AD 3 · Log your day in a minute
+
+Primary text:
+Done driving? Skip the spreadsheet. Log your whole Lyft and Uber day in under a minute: earnings, tips, rides, hours, gas, miles, tolls and repairs. Kept does the math.
+
+Headline: Log your day in under a minute
+Description: Free, no ads, works on any phone
+Button: Learn more
+Link: https://keptforgigworkers.com
+
+-----
+
+AD 4 · Become a tester (Android)
+
+Primary text:
+Android rideshare drivers: help us test Kept before it launches on Google Play. It's free. Join the tester group, install the test version, and tell us what to fix.
+
+Headline: Become a Kept tester
+Description: Free early access for Android drivers
+Button: Sign up
+Link: https://play.google.com/apps/testing/com.desertcircuitapps.kept
+(Testers also need to join https://groups.google.com/g/testers-community first.)
+
+-----
