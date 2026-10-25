@@ -1,10 +1,10 @@
 # Kept Pro: launch checklist
 
-Pro is built and switched **off**. Until launch (`lockBeforeLaunch: true` in `pro.js`), the Pro features (Taxes report, Compare and Trends tabs, Google Drive backup) are **locked for everyone** and More shows a "Kept Pro is coming soon, with a 30-day free trial" note. No trial clock runs yet; gifted Pro still unlocks. At step 5 the trial starts for everyone.
+Pro is built and switched **off**. Until launch (`lockBeforeLaunch: true` in `pro.js`), the Pro features (Taxes report, Compare and Trends tabs, Google Drive backup) are **locked for everyone** and More shows a "Kept Pro is coming soon, with a 7-day free trial" note. No trial clock runs yet; gifted Pro still unlocks. At step 5 the trial starts for everyone.
 
 - **Free:** logging days, totals, Lyft vs Uber on Home, Export to Excel / Sheets, Customize, saving a backup file, Restore backup, Restore from Drive
 - **Pro:** Taxes report, Insights Compare and Trends tabs, Google Drive auto-backup + Google Sheet
-- **Trial:** 30 days for everyone, starting the first time they open Kept after launch
+- **Trial:** 7 days for everyone, starting the first time they open Kept after launch
 - **Prices:** $1.99/month, $14.99/year, $24.99 lifetime. Sold only in the Google Play and Microsoft Store apps.
 - **Tied to the Kept account:** buy once in the app, and Pro unlocks on every device and on keptforgigworkers.com wherever the driver signs in. The Pro server checks each purchase with the store and marks the account Pro (`users/{uid}/meta/pro`, which drivers can't write). One purchase links to one account only. The free trial also follows the account (`users/{uid}/meta/trial`, stamped once by the server clock), so reinstalling or a new device doesn't restart it.
 - **Without an account,** a purchase still works on that device, and links to the account automatically the first time they sign in.

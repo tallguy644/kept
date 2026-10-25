@@ -1,4 +1,4 @@
-/* Kept Pro: 30-day free trial, then Taxes, Google Drive auto-backup and Excel export need Pro.
+/* Kept Pro: 7-day free trial, then Taxes, Google Drive auto-backup and Excel export need Pro.
    Pro is bought only inside the store apps (Google Play, Microsoft Store) through the Digital Goods API, and is tied to
    the driver's Kept account: the Pro server (worker/) checks the purchase and marks the account Pro, so it unlocks on
    every device and on the website where they sign in. The free trial follows the account too.
@@ -11,7 +11,7 @@
 const PRO={
   enabled:false,            // LAUNCH SWITCH: set to true once the Pro products are live in both stores
   lockBeforeLaunch:true,    // until launch, Pro features stay locked for everyone (no trial yet); gifted Pro still unlocks
-  trialDays:30,
+  trialDays:7,
   skus:{monthly:'kept_pro_monthly',yearly:'kept_pro_yearly',lifetime:'kept_pro_lifetime'},
   prices:{monthly:'$1.99',yearly:'$14.99',lifetime:'$24.99'},   // shown until the store sends local prices
   workerUrl:'',             // Pro server (Cloudflare Worker in worker/): checks purchases, links them to accounts. Required before launch.
@@ -36,7 +36,7 @@ const preLock=!enabled&&PRO.lockBeforeLaunch!==false;   // before launch: Pro fe
 
 /* ---------- Words (English plus the app's six languages) ---------- */
 const T={
-en:{soonT:'Kept Pro is coming soon',soonP:'The Taxes report, Compare and Trends, and Google Drive backup are part of Kept Pro, which is coming soon. When it launches, every driver gets a 30-day free trial first. Logging your days, totals, Lyft vs Uber, backup files and Excel export stay free.',soonToast:'Kept Pro is coming soon, with a 30-day free trial.',pro:'Pro',goPro:'Go Pro',proOn:'Pro ✓',trialLeft:'Free trial · {n} days left',trialLast:'Free trial · last day',
+en:{soonT:'Kept Pro is coming soon',soonP:'The Taxes report, Compare and Trends, and Google Drive backup are part of Kept Pro, which is coming soon. When it launches, every driver gets a 7-day free trial first. Logging your days, totals, Lyft vs Uber, backup files and Excel export stay free.',soonToast:'Kept Pro is coming soon, with a 7-day free trial.',pro:'Pro',goPro:'Go Pro',proOn:'Pro ✓',trialLeft:'Free trial · {n} days left',trialLast:'Free trial · last day',
   title:'Kept Pro',done:'Done',
   stTrial:'Your free trial has {n} days left. After that, these need Pro:',stTrialLast:'Your free trial ends today. After that, these need Pro:',
   stEnded:'Your free trial has ended. Get Pro to use:',stPro:'You have Pro. Thanks for supporting Kept!',stLife:'You have Pro for life. Thanks for supporting Kept!',
@@ -50,7 +50,7 @@ en:{soonT:'Kept Pro is coming soon',soonP:'The Taxes report, Compare and Trends,
   working:'Opening the store…',thanks:'Pro unlocked. Thanks!',cancelled:'Purchase cancelled.',failed:'The purchase didn\'t go through. Try again.',
   restored:'Pro restored.',none:'No Pro purchase found for this store account.',
   needPro:'That\'s a Pro feature.',driveNeedsPro:'Google Drive backup is a Pro feature. Your days are still saved on this device.',stAcct:'Pro is active on your Kept account, on all your devices.',signInPro:'Bought Pro in the Kept app? Sign in with the same account to use it here.',signIn:'Sign in',linked:'Pro is now linked to your account, so it works on all your devices.',other:'This purchase is already linked to a different Kept account.',signInFirst:'Sign in first so Pro follows you to all your devices.'},
-es:{soonT:'Kept Pro llegará pronto',soonP:'El informe de impuestos, Comparar y Tendencias, y el respaldo en Google Drive son parte de Kept Pro, que llegará pronto. Cuando se lance, cada conductor tendrá primero 30 días de prueba gratis. Registrar tus días, los totales, Lyft vs Uber, las copias de respaldo y la exportación a Excel siguen siendo gratis.',soonToast:'Kept Pro llegará pronto, con 30 días de prueba gratis.',pro:'Pro',goPro:'Hazte Pro',proOn:'Pro ✓',trialLeft:'Prueba gratis · quedan {n} días',trialLast:'Prueba gratis · último día',
+es:{soonT:'Kept Pro llegará pronto',soonP:'El informe de impuestos, Comparar y Tendencias, y el respaldo en Google Drive son parte de Kept Pro, que llegará pronto. Cuando se lance, cada conductor tendrá primero 7 días de prueba gratis. Registrar tus días, los totales, Lyft vs Uber, las copias de respaldo y la exportación a Excel siguen siendo gratis.',soonToast:'Kept Pro llegará pronto, con 7 días de prueba gratis.',pro:'Pro',goPro:'Hazte Pro',proOn:'Pro ✓',trialLeft:'Prueba gratis · quedan {n} días',trialLast:'Prueba gratis · último día',
   title:'Kept Pro',done:'Listo',
   stTrial:'A tu prueba gratis le quedan {n} días. Después, esto requiere Pro:',stTrialLast:'Tu prueba gratis termina hoy. Después, esto requiere Pro:',
   stEnded:'Tu prueba gratis terminó. Hazte Pro para usar:',stPro:'Tienes Pro. ¡Gracias por apoyar Kept!',stLife:'Tienes Pro de por vida. ¡Gracias por apoyar Kept!',
@@ -64,7 +64,7 @@ es:{soonT:'Kept Pro llegará pronto',soonP:'El informe de impuestos, Comparar y 
   working:'Abriendo la tienda…',thanks:'Pro activado. ¡Gracias!',cancelled:'Compra cancelada.',failed:'La compra no se completó. Inténtalo de nuevo.',
   restored:'Pro restaurado.',none:'No se encontró una compra de Pro en esta cuenta de la tienda.',
   needPro:'Esa función es de Pro.',driveNeedsPro:'El respaldo en Google Drive es una función de Pro. Tus días siguen guardados en este dispositivo.',stAcct:'Pro está activo en tu cuenta de Kept, en todos tus dispositivos.',signInPro:'¿Compraste Pro en la app Kept? Inicia sesión con la misma cuenta para usarlo aquí.',signIn:'Iniciar sesión',linked:'Pro ya está vinculado a tu cuenta y funciona en todos tus dispositivos.',other:'Esta compra ya está vinculada a otra cuenta de Kept.',signInFirst:'Inicia sesión primero para que Pro te siga en todos tus dispositivos.'},
-pt:{soonT:'O Kept Pro chega em breve',soonP:'O relatório de impostos, Comparar e Tendências, e o backup no Google Drive fazem parte do Kept Pro, que chega em breve. No lançamento, todo motorista ganha primeiro 30 dias de teste grátis. Registrar seus dias, os totais, Lyft vs Uber, os arquivos de backup e a exportação para Excel continuam grátis.',soonToast:'O Kept Pro chega em breve, com 30 dias de teste grátis.',pro:'Pro',goPro:'Seja Pro',proOn:'Pro ✓',trialLeft:'Teste grátis · faltam {n} dias',trialLast:'Teste grátis · último dia',
+pt:{soonT:'O Kept Pro chega em breve',soonP:'O relatório de impostos, Comparar e Tendências, e o backup no Google Drive fazem parte do Kept Pro, que chega em breve. No lançamento, todo motorista ganha primeiro 7 dias de teste grátis. Registrar seus dias, os totais, Lyft vs Uber, os arquivos de backup e a exportação para Excel continuam grátis.',soonToast:'O Kept Pro chega em breve, com 7 dias de teste grátis.',pro:'Pro',goPro:'Seja Pro',proOn:'Pro ✓',trialLeft:'Teste grátis · faltam {n} dias',trialLast:'Teste grátis · último dia',
   title:'Kept Pro',done:'Pronto',
   stTrial:'Seu teste grátis tem mais {n} dias. Depois disso, isto exige Pro:',stTrialLast:'Seu teste grátis termina hoje. Depois disso, isto exige Pro:',
   stEnded:'Seu teste grátis terminou. Seja Pro para usar:',stPro:'Você tem Pro. Obrigado por apoiar o Kept!',stLife:'Você tem Pro vitalício. Obrigado por apoiar o Kept!',
@@ -78,7 +78,7 @@ pt:{soonT:'O Kept Pro chega em breve',soonP:'O relatório de impostos, Comparar 
   working:'Abrindo a loja…',thanks:'Pro ativado. Obrigado!',cancelled:'Compra cancelada.',failed:'A compra não foi concluída. Tente de novo.',
   restored:'Pro restaurado.',none:'Nenhuma compra do Pro encontrada nesta conta da loja.',
   needPro:'Esse recurso é do Pro.',driveNeedsPro:'O backup no Google Drive é um recurso Pro. Seus dias continuam salvos neste aparelho.',stAcct:'O Pro está ativo na sua conta Kept, em todos os seus aparelhos.',signInPro:'Comprou o Pro no app Kept? Entre com a mesma conta para usá-lo aqui.',signIn:'Entrar',linked:'O Pro agora está vinculado à sua conta e funciona em todos os seus aparelhos.',other:'Esta compra já está vinculada a outra conta Kept.',signInFirst:'Entre primeiro para que o Pro acompanhe você em todos os aparelhos.'},
-fr:{soonT:'Kept Pro arrive bientôt',soonP:'Le rapport fiscal, Comparer et Tendances, et la sauvegarde Google Drive font partie de Kept Pro, qui arrive bientôt. À son lancement, chaque chauffeur aura d\'abord 30 jours d\'essai gratuit. Noter vos journées, les totaux, Lyft vs Uber, les fichiers de sauvegarde et l\'export Excel restent gratuits.',soonToast:'Kept Pro arrive bientôt, avec 30 jours d\'essai gratuit.',pro:'Pro',goPro:'Passer Pro',proOn:'Pro ✓',trialLeft:'Essai gratuit · {n} jours restants',trialLast:'Essai gratuit · dernier jour',
+fr:{soonT:'Kept Pro arrive bientôt',soonP:'Le rapport fiscal, Comparer et Tendances, et la sauvegarde Google Drive font partie de Kept Pro, qui arrive bientôt. À son lancement, chaque chauffeur aura d\'abord 7 jours d\'essai gratuit. Noter vos journées, les totaux, Lyft vs Uber, les fichiers de sauvegarde et l\'export Excel restent gratuits.',soonToast:'Kept Pro arrive bientôt, avec 7 jours d\'essai gratuit.',pro:'Pro',goPro:'Passer Pro',proOn:'Pro ✓',trialLeft:'Essai gratuit · {n} jours restants',trialLast:'Essai gratuit · dernier jour',
   title:'Kept Pro',done:'Terminé',
   stTrial:'Il reste {n} jours à votre essai gratuit. Ensuite, ceci nécessite Pro :',stTrialLast:'Votre essai gratuit se termine aujourd\'hui. Ensuite, ceci nécessite Pro :',
   stEnded:'Votre essai gratuit est terminé. Passez Pro pour utiliser :',stPro:'Vous avez Pro. Merci de soutenir Kept !',stLife:'Vous avez Pro à vie. Merci de soutenir Kept !',
@@ -92,7 +92,7 @@ fr:{soonT:'Kept Pro arrive bientôt',soonP:'Le rapport fiscal, Comparer et Tenda
   working:'Ouverture de la boutique…',thanks:'Pro activé. Merci !',cancelled:'Achat annulé.',failed:'L\'achat n\'a pas abouti. Réessayez.',
   restored:'Pro restauré.',none:'Aucun achat Pro trouvé pour ce compte de la boutique.',
   needPro:'C\'est une fonction Pro.',driveNeedsPro:'La sauvegarde Google Drive est une fonction Pro. Vos journées restent enregistrées sur cet appareil.',stAcct:'Pro est actif sur votre compte Kept, sur tous vos appareils.',signInPro:'Vous avez acheté Pro dans l\'appli Kept ? Connectez-vous avec le même compte pour l\'utiliser ici.',signIn:'Se connecter',linked:'Pro est maintenant lié à votre compte et fonctionne sur tous vos appareils.',other:'Cet achat est déjà lié à un autre compte Kept.',signInFirst:'Connectez-vous d\'abord pour que Pro vous suive sur tous vos appareils.'},
-ru:{soonT:'Kept Pro скоро появится',soonP:'Налоговый отчёт, вкладки «Сравнение» и «Динамика» и резервная копия в Google Диске входят в Kept Pro, который скоро появится. После запуска каждый водитель сначала получит 30 дней бесплатно. Запись дней, итоги, сравнение Lyft и Uber, файлы резервных копий и экспорт в Excel остаются бесплатными.',soonToast:'Kept Pro скоро появится, с 30 днями бесплатно.',pro:'Pro',goPro:'Перейти на Pro',proOn:'Pro ✓',trialLeft:'Пробный период · осталось дней: {n}',trialLast:'Пробный период · последний день',
+ru:{soonT:'Kept Pro скоро появится',soonP:'Налоговый отчёт, вкладки «Сравнение» и «Динамика» и резервная копия в Google Диске входят в Kept Pro, который скоро появится. После запуска каждый водитель сначала получит 7 дней бесплатно. Запись дней, итоги, сравнение Lyft и Uber, файлы резервных копий и экспорт в Excel остаются бесплатными.',soonToast:'Kept Pro скоро появится, с 7 днями бесплатно.',pro:'Pro',goPro:'Перейти на Pro',proOn:'Pro ✓',trialLeft:'Пробный период · осталось дней: {n}',trialLast:'Пробный период · последний день',
   title:'Kept Pro',done:'Готово',
   stTrial:'До конца пробного периода осталось дней: {n}. Потом для этого нужен Pro:',stTrialLast:'Пробный период заканчивается сегодня. Потом для этого нужен Pro:',
   stEnded:'Пробный период закончился. Оформите Pro, чтобы пользоваться:',stPro:'У вас Pro. Спасибо за поддержку Kept!',stLife:'У вас Pro навсегда. Спасибо за поддержку Kept!',
@@ -106,7 +106,7 @@ ru:{soonT:'Kept Pro скоро появится',soonP:'Налоговый от�
   working:'Открываем магазин…',thanks:'Pro включён. Спасибо!',cancelled:'Покупка отменена.',failed:'Покупка не прошла. Попробуйте ещё раз.',
   restored:'Pro восстановлен.',none:'Покупка Pro для этого аккаунта магазина не найдена.',
   needPro:'Это функция Pro.',driveNeedsPro:'Копия в Google Диск — функция Pro. Ваши дни по-прежнему сохранены на этом устройстве.',stAcct:'Pro активен в вашем аккаунте Kept на всех устройствах.',signInPro:'Купили Pro в приложении Kept? Войдите в тот же аккаунт, чтобы пользоваться им здесь.',signIn:'Войти',linked:'Pro привязан к вашему аккаунту и работает на всех устройствах.',other:'Эта покупка уже привязана к другому аккаунту Kept.',signInFirst:'Сначала войдите, чтобы Pro работал на всех ваших устройствах.'},
-zh:{soonT:'Kept Pro 即将推出',soonP:'税务报告、对比和趋势，以及 Google 云端硬盘备份属于即将推出的 Kept Pro。推出后，每位司机都可先免费试用 30 天。记录每天、汇总、Lyft 与 Uber 对比、备份文件和导出到 Excel 仍然免费。',soonToast:'Kept Pro 即将推出，可免费试用 30 天。',pro:'Pro',goPro:'升级 Pro',proOn:'Pro ✓',trialLeft:'免费试用 · 剩余 {n} 天',trialLast:'免费试用 · 最后一天',
+zh:{soonT:'Kept Pro 即将推出',soonP:'税务报告、对比和趋势，以及 Google 云端硬盘备份属于即将推出的 Kept Pro。推出后，每位司机都可先免费试用 7 天。记录每天、汇总、Lyft 与 Uber 对比、备份文件和导出到 Excel 仍然免费。',soonToast:'Kept Pro 即将推出，可免费试用 7 天。',pro:'Pro',goPro:'升级 Pro',proOn:'Pro ✓',trialLeft:'免费试用 · 剩余 {n} 天',trialLast:'免费试用 · 最后一天',
   title:'Kept Pro',done:'完成',
   stTrial:'免费试用还剩 {n} 天。之后以下功能需要 Pro：',stTrialLast:'免费试用今天结束。之后以下功能需要 Pro：',
   stEnded:'免费试用已结束。升级 Pro 即可使用：',stPro:'你已拥有 Pro。感谢支持 Kept！',stLife:'你已拥有终身 Pro。感谢支持 Kept！',
@@ -120,7 +120,7 @@ zh:{soonT:'Kept Pro 即将推出',soonP:'税务报告、对比和趋势，以及
   working:'正在打开商店…',thanks:'Pro 已解锁。谢谢！',cancelled:'购买已取消。',failed:'购买未完成，请重试。',
   restored:'Pro 已恢复。',none:'此商店账户中未找到 Pro 购买记录。',
   needPro:'这是 Pro 功能。',driveNeedsPro:'Google 云端硬盘备份是 Pro 功能。你的记录仍保存在此设备上。',stAcct:'Pro 已在你的 Kept 账户中启用，适用于你的所有设备。',signInPro:'在 Kept 应用中购买了 Pro？用同一账户登录即可在这里使用。',signIn:'登录',linked:'Pro 已关联到你的账户，可在所有设备上使用。',other:'此购买已关联到另一个 Kept 账户。',signInFirst:'请先登录，这样 Pro 就能在你的所有设备上使用。'},
-vi:{soonT:'Kept Pro sắp ra mắt',soonP:'Báo cáo thuế, So sánh và Xu hướng, và sao lưu Google Drive thuộc Kept Pro, sắp ra mắt. Khi ra mắt, mỗi tài xế được dùng thử miễn phí 30 ngày trước. Ghi ngày, tổng kết, so sánh Lyft và Uber, tệp sao lưu và xuất sang Excel vẫn miễn phí.',soonToast:'Kept Pro sắp ra mắt, dùng thử miễn phí 30 ngày.',pro:'Pro',goPro:'Nâng cấp Pro',proOn:'Pro ✓',trialLeft:'Dùng thử · còn {n} ngày',trialLast:'Dùng thử · ngày cuối',
+vi:{soonT:'Kept Pro sắp ra mắt',soonP:'Báo cáo thuế, So sánh và Xu hướng, và sao lưu Google Drive thuộc Kept Pro, sắp ra mắt. Khi ra mắt, mỗi tài xế được dùng thử miễn phí 7 ngày trước. Ghi ngày, tổng kết, so sánh Lyft và Uber, tệp sao lưu và xuất sang Excel vẫn miễn phí.',soonToast:'Kept Pro sắp ra mắt, dùng thử miễn phí 7 ngày.',pro:'Pro',goPro:'Nâng cấp Pro',proOn:'Pro ✓',trialLeft:'Dùng thử · còn {n} ngày',trialLast:'Dùng thử · ngày cuối',
   title:'Kept Pro',done:'Xong',
   stTrial:'Bản dùng thử còn {n} ngày. Sau đó, các tính năng này cần Pro:',stTrialLast:'Bản dùng thử kết thúc hôm nay. Sau đó, các tính năng này cần Pro:',
   stEnded:'Bản dùng thử đã kết thúc. Nâng cấp Pro để dùng:',stPro:'Bạn đã có Pro. Cảm ơn bạn đã ủng hộ Kept!',stLife:'Bạn có Pro trọn đời. Cảm ơn bạn đã ủng hộ Kept!',
@@ -313,7 +313,7 @@ function show(open,msg){
   if(window.keptGo){ if(open) window.keptGo('pro'); else window.keptBack(); return; }
   sec.hidden=!open; if(open) sec.scrollIntoView({behavior:'smooth',block:'start'});
 }
-// Before launch: a short "coming soon" note in More, so drivers know Pro and its 30-day trial are on the way.
+// Before launch: a short "coming soon" note in More, so drivers know Pro and its 7-day trial are on the way.
 if(!enabled&&bar&&bar.parentNode&&!document.getElementById('proSoon')){
   const soon=document.createElement('div'); soon.className='card'; soon.id='proSoon';
   soon.style.cssText='display:flex;flex-direction:column;gap:6px;text-align:left';
