@@ -270,6 +270,57 @@ table.cmp{width:100%;border-collapse:collapse}
 .welcome .btn-primary svg{width:20px;height:20px}
 .welcome-on .nav{display:none}
 
+/* ---------- desktop (website on a computer): sidebar instead of the bottom bar, wider content ---------- */
+.nav-brand,.nav-wide{display:none}
+@media (min-width:960px){
+  :root{--side:248px}
+  .nav{top:0;bottom:0;right:auto;width:var(--side);border-top:0;border-right:1px solid var(--line);padding:0}
+  .nav-in{max-width:none;height:100%;margin:0;display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:26px 16px}
+  .nav-brand{display:flex;order:-2;padding:0 10px 24px}
+  .nav button{flex-direction:row;justify-content:flex-start;gap:14px;font-size:1rem;padding:12px 14px;border-radius:12px}
+  .nav button:hover{background:var(--surface-2);color:var(--fg)}
+  .nav button[aria-current="page"]{background:var(--surface-2);color:var(--fg)}
+  .nav .plus{order:-1;width:auto;height:50px;margin:0 0 18px;border-radius:14px;justify-content:center;gap:10px;padding:0 16px;font-weight:700;font-size:1rem}
+  .nav .plus:hover{background:var(--accent);color:var(--accent-fg);filter:brightness(1.08)}
+  .nav .plus svg{width:22px;height:22px}
+  .nav .plus .nav-wide{display:inline}
+  .shell{max-width:none;margin:0 0 0 var(--side);padding:30px 48px 56px}
+  .shell>.view{width:100%;max-width:1080px;margin:0 auto}
+  .welcome-on .shell{margin-left:0}
+  .welcome-on .shell>.view{max-width:520px}
+  .shell>.view>.top>.brand{display:none}
+  #vHome>.top{display:none}
+  #vInsights{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
+  #vInsights>*{grid-column:1/-1}
+  #vInsights>.top{grid-column:2;grid-row:1;min-height:0}
+  #vInsights>#insSeg{grid-column:1;grid-row:1}
+  .toast{left:calc(50% + var(--side)/2);bottom:28px}
+  /* Home: tiles in a row of three; on wide screens the totals sit beside the tiles */
+  #vHome>.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media (min-width:1200px){
+    #vHome{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px 24px;align-items:start}
+    #vHome>*{grid-column:1/-1}
+    #vHome>.seg{grid-column:1}
+    #vHome>.datenav{grid-column:2;align-self:center}
+    #vHome>.hero{grid-column:1;align-self:stretch;display:flex;flex-direction:column;justify-content:space-between}
+    #vHome>.tiles{grid-column:2;grid-template-columns:1fr 1fr}
+  }
+  /* Days: two columns of days, month headings across */
+  #log{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:12px 16px!important;align-items:start}
+  #log>.month-h,#log>.empty{grid-column:1/-1}
+  /* Insights */
+  #insSeg{max-width:560px}
+  #insOverview:not([hidden]){display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
+  #insOverview>:nth-child(2){grid-column:1/-1;order:3}
+  #insOverview>:nth-child(3){align-self:stretch}
+  #insOverview>:nth-child(4){grid-column:1/-1;order:4}
+  #insCompare{max-width:820px}
+  #insTrends:not([hidden]){display:grid!important;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);align-items:start}
+  /* forms and settings read better at a comfortable width */
+  #vLog,#vMore,#cust,#proSec,#acctSec,#lockSec{max-width:760px}
+  #lockOffer{align-items:center}
+}
+
 /* ---------- toast ---------- */
 .toast{position:fixed;left:50%;bottom:calc(var(--navh) + 18px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.92rem;font-weight:500;z-index:30;max-width:calc(100% - 32px);box-shadow:0 8px 20px rgba(0,0,0,.2)}
 
@@ -308,7 +359,7 @@ table.cmp{width:100%;border-collapse:collapse}
   </div>
   <h2 id="wHead">Track your rideshare work. Keep more of what you earn.</h2>
   <p id="wSub">Log your Lyft and Uber days, track gas and miles, and get clear numbers for tax time — all in one simple app.</p>
-  <div class="dots" id="wDots"><i class="on"></i><i></i><i></i></div>
+  <div class="dots" id="wDots"><i class="on"></i><i></i><i></i><i></i></div>
   <button type="button" class="btn-primary" id="wNext"><span id="wBtn">Next</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
 </section>
 
@@ -477,9 +528,10 @@ table.cmp{width:100%;border-collapse:collapse}
 
 <nav class="nav" aria-label="Main">
   <div class="nav-in">
+    <div class="brand nav-brand" aria-hidden="true"><b>Kept</b><small>for Gig Workers</small></div>
     <button type="button" data-go="home" aria-current="page"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.2 3 10.4V21h6.5v-6h5v6H21V10.4z"/></svg><span>Home</span></button>
     <button type="button" data-go="days"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.6-4.4A2 2 0 018.5 5h7a2 2 0 011.9 1.6L19 11M4 11h16v6H4zM6 17v2M18 17v2"/><circle cx="7.5" cy="14" r="1"/><circle cx="16.5" cy="14" r="1"/></svg><span>Days</span></button>
-    <button type="button" class="plus" data-go="log" aria-label="Log a day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button type="button" class="plus" data-go="log" aria-label="Log a day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="nav-wide" aria-hidden="true">Log a day</span></button>
     <button type="button" data-go="insights"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="12" width="4" height="8" rx="1"/><rect x="10" y="8" width="4" height="12" rx="1"/><rect x="16" y="4" width="4" height="16" rx="1"/></svg><span>Insights</span></button>
     <button type="button" data-go="more"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg><span>More</span></button>
   </div>
