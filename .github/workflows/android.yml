@@ -81,7 +81,10 @@ jobs:
         run: |
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           "$BT/aapt2" dump badging out/Kept-for-Gig-Workers-v2.apk | head -3
-          "$BT/apksigner" verify --print-certs out/Kept-for-Gig-Workers-v2.apk | grep -i "SHA-256" | head -2
+          "$BT/apksigner" verify --print-certs out/Kept-for-Gig-Workers-v2.apk | tee "$RUNNER_TEMP/certs.txt" | grep -i "SHA-256" | head -2
+          # must be the same upload key as version 1 (Play Console: upload key certificate)
+          grep -qi "8cceE546b8e0861f72a2a9d470c348c649b7b7b13287d89ab300fade151355a6" "$RUNNER_TEMP/certs.txt" || { echo "::error title=signing::APK is not signed with the Kept upload key"; exit 1; }
+          "$BT/aapt2" dump badging out/Kept-for-Gig-Workers-v2.apk | grep -q "package: name='com.desertcircuitapps.kept' versionCode='2'" || { echo "::error title=identity::package name or versionCode is wrong"; exit 1; }
           ! unzip -l out/Kept-for-Gig-Workers-v2.apk | grep -i androidbrowserhelper
 
       - uses: actions/upload-artifact@v5
