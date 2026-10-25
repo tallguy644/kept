@@ -7,6 +7,11 @@ PACKAGE_NAME = "com.desertcircuitapps.kept"
 FIREBASE_PROJECT_ID = "kept-b85c0"
 ALLOWED_ORIGINS = "https://keptforgigworkers.com,https://www.keptforgigworkers.com,https://kept-b85c0.web.app,https://tallguy644.github.io"
 
+# Kept Pro+ (Uber and Lyft sync through Argyle). Leave ARGYLE_SANDBOX = "true" until Argyle's production keys are set.
+ARGYLE_SANDBOX = "true"
+PLUS_IMPORT_DAYS = "90"          # how much trip history the first sync brings in
+DEFAULT_TZ = "America/Phoenix"   # time zone for trips that don't say theirs
+
 # Re-check every linked purchase once a day (renewals, cancellations, refunds).
 [triggers]
 crons = ["17 9 * * *"]
@@ -14,3 +19,6 @@ crons = ["17 9 * * *"]
 # Keys are secrets, never put them in this file. Add them with:
 #   npx wrangler secret put GOOGLE_SA_JSON      (service account with Play Console access)
 #   npx wrangler secret put FIREBASE_SA_JSON    (service account with the "Cloud Datastore User" role in kept-b85c0; optional if the first one has it)
+#   npx wrangler secret put ARGYLE_KEY_ID         (Pro+: Argyle API key ID)
+#   npx wrangler secret put ARGYLE_KEY_SECRET     (Pro+: Argyle API key secret)
+#   npx wrangler secret put ARGYLE_WEBHOOK_SECRET (Pro+: the secret you set on the Argyle webhook)

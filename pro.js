@@ -17,7 +17,15 @@ const PRO={
   workerUrl:'',             // Pro server (Cloudflare Worker in worker/): checks purchases, links them to accounts. Required before launch.
   playUrl:'',               // Google Play listing, e.g. https://play.google.com/store/apps/details?id=...
   msStoreUrl:'',            // Microsoft Store listing, e.g. https://apps.microsoft.com/detail/9N...
-  playPackage:'com.desertcircuitapps.kept'   // Android package name, for the "Manage subscription" link
+  playPackage:'com.desertcircuitapps.kept',  // Android package name, for the "Manage subscription" link
+  // Kept Pro+ = everything in Pro, plus automatic Uber and Lyft sync (through Argyle). Built and switched off; see PLUS.md.
+  plus:{
+    enabled:false,          // PRO+ LAUNCH SWITCH: set to true once the Pro+ products, the Argyle contract and the server are live
+    skus:{monthly:'kept_plus_monthly',yearly:'kept_plus_yearly'},
+    prices:{monthly:'$7.99',yearly:'$69.99'},   // shown until the store sends local prices
+    sandbox:true,           // Argyle test mode (fake Uber/Lyft accounts). Set to false for real drivers.
+    items:[]                // optional: Argyle item IDs for Uber and Lyft, so the sign-in screen goes straight to them
+  }
 };
 Object.assign(PRO,window.KEPT_PRO_SETTINGS||{});   // lets automated tests point at a stand-in server
 window.keptWorkerUrl=PRO.workerUrl;
@@ -30,8 +38,12 @@ const DAY=864e5, GRACE=7*DAY;
 
 /* Preview without launching: add ?pro=preview (trial running) or ?pro=expired (trial over) to the address. */
 const preview=new URLSearchParams(location.search).get('pro');
-const enabled=PRO.enabled||preview==='preview'||preview==='expired';
+const enabled=PRO.enabled||preview==='preview'||preview==='expired'||preview==='plus'||preview==='plusoffer';
 window.keptProEnabled=enabled;
+/* Pro+ preview: ?pro=plusoffer shows the Pro+ plans; ?pro=plus acts as if Pro+ is active (add &plus=demo for sample synced days). */
+const plusOn=enabled&&(!!(PRO.plus&&PRO.plus.enabled)||preview==='plus'||preview==='plusoffer');
+window.keptPlusEnabled=plusOn;
+window.keptPlusSettings={sandbox:PRO.plus.sandbox!==false,items:PRO.plus.items||[],workerUrl:PRO.workerUrl};
 const preLock=!enabled&&PRO.lockBeforeLaunch!==false;   // before launch: Pro features locked, "coming soon" note instead of plans   // account.js starts the account's trial clock only once Pro is live
 
 /* ---------- Words (English plus the app's six languages) ---------- */
@@ -152,13 +164,20 @@ function daysLeft(){ return Math.max(0,PRO.trialDays-Math.floor((Date.now()-tria
 function owned(){ return !!(st.ent&&Date.now()-st.ent.checked<GRACE); }
 function acctPro(){ const p=acct.user&&acct.pro; return !!(p&&p.active&&(p.expires==null||p.expires>Date.now())); }
 function trialOn(){ return daysLeft()>0; }
-function isPro(){ if(preLock) return owned()||acctPro(); return !enabled||owned()||acctPro()||trialOn(); }
+function isPro(){ if(preview==='plus') return true; if(preLock) return owned()||acctPro(); return !enabled||owned()||acctPro()||trialOn(); }
 window.keptIsPro=isPro;
+const plusSkus=Object.values(PRO.plus.skus);
+function plusOwned(){ return owned()&&plusSkus.includes(st.ent.sku); }
+function acctPlus(){ return acctPro()&&acct.pro.tier==='plus'; }
+function isPlus(){ return plusOn&&(preview==='plus'||plusOwned()||acctPlus()); }
+window.keptIsPlus=isPlus;
+window.keptShowPro=(msg)=>show(true,msg);
 
 /* ---------- Store connection (only inside the Google Play / Microsoft Store apps) ---------- */
 let store=null, details={};
-const skuList=Object.values(PRO.skus);
-const planOf=sku=>Object.keys(PRO.skus).find(k=>PRO.skus[k]===sku);
+const ALL={...PRO.skus,plus_monthly:PRO.plus.skus.monthly,plus_yearly:PRO.plus.skus.yearly};   // every product the app sells
+const skuList=Object.values(PRO.skus).concat(plusOn?plusSkus:[]);
+const planOf=sku=>Object.keys(ALL).find(k=>ALL[k]===sku);
 async function connect(){
   if(!('getDigitalGoodsService' in window)) return null;
   for(const s of STORES){
@@ -169,9 +188,9 @@ async function connect(){
   return store;
 }
 function priceOf(plan){
-  const d=details[PRO.skus[plan]];
+  const d=details[ALL[plan]];
   if(d&&d.price){ try{ return new Intl.NumberFormat(undefined,{style:'currency',currency:d.price.currency}).format(Number(d.price.value)); }catch(e){} }
-  return PRO.prices[plan];
+  return PRO.prices[plan]||PRO.plus.prices[plan.replace('plus_','')];
 }
 async function ackPlay(p){   // purchase without an account: acknowledge it so Google doesn't refund it (Pro on this device)
   if(store.name!=='play'||!PRO.workerUrl||(st.acked||[]).includes(p.purchaseToken)) return;
@@ -205,12 +224,12 @@ async function refresh(){
   try{ list=await store.svc.listPurchases(); }catch(e){ return owned(); }   // offline: keep what we knew (7-day grace)
   const mine=list.filter(p=>skuList.includes(p.itemId));
   for(const p of mine){ try{ if(acct.user&&PRO.workerUrl) await claim(p); else await ackPlay(p); }catch(e){} }
-  const best=mine.find(p=>p.itemId===PRO.skus.lifetime)||mine[0];
+  const best=mine.find(p=>plusSkus.includes(p.itemId))||mine.find(p=>p.itemId===PRO.skus.lifetime)||mine[0];   // Pro+ includes Pro
   st.ent=best?{sku:best.itemId,checked:Date.now()}:null; saveSt();
   return !!best;
 }
 async function buy(plan){
-  const sku=PRO.skus[plan]; say(w('working'));
+  const sku=ALL[plan]; say(w('working'));
   try{
     const req=new PaymentRequest([{supportedMethods:store.method,data:{sku}}],{total:{label:'Total',amount:{currency:'USD',value:'0'}}});
     const res=await req.show();
@@ -232,6 +251,28 @@ function manageUrl(){
   return 'https://play.google.com/store/account/subscriptions'+(sku&&PRO.playPackage?`?sku=${encodeURIComponent(sku)}&package=${encodeURIComponent(PRO.playPackage)}`:'');
 }
 
+/* ---------- Pro+ card on the Pro screen ---------- */
+function plusCard(){
+  if(!plusOn) return '';
+  const feats=`<ul><li>${esc(pw('pf1'))}</li><li>${esc(pw('pf2'))}</li><li>${esc(pw('pf3'))}</li></ul>`;
+  if(isPlus()) return `<div class="card pro"><p class="pro-status">${esc(pw('plusTitle'))} <span class="plus-tag">PRO+</span></p>${feats}${store&&plusOwned()?`<div class="pro-links"><a class="btn" href="${esc(manageUrl())}" target="_blank" rel="noopener">${esc(w('manage'))}</a></div>`:''}</div>`;
+  const plans=store?`<div class="pro-plans two">
+      <button type="button" data-plan="plus_monthly"><span>${esc(w('monthly'))}</span><b>${esc(priceOf('plus_monthly'))}</b><small>${esc(w('perMo'))}</small></button>
+      <button type="button" class="primary" data-plan="plus_yearly"><span class="tag">${esc(w('best'))}</span><span>${esc(w('yearly'))}</span><b>${esc(priceOf('plus_yearly'))}</b><small>${esc(w('perYr'))}</small></button>
+    </div><p class="pro-note">${esc(pw('plusSwitch'))}</p>`:`<p class="pro-free">${esc(pw('plusWeb'))}</p>`;
+  return `<div class="card pro"><p class="pro-status">${esc(pw('plusTitle'))} <span class="plus-tag">PRO+</span></p><p class="pro-free" style="color:var(--fg);font-size:.95rem">${esc(pw('plusLead'))}</p>${feats}${plans}</div>`;
+}
+const PT={
+en:{plusTitle:'Kept Pro+',plusLead:'Stop typing in your days. Pro+ fills them in for you.',pf1:'Everything in Kept Pro',pf2:'Automatic Uber and Lyft sync: earnings, tips, rides, hours and trip miles land in Kept on their own',pf3:'Secure connection through Argyle. Kept never sees your Uber or Lyft password.',plusSwitch:'If you already have Pro, cancel it in your store account after upgrading so you aren\'t charged twice.',plusWeb:'Pro+ is available in the Kept app on Google Play and the Microsoft Store.',stPlus:'You have Kept Pro+. Your Uber and Lyft days sync automatically.',plusOn:'Pro+ ✓'},
+es:{plusTitle:'Kept Pro+',plusLead:'Deja de escribir tus días. Pro+ los llena por ti.',pf1:'Todo lo de Kept Pro',pf2:'Sincronización automática con Uber y Lyft: ganancias, propinas, viajes, horas y millas de viaje llegan solas a Kept',pf3:'Conexión segura a través de Argyle. Kept nunca ve tu contraseña de Uber o Lyft.',plusSwitch:'Si ya tienes Pro, cancélalo en tu cuenta de la tienda después de mejorar para que no te cobren dos veces.',plusWeb:'Pro+ está disponible en la app Kept de Google Play y Microsoft Store.',stPlus:'Tienes Kept Pro+. Tus días de Uber y Lyft se sincronizan solos.',plusOn:'Pro+ ✓'},
+pt:{plusTitle:'Kept Pro+',plusLead:'Pare de digitar seus dias. O Pro+ preenche para você.',pf1:'Tudo do Kept Pro',pf2:'Sincronização automática com Uber e Lyft: ganhos, gorjetas, corridas, horas e milhas das corridas chegam sozinhos ao Kept',pf3:'Conexão segura pela Argyle. O Kept nunca vê sua senha da Uber ou da Lyft.',plusSwitch:'Se você já tem o Pro, cancele-o na sua conta da loja depois de fazer o upgrade para não ser cobrado duas vezes.',plusWeb:'O Pro+ está disponível no app Kept no Google Play e na Microsoft Store.',stPlus:'Você tem o Kept Pro+. Seus dias da Uber e da Lyft sincronizam sozinhos.',plusOn:'Pro+ ✓'},
+fr:{plusTitle:'Kept Pro+',plusLead:'Arrêtez de saisir vos journées. Pro+ les remplit pour vous.',pf1:'Tout Kept Pro',pf2:'Synchro automatique Uber et Lyft : gains, pourboires, courses, heures et miles de course arrivent seuls dans Kept',pf3:'Connexion sécurisée via Argyle. Kept ne voit jamais votre mot de passe Uber ou Lyft.',plusSwitch:'Si vous avez déjà Pro, annulez-le dans votre compte de la boutique après la mise à niveau pour ne pas payer deux fois.',plusWeb:'Pro+ est disponible dans l\'app Kept sur Google Play et le Microsoft Store.',stPlus:'Vous avez Kept Pro+. Vos journées Uber et Lyft se synchronisent automatiquement.',plusOn:'Pro+ ✓'},
+ru:{plusTitle:'Kept Pro+',plusLead:'Хватит вводить дни вручную. Pro+ заполнит их за вас.',pf1:'Всё из Kept Pro',pf2:'Автосинхронизация с Uber и Lyft: заработок, чаевые, поездки, часы и мили поездок сами попадают в Kept',pf3:'Безопасное подключение через Argyle. Kept никогда не видит ваш пароль Uber или Lyft.',plusSwitch:'Если у вас уже есть Pro, отмените его в аккаунте магазина после перехода, чтобы не платить дважды.',plusWeb:'Pro+ доступен в приложении Kept в Google Play и Microsoft Store.',stPlus:'У вас Kept Pro+. Дни Uber и Lyft синхронизируются автоматически.',plusOn:'Pro+ ✓'},
+zh:{plusTitle:'Kept Pro+',plusLead:'不用再手动输入每天的数据，Pro+ 帮你自动填好。',pf1:'包含 Kept Pro 的全部功能',pf2:'自动同步 Uber 和 Lyft：收入、小费、行程数、时长和行程里程自动进入 Kept',pf3:'通过 Argyle 安全连接。Kept 永远看不到你的 Uber 或 Lyft 密码。',plusSwitch:'如果你已经有 Pro，升级后请在商店账户中取消 Pro，以免重复扣费。',plusWeb:'Pro+ 可在 Google Play 和 Microsoft Store 的 Kept 应用中购买。',stPlus:'你已拥有 Kept Pro+。Uber 和 Lyft 的每日数据会自动同步。',plusOn:'Pro+ ✓'},
+vi:{plusTitle:'Kept Pro+',plusLead:'Không cần nhập ngày làm việc nữa. Pro+ tự điền cho bạn.',pf1:'Mọi tính năng của Kept Pro',pf2:'Tự động đồng bộ Uber và Lyft: thu nhập, tiền tip, số chuyến, giờ và dặm chuyến đi tự vào Kept',pf3:'Kết nối an toàn qua Argyle. Kept không bao giờ thấy mật khẩu Uber hay Lyft của bạn.',plusSwitch:'Nếu bạn đã có Pro, hãy hủy Pro trong tài khoản cửa hàng sau khi nâng cấp để không bị tính phí hai lần.',plusWeb:'Pro+ có trong ứng dụng Kept trên Google Play và Microsoft Store.',stPlus:'Bạn đang dùng Kept Pro+. Ngày làm Uber và Lyft được đồng bộ tự động.',plusOn:'Pro+ ✓'}
+};
+const pw=(k)=>(PT[lang]&&PT[lang][k])||PT.en[k];
+
 /* ---------- Screen ---------- */
 const css=document.createElement('style');
 css.textContent=`
@@ -252,6 +293,8 @@ css.textContent=`
 .pro-links .btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 #proSlot:not(:has(button:not([hidden]))){display:none}
 .pro-plans b{font-size:1.25rem;font-family:var(--display)}
+.pro-plans.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.plus-tag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:4px;font-size:.66rem;font-weight:800;letter-spacing:.06em;line-height:1.6;vertical-align:2px;background:var(--fg);color:var(--bg)}
 .pro-plans small{font-size:.78rem;font-weight:500;opacity:.85}
 .pro-plans .tag{position:absolute;top:-9px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:.66rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:1px 7px;border-radius:99px;background:var(--fg);color:var(--bg)}
 .pro-links{display:flex;gap:8px;flex-wrap:wrap}
@@ -269,7 +312,7 @@ function say(t){ const m=document.getElementById('proMsg'); if(m) m.textContent=
 function draw(){
   const keepMsg=(document.getElementById('proMsg')||{}).textContent||'';
   const left=daysLeft(), life=(owned()&&st.ent.sku===PRO.skus.lifetime)||(acctPro()&&acct.pro.expires==null);
-  const status= owned()?(life?w('stLife'):w('stPro')) : acctPro()?(life?w('stLife'):w('stAcct')) : trialOn()?(left===1?w('stTrialLast'):w('stTrial',{n:left})) : w('stEnded');
+  const status= isPlus()?pw('stPlus') : owned()?(life?w('stLife'):w('stPro')) : acctPro()?(life?w('stLife'):w('stAcct')) : trialOn()?(left===1?w('stTrialLast'):w('stTrial',{n:left})) : w('stEnded');
   let buyHtml='';
   const signInHtml=!acct.user&&window.keptAccount?`<p class="pro-free">${esc(w('signInPro'))}</p><div class="pro-links"><button type="button" id="proSignIn">${esc(w('signIn'))}</button></div>`:'';
   if(acctPro()&&!owned()){
@@ -298,7 +341,7 @@ function draw(){
       <p class="pro-free">${esc(w('free'))}</p>
       ${buyHtml}
       <p class="pro-msg" id="proMsg" role="status"></p>
-    </div>`;
+    </div>${plusCard()}`;
   say(keepMsg);
   sec.querySelector('#proDone').onclick=()=>{ show(false); btn.focus(); };
   sec.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>buy(b.dataset.plan));
@@ -329,11 +372,12 @@ function update(){
   btn.hidden=false;
   const left=daysLeft();
   btn.classList.toggle('on',owned()||acctPro());
-  btn.textContent= (owned()||acctPro())?w('proOn') : trialOn()?(left===1?w('trialLast'):w('trialLeft',{n:left})) : w('goPro');
+  btn.textContent= isPlus()?pw('plusOn') : (owned()||acctPro())?w('proOn') : trialOn()?(left===1?w('trialLast'):w('trialLeft',{n:left})) : w('goPro');
   const locked=!isPro();
   GATED.forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.toggle('pro-lock',locked); });
   if(locked&&typeof insTab!=='undefined'&&insTab!=='overview'&&typeof setIns==='function') setIns('overview');
   draw();   // keep the Pro screen current even while it's closed
+  window.dispatchEvent(new CustomEvent('kept-pro-change'));   // sync.js listens (Pro+)
 }
 
 if(bar){ bar.prepend(btn); }

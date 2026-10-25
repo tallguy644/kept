@@ -300,7 +300,7 @@ window.keptAccount={state:acctState,idToken:()=>auth&&auth.currentUser?auth.curr
 function stopMeta(){ metaUnsub.forEach(f=>f()); metaUnsub=[]; acctPro=null; trialStart=null; }
 async function watchMeta(u){
   const proRef=F.doc(db,'users',u.uid,'meta','pro'), trialRef=F.doc(db,'users',u.uid,'meta','trial');
-  metaUnsub.push(F.onSnapshot(proRef,d=>{ const x=d.exists()?d.data():null; acctPro=x?{active:!!x.active,sku:x.sku||'',expires:x.expires==null?null:Number(x.expires)}:null; emit(); },()=>{}));
+  metaUnsub.push(F.onSnapshot(proRef,d=>{ const x=d.exists()?d.data():null; acctPro=x?{active:!!x.active,sku:x.sku||'',tier:x.tier||'',expires:x.expires==null?null:Number(x.expires)}:null; emit(); },()=>{}));
   if(window.keptProEnabled) try{ const t=await F.getDoc(trialRef); if(!t.exists()) await F.setDoc(trialRef,{start:F.serverTimestamp()}); }catch(e){ console.warn('trial',e); }
   metaUnsub.push(F.onSnapshot(trialRef,d=>{ const v=d.exists()&&d.data().start; trialStart=v&&v.toMillis?v.toMillis():null; if(trialStart) emit(); },()=>{}));
 }

@@ -714,6 +714,7 @@ function renderDays(){
     r.innerHTML=`<div class="d"></div><div class="net num ${n<0?'neg':'pos'}">${money(n)}<em>${s.miles?money(n/s.miles)+'/mi':''}</em></div><div class="meta num"></div><div class="meta num"></div>
       <div class="x"><button type="button" data-a="edit">Edit</button><button type="button" data-a="del">Delete</button></div>`;
     r.querySelector('.d').textContent=fmtDate(s.date);
+    if(s.sy&&window.keptSyncedLabel){ const t=document.createElement('span'); t.className='sy-tag'; t.textContent=window.keptSyncedLabel; r.querySelector('.d').appendChild(t); }   // Pro+ synced day
     const [m1,m2]=r.querySelectorAll('.meta');
     const pl=(cls,name,e,t,rides,h)=> (e||t||rides||h) ? `<b class="${cls}">${name}</b> ${money(e)}${t?` + ${money(t)} tips`:''}${rides?` · ${rides} rides`:''}${h?` · ${h} hr`:''}` : '';
     m1.innerHTML=[pl('l','Lyft',s.le,s.lt,s.lr,s.lh),pl('u','Uber',s.ue,s.ut,s.ur,s.uh)].filter(Boolean).join('<br>')||'No platform earnings';
@@ -917,6 +918,7 @@ $('logBack').onclick=()=>{ const was=editing; resetForm(); go(was?'days':(lastVi
 $('f').addEventListener('submit',async e=>{
   e.preventDefault();
   const s={...readForm(), id: editing||newId('s')};
+  const old=editing&&data.shifts.find(x=>x.id===editing); if(old&&old.sy) s.sy=old.sy;   // keep Pro+ sync memory, so the driver's edits are respected
   if(!s.date){ alertMsg($('msg'),'Pick a date for this day.'); return; }
   if(!s.le&&!s.ue&&!s.lt&&!s.ut&&!s.bonus&&!s.tolls&&!s.maint&&!s.gas&&!s.miles&&!s.ld&&!s.ud){ alertMsg($('msg'),'Enter at least your earnings, gas or miles.'); return; }
   $('saveBtn').disabled=true; $('msg').className='msg'; $('msg').textContent=mode==='sheets'?'Saving to your sheet…':'';
@@ -1515,5 +1517,6 @@ catch(e){ setSync('This browser is blocking storage, so entries won\'t be kept. 
 <script src="account.js"></script>
 <script src="lock.js"></script>
 <script src="moved.js"></script>
+<script src="sync.js"></script>
 <script>if('serviceWorker' in navigator&&!window.keptNative) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </body></html>

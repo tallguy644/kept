@@ -1,5 +1,7 @@
 # Kept Pro: launch checklist
 
+> Kept **Pro+** (Pro plus automatic Uber and Lyft sync) is built and switched off too: see [PLUS.md](PLUS.md).
+
 Pro is built and switched **off**. Until launch (`lockBeforeLaunch: true` in `pro.js`), the Pro features (Taxes report, Compare and Trends tabs, Google Drive backup) are **locked for everyone** and More shows a "Kept Pro is coming soon, with a 7-day free trial" note. No trial clock runs yet; gifted Pro still unlocks. At step 5 the trial starts for everyone.
 
 - **Free:** logging days, totals, Lyft vs Uber on Home, Export to Excel / Sheets, Customize, saving a backup file, Restore backup, Restore from Drive
