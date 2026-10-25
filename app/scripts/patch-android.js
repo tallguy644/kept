@@ -2,7 +2,7 @@
 // version, signing, native helper code, icons, splash and theme. Fails loudly if the template changed.
 const fs=require('fs'), path=require('path');
 const app=path.resolve(__dirname,'..'), and=path.join(app,'android'), mod=path.join(and,'app');
-const VERSION_CODE=3, VERSION_NAME='1.2.0', PKG='com.desertcircuitapps.kept';
+const VERSION_CODE=4, VERSION_NAME='1.3.0', PKG='com.desertcircuitapps.kept';
 const must=(cond,msg)=>{ if(!cond){ console.error('PATCH FAILED: '+msg); process.exit(1); } };
 
 // 1) app/build.gradle: version, signing (from environment), native dependencies
