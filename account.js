@@ -18,7 +18,13 @@ const FIREBASE_CONFIG={
   measurementId:'G-HSV2Q3L7WX'
 };
 const SDK='https://www.gstatic.com/firebasejs/10.12.2/';
-const cfg=window.KEPT_FIREBASE_CONFIG||FIREBASE_CONFIG;
+const cfg={...(window.KEPT_FIREBASE_CONFIG||FIREBASE_CONFIG)};
+// On Kept's own Firebase Hosting domains, Google sign-in runs on the same address as the app (Hosting serves /__/auth/).
+// This keeps sign-in working in installed apps (Microsoft Store) and browsers that block third-party storage.
+if(['keptforgigworkers.com','kept-b85c0.web.app','kept-b85c0.firebaseapp.com'].includes(location.hostname)) cfg.authDomain=location.hostname;
+// Installed app window (Microsoft Store, installed PWA): popups can't report back there, so sign in by redirect instead.
+const installedApp=()=>['standalone','fullscreen','minimal-ui','window-controls-overlay'].some(m=>matchMedia('(display-mode: '+m+')').matches)||navigator.standalone===true;
+const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,bad)=>setTimeout(()=>bad(Object.assign(new Error('timeout'),{code:'kept/timeout'})),ms))]);
 if(!cfg) return;
 
 /* ---------- Words ---------- */
@@ -250,7 +256,7 @@ const load=Promise.all([import(SDK+'firebase-app.js'),import(SDK+'firebase-auth.
   a.onAuthStateChanged(auth,u=>{ ready=true; onUser(u); });
 });
 load.catch(()=>{ drawRow(); });
-async function need(){ try{ await load; return true; }catch(e){ say(w('e_load'),true); return false; } }
+async function need(){ try{ await withTimeout(load,20000); return true; }catch(e){ say(w('e_load'),true); return false; } }   // never wait forever: say so if sign-in can't load
 
 async function googleSignIn(){
   if(busy||!await need()) return; busy=true; say('');
@@ -261,13 +267,12 @@ async function googleSignIn(){
     return;
   }
   const p=new A.GoogleAuthProvider();
-  const standalone=matchMedia('(display-mode: standalone)').matches;
   try{
-    if(standalone&&cfg.authDomain===location.hostname) await A.signInWithRedirect(auth,p);
-    else { justSigned=true; await A.signInWithPopup(auth,p); }
+    if(installedApp()&&cfg.authDomain===location.hostname) await A.signInWithRedirect(auth,p);   // leaves the page and comes back signed in
+    else { justSigned=true; await withTimeout(A.signInWithPopup(auth,p),180000); }
   }catch(e){
-    if(/popup-blocked|operation-not-supported/.test(e.code||'')){ try{ await A.signInWithRedirect(auth,p); }catch(e2){ say(errMsg(e2),true); } }
-    else { justSigned=false; say(errMsg(e),true); }
+    if(/popup-blocked|operation-not-supported|kept\/timeout/.test(e.code||'')){ try{ await A.signInWithRedirect(auth,p); }catch(e2){ say(errMsg(e2),true); } }
+    else { justSigned=false; if(!/popup-closed-by-user|cancelled-popup-request/.test(e.code||'')) say(errMsg(e),true); }
   }finally{ busy=false; }
 }
 async function emailAuth(){
@@ -276,7 +281,7 @@ async function emailAuth(){
   if(!/^\S+@\S+\.\S+$/.test(em)){ say(w('e_email'),true); return; }
   if(pw.length<6){ say(mode==='create'?w('e_weak'):w('e_cred'),true); return; }
   busy=true; $('acctSubmit').disabled=true; say('');
-  try{ justSigned=true; if(mode==='create') await A.createUserWithEmailAndPassword(auth,em,pw); else await A.signInWithEmailAndPassword(auth,em,pw); }
+  try{ justSigned=true; await withTimeout(mode==='create'?A.createUserWithEmailAndPassword(auth,em,pw):A.signInWithEmailAndPassword(auth,em,pw),30000); }
   catch(e){ justSigned=false; say(errMsg(e),true); }
   finally{ busy=false; const b=$('acctSubmit'); if(b) b.disabled=false; }
 }
