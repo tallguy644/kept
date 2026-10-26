@@ -34,7 +34,7 @@ en:{row:'Sign in or create account',rowSub:'Keep your days safe on all your devi
   google:'Continue with Google',or:'or',email:'Email',password:'Password',signIn:'Sign in',create:'Create account',
   toCreate:'New here? Create an account',toSignIn:'Have an account? Sign in',forgot:'Forgot password?',
   signedAs:'Signed in as',signOut:'Sign out',del:'Delete account',delSure:'Tap again to delete your account and all its days',
-  delPw:'Enter your password to confirm',delConfirm:'Delete my account',deleted:'Your account and its days were deleted.',
+  reauth:'For your security, sign out, sign in again with Google, then delete your account.',delPw:'Enter your password to confirm',delConfirm:'Delete my account',deleted:'Your account and its days were deleted.',
   synced:'All your days are saved to your account.',syncing:'Saving to your account…',offline:'Offline. Your changes will sync when you\'re back online.',
   signOutNote:'Signing out removes your days from this device. They stay safe in your account.',
   welcome:'Signed in. Your days are now saved to your account.',bye:'Signed out. Your days are safe in your account.',
@@ -48,7 +48,7 @@ es:{row:'Inicia sesión o crea una cuenta',rowSub:'Protege tus días en todos tu
   google:'Continuar con Google',or:'o',email:'Correo',password:'Contraseña',signIn:'Iniciar sesión',create:'Crear cuenta',
   toCreate:'¿Eres nuevo? Crea una cuenta',toSignIn:'¿Ya tienes cuenta? Inicia sesión',forgot:'¿Olvidaste tu contraseña?',
   signedAs:'Sesión iniciada como',signOut:'Cerrar sesión',del:'Eliminar cuenta',delSure:'Toca otra vez para eliminar tu cuenta y todos sus días',
-  delPw:'Escribe tu contraseña para confirmar',delConfirm:'Eliminar mi cuenta',deleted:'Se eliminaron tu cuenta y sus días.',
+  reauth:'Por seguridad, cierra sesión, vuelve a entrar con Google y luego elimina tu cuenta.',delPw:'Escribe tu contraseña para confirmar',delConfirm:'Eliminar mi cuenta',deleted:'Se eliminaron tu cuenta y sus días.',
   synced:'Todos tus días están guardados en tu cuenta.',syncing:'Guardando en tu cuenta…',offline:'Sin conexión. Tus cambios se sincronizarán cuando vuelvas a estar en línea.',
   signOutNote:'Al cerrar sesión se quitan tus días de este dispositivo. Siguen seguros en tu cuenta.',
   welcome:'Sesión iniciada. Tus días ahora se guardan en tu cuenta.',bye:'Sesión cerrada. Tus días están seguros en tu cuenta.',
@@ -62,7 +62,7 @@ pt:{row:'Entre ou crie uma conta',rowSub:'Proteja seus dias em todos os aparelho
   google:'Continuar com o Google',or:'ou',email:'E-mail',password:'Senha',signIn:'Entrar',create:'Criar conta',
   toCreate:'É novo aqui? Crie uma conta',toSignIn:'Já tem conta? Entre',forgot:'Esqueceu a senha?',
   signedAs:'Conectado como',signOut:'Sair',del:'Excluir conta',delSure:'Toque de novo para excluir sua conta e todos os dias',
-  delPw:'Digite sua senha para confirmar',delConfirm:'Excluir minha conta',deleted:'Sua conta e seus dias foram excluídos.',
+  reauth:'Por segurança, saia, entre de novo com o Google e depois exclua sua conta.',delPw:'Digite sua senha para confirmar',delConfirm:'Excluir minha conta',deleted:'Sua conta e seus dias foram excluídos.',
   synced:'Todos os seus dias estão salvos na sua conta.',syncing:'Salvando na sua conta…',offline:'Sem conexão. Suas alterações serão sincronizadas quando você voltar a ficar on-line.',
   signOutNote:'Ao sair, seus dias são removidos deste aparelho. Eles continuam seguros na sua conta.',
   welcome:'Conectado. Seus dias agora são salvos na sua conta.',bye:'Você saiu. Seus dias estão seguros na sua conta.',
@@ -76,7 +76,7 @@ fr:{row:'Se connecter ou créer un compte',rowSub:'Protégez vos journées sur t
   google:'Continuer avec Google',or:'ou',email:'E-mail',password:'Mot de passe',signIn:'Se connecter',create:'Créer un compte',
   toCreate:'Nouveau ? Créez un compte',toSignIn:'Déjà un compte ? Connectez-vous',forgot:'Mot de passe oublié ?',
   signedAs:'Connecté en tant que',signOut:'Se déconnecter',del:'Supprimer le compte',delSure:'Touchez encore pour supprimer votre compte et toutes ses journées',
-  delPw:'Saisissez votre mot de passe pour confirmer',delConfirm:'Supprimer mon compte',deleted:'Votre compte et ses journées ont été supprimés.',
+  reauth:'Par sécurité, déconnectez-vous, reconnectez-vous avec Google, puis supprimez votre compte.',delPw:'Saisissez votre mot de passe pour confirmer',delConfirm:'Supprimer mon compte',deleted:'Votre compte et ses journées ont été supprimés.',
   synced:'Toutes vos journées sont enregistrées dans votre compte.',syncing:'Enregistrement dans votre compte…',offline:'Hors ligne. Vos modifications seront synchronisées dès votre retour en ligne.',
   signOutNote:'La déconnexion retire vos journées de cet appareil. Elles restent en sécurité dans votre compte.',
   welcome:'Connecté. Vos journées sont maintenant enregistrées dans votre compte.',bye:'Déconnecté. Vos journées sont en sécurité dans votre compte.',
@@ -90,7 +90,7 @@ ru:{row:'Войти или создать аккаунт',rowSub:'Ваши дн�
   google:'Продолжить с Google',or:'или',email:'Эл. почта',password:'Пароль',signIn:'Войти',create:'Создать аккаунт',
   toCreate:'Впервые здесь? Создайте аккаунт',toSignIn:'Уже есть аккаунт? Войдите',forgot:'Забыли пароль?',
   signedAs:'Вы вошли как',signOut:'Выйти',del:'Удалить аккаунт',delSure:'Нажмите ещё раз, чтобы удалить аккаунт и все дни',
-  delPw:'Введите пароль для подтверждения',delConfirm:'Удалить мой аккаунт',deleted:'Ваш аккаунт и его дни удалены.',
+  reauth:'В целях безопасности выйдите, снова войдите через Google, а затем удалите аккаунт.',delPw:'Введите пароль для подтверждения',delConfirm:'Удалить мой аккаунт',deleted:'Ваш аккаунт и его дни удалены.',
   synced:'Все ваши дни сохранены в аккаунте.',syncing:'Сохраняем в аккаунт…',offline:'Нет сети. Изменения синхронизируются, когда появится связь.',
   signOutNote:'При выходе дни удаляются с этого устройства. В аккаунте они остаются в безопасности.',
   welcome:'Вы вошли. Теперь ваши дни сохраняются в аккаунте.',bye:'Вы вышли. Ваши дни в безопасности в аккаунте.',
@@ -104,7 +104,7 @@ zh:{row:'登录或创建账户',rowSub:'在所有设备上安全保存你的记�
   google:'使用 Google 继续',or:'或',email:'邮箱',password:'密码',signIn:'登录',create:'创建账户',
   toCreate:'新用户？创建账户',toSignIn:'已有账户？登录',forgot:'忘记密码？',
   signedAs:'已登录：',signOut:'退出登录',del:'删除账户',delSure:'再点一次将删除你的账户及所有记录',
-  delPw:'输入密码以确认',delConfirm:'删除我的账户',deleted:'你的账户及记录已删除。',
+  reauth:'为了安全，请先退出，再用 Google 重新登录，然后删除账户。',delPw:'输入密码以确认',delConfirm:'删除我的账户',deleted:'你的账户及记录已删除。',
   synced:'你的所有记录都已保存到账户。',syncing:'正在保存到账户…',offline:'离线中。恢复联网后会自动同步。',
   signOutNote:'退出登录会从此设备移除你的记录，它们仍安全保存在你的账户中。',
   welcome:'已登录。你的记录现在会保存到账户。',bye:'已退出。你的记录安全保存在账户中。',
@@ -118,7 +118,7 @@ vi:{row:'Đăng nhập hoặc tạo tài khoản',rowSub:'Giữ dữ liệu an t
   google:'Tiếp tục với Google',or:'hoặc',email:'Email',password:'Mật khẩu',signIn:'Đăng nhập',create:'Tạo tài khoản',
   toCreate:'Mới dùng? Tạo tài khoản',toSignIn:'Đã có tài khoản? Đăng nhập',forgot:'Quên mật khẩu?',
   signedAs:'Đã đăng nhập:',signOut:'Đăng xuất',del:'Xóa tài khoản',delSure:'Chạm lần nữa để xóa tài khoản và mọi dữ liệu',
-  delPw:'Nhập mật khẩu để xác nhận',delConfirm:'Xóa tài khoản của tôi',deleted:'Đã xóa tài khoản và dữ liệu của bạn.',
+  reauth:'Để bảo mật, hãy đăng xuất, đăng nhập lại bằng Google rồi xóa tài khoản.',delPw:'Nhập mật khẩu để xác nhận',delConfirm:'Xóa tài khoản của tôi',deleted:'Đã xóa tài khoản và dữ liệu của bạn.',
   synced:'Mọi dữ liệu đã được lưu vào tài khoản.',syncing:'Đang lưu vào tài khoản…',offline:'Đang ngoại tuyến. Thay đổi sẽ được đồng bộ khi có mạng.',
   signOutNote:'Đăng xuất sẽ xóa dữ liệu khỏi thiết bị này. Dữ liệu vẫn an toàn trong tài khoản.',
   welcome:'Đã đăng nhập. Dữ liệu giờ được lưu vào tài khoản.',bye:'Đã đăng xuất. Dữ liệu vẫn an toàn trong tài khoản.',
@@ -138,6 +138,8 @@ const errMsg=e=>{ const c=(e&&e.code)||'';
   if(/popup-closed|cancelled-popup|user-cancelled/.test(c)) return w('e_cancel');
   if(/network/.test(c)) return w('e_net');
   if(/too-many/.test(c)) return w('e_many');
+  if(/missing-password/.test(c)) return w('delPw');
+  if(/requires-recent-login|kept\/reauth/.test(c)) return w('reauth');
   return w('e_other'); };
 
 /* ---------- Screens ---------- */
@@ -384,8 +386,16 @@ async function deleteNow(){
   if(!await need()||busy) return; busy=true;
   const u=auth.currentUser, pwUser=(u.providerData||[]).some(p=>p.providerId==='password');
   try{
-    if(pwUser){ const pw=($('acctDelPw')||{}).value||''; await A.reauthenticateWithCredential(u,A.EmailAuthProvider.credential(u.email,pw)); }
-    else await A.reauthenticateWithPopup(u,new A.GoogleAuthProvider());
+    if(pwUser){ const pw=($('acctDelPw')||{}).value||''; if(!pw) throw Object.assign(new Error('pw'),{code:'auth/missing-password'}); await A.reauthenticateWithCredential(u,A.EmailAuthProvider.credential(u.email,pw)); }
+    else{
+      // Signed in within the last few minutes? Firebase allows deleting without asking again (and popups don't work in installed apps).
+      const t=await u.getIdTokenResult(), fresh=Date.now()/1000-Number(t.claims.auth_time||0)<240;
+      if(!fresh){
+        if(installedApp()) throw Object.assign(new Error('reauth'),{code:'kept/reauth'});
+        try{ await withTimeout(A.reauthenticateWithPopup(u,new A.GoogleAuthProvider()),120000); }
+        catch(e){ if(/popup-blocked|operation-not-supported|kept\/timeout/.test(e.code||'')) throw Object.assign(new Error('reauth'),{code:'kept/reauth'}); throw e; }
+      }
+    }
     if(unsub){ unsub(); unsub=null; }
     stopMeta();
     // Pro status, trial and linked purchases are server-only records: ask the Pro server to remove them too.
