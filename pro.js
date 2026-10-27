@@ -14,7 +14,7 @@ const PRO={
   trialDays:7,
   skus:{monthly:'kept_pro_monthly',yearly:'kept_pro_yearly',lifetime:'kept_pro_lifetime'},
   prices:{monthly:'$1.99',yearly:'$14.99',lifetime:'$24.99'},   // shown until the store sends local prices
-  workerUrl:'',             // Pro server (Cloudflare Worker in worker/): checks purchases, links them to accounts. Required before launch.
+  workerUrl:'https://kept-pro.earring-atelier.workers.dev',   // Pro server (Cloudflare Worker in worker/): checks purchases, links them to accounts. Required before launch.
   playUrl:'',               // Google Play listing, e.g. https://play.google.com/store/apps/details?id=...
   msStoreUrl:'',            // Microsoft Store listing, e.g. https://apps.microsoft.com/detail/9N...
   playPackage:'com.desertcircuitapps.kept',  // Android package name, for the "Manage subscription" link

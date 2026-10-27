@@ -41,7 +41,7 @@ Use these exact product IDs. The app looks for them by name.
    npx wrangler secret put GOOGLE_SA_JSON      # Play access key
    npx wrangler secret put FIREBASE_SA_JSON    # Firestore key (skip if the first one has the role)
    ```
-4. Copy the Worker address (`https://kept-pro.<you>.workers.dev`).
+4. Done: the Pro server is deployed by GitHub Actions (.github/workflows/deploy-pro-server.yml) at https://kept-pro.earring-atelier.workers.dev. Secrets CLOUDFLARE_API_TOKEN and GOOGLE_SA_JSON live in the GitHub repo.
 
 ## 4. Fill in `pro.js` settings
 
