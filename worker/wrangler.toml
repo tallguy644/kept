@@ -5,7 +5,7 @@ compatibility_date = "2026-06-01"
 [vars]
 PACKAGE_NAME = "com.desertcircuitapps.kept"
 FIREBASE_PROJECT_ID = "kept-b85c0"
-ALLOWED_ORIGINS = "https://keptforgigworkers.com,https://www.keptforgigworkers.com,https://kept-b85c0.web.app,https://tallguy644.github.io"
+ALLOWED_ORIGINS = "https://keptforgigworkers.com,https://www.keptforgigworkers.com,https://kept-b85c0.web.app,https://tallguy644.github.io,https://localhost"   # https://localhost = the Google Play app (Capacitor)
 
 # Kept Pro+ (Uber and Lyft sync through Argyle). Leave ARGYLE_SANDBOX = "true" until Argyle's production keys are set.
 ARGYLE_SANDBOX = "true"
