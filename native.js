@@ -18,7 +18,13 @@ window.keptNative={
   print(title){ return K.printPage({title:title||'Kept'}); },
   async bioAvailable(){ try{ return !!(await K.biometricAvailable()).available; }catch(e){ return false; } },
   async bio(title,reason){ try{ await K.biometric({title,reason}); }catch(e){ throw errOf(e); } },
-  async googleIdToken(){ try{ return (await K.googleSignIn({webClientId:WEB_CLIENT_ID})).idToken; }catch(e){ throw errOf(e); } }
+  async googleIdToken(){ try{ return (await K.googleSignIn({webClientId:WEB_CLIENT_ID})).idToken; }catch(e){ throw errOf(e); } },
+  // Google Play Billing (Kept Pro / Pro+), used by pro.js
+  billing:{
+    async products(subs,inapp){ return (await K.billingProducts({subs,inapp})).products||[]; },
+    async buy(id,type){ try{ return await K.billingBuy({id,type}); }catch(e){ throw errOf(e); } },
+    async purchases(){ return (await K.billingPurchases()).purchases||[]; }
+  }
 };
 
 // Android back button: step back inside Kept, and only leave the app from the Home screen.

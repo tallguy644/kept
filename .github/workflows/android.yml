@@ -64,8 +64,8 @@ jobs:
           chmod +x gradlew
           "$GITHUB_WORKSPACE/.github/scripts/logged.sh" gradle-release ./gradlew --no-daemon assembleRelease bundleRelease
           mkdir -p "$GITHUB_WORKSPACE/out"
-          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/out/Kept-for-Gig-Workers-v7.apk"
-          cp app/build/outputs/bundle/release/app-release.aab "$GITHUB_WORKSPACE/out/Kept-for-Gig-Workers-v7.aab"
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/out/Kept-for-Gig-Workers-v8.apk"
+          cp app/build/outputs/bundle/release/app-release.aab "$GITHUB_WORKSPACE/out/Kept-for-Gig-Workers-v8.aab"
 
       - name: Build debug APK (no signing key set yet)
         if: env.HAS_KEY != 'true'
@@ -80,12 +80,14 @@ jobs:
         if: env.HAS_KEY == 'true'
         run: |
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
-          "$BT/aapt2" dump badging out/Kept-for-Gig-Workers-v7.apk | head -3
-          "$BT/apksigner" verify --print-certs out/Kept-for-Gig-Workers-v7.apk | tee "$RUNNER_TEMP/certs.txt" | grep -i "SHA-256" | head -2
+          "$BT/aapt2" dump badging out/Kept-for-Gig-Workers-v8.apk | head -3
+          "$BT/apksigner" verify --print-certs out/Kept-for-Gig-Workers-v8.apk | tee "$RUNNER_TEMP/certs.txt" | grep -i "SHA-256" | head -2
           # must be the same upload key as version 1 (Play Console: upload key certificate)
           grep -qi "8cceE546b8e0861f72a2a9d470c348c649b7b7b13287d89ab300fade151355a6" "$RUNNER_TEMP/certs.txt" || { echo "::error title=signing::APK is not signed with the Kept upload key"; exit 1; }
-          "$BT/aapt2" dump badging out/Kept-for-Gig-Workers-v7.apk | grep -q "package: name='com.desertcircuitapps.kept' versionCode='7'" || { echo "::error title=identity::package name or versionCode is wrong"; exit 1; }
-          ! unzip -l out/Kept-for-Gig-Workers-v7.apk | grep -i androidbrowserhelper
+          "$BT/aapt2" dump badging out/Kept-for-Gig-Workers-v8.apk | grep -q "package: name='com.desertcircuitapps.kept' versionCode='8'" || { echo "::error title=identity::package name or versionCode is wrong"; exit 1; }
+          ! unzip -l out/Kept-for-Gig-Workers-v8.apk | grep -i androidbrowserhelper
+          # Google Play only allows in-app products once the app declares the billing permission
+          "$BT/aapt2" dump badging out/Kept-for-Gig-Workers-v8.apk | grep -q "uses-permission: name='com.android.vending.BILLING'" || { echo "::error title=billing::BILLING permission missing"; exit 1; }
 
       - uses: actions/upload-artifact@v5
         with:
@@ -97,6 +99,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="android-v7-${{ github.run_number }}"
-          gh release create "$TAG" out/* --title "Kept Android v7 (build ${{ github.run_number }})" \
+          TAG="android-v8-${{ github.run_number }}"
+          gh release create "$TAG" out/* --title "Kept Android v8 (build ${{ github.run_number }})" \
             --notes "Signed Google Play app (Capacitor). Install the .apk on your phone to test; upload the .aab to Google Play." --prerelease

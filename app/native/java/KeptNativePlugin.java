@@ -11,6 +11,23 @@ import android.print.PrintManager;
 import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
+import com.android.billingclient.api.AcknowledgePurchaseParams;
+import com.android.billingclient.api.BillingClient;
+import com.android.billingclient.api.BillingClientStateListener;
+import com.android.billingclient.api.BillingFlowParams;
+import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.PendingPurchasesParams;
+import com.android.billingclient.api.ProductDetails;
+import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.QueryProductDetailsParams;
+import com.android.billingclient.api.QueryPurchasesParams;
+import com.getcapacitor.JSArray;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
@@ -39,7 +56,8 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Small native helpers for Kept (called from native.js):
- * share a backup/export file, print the tax report, fingerprint/face/screen-lock prompt, and Google sign-in.
+ * share a backup/export file, print the tax report, fingerprint/face/screen-lock prompt, Google sign-in,
+ * and Google Play Billing for Kept Pro.
  */
 @CapacitorPlugin(name = "KeptNative")
 public class KeptNativePlugin extends Plugin {
@@ -169,5 +187,200 @@ public class KeptNativePlugin extends Plugin {
                         else call.reject(e.getMessage() == null ? "Google sign-in failed" : e.getMessage(), "error");
                     }
                 });
+    }
+
+    /* ---------- Google Play Billing (Kept Pro / Pro+): Billing Library 8 ---------- */
+    private BillingClient billing;
+    private boolean billingConnecting = false;
+    private final List<Object[]> billingWaiting = new ArrayList<>();   // {PluginCall, Runnable} waiting for the connection
+    private final Map<String, ProductDetails> productCache = new HashMap<>();
+    private PluginCall pendingBuy;
+
+    private void withBilling(PluginCall call, Runnable task) {
+        if (billing == null) {
+            billing = BillingClient.newBuilder(getContext())
+                    .setListener(this::onPurchasesUpdated)
+                    .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
+                    .enableAutoServiceReconnection()
+                    .build();
+        }
+        if (billing.isReady()) { task.run(); return; }
+        billingWaiting.add(new Object[]{call, task});
+        if (billingConnecting) return;
+        billingConnecting = true;
+        billing.startConnection(new BillingClientStateListener() {
+            @Override
+            public void onBillingSetupFinished(@NonNull BillingResult result) {
+                billingConnecting = false;
+                List<Object[]> queue = new ArrayList<>(billingWaiting);
+                billingWaiting.clear();
+                boolean ok = result.getResponseCode() == BillingClient.BillingResponseCode.OK;
+                for (Object[] w : queue) {
+                    if (ok) ((Runnable) w[1]).run();
+                    else ((PluginCall) w[0]).reject("Google Play billing isn't available on this device", "unavailable");
+                }
+            }
+
+            @Override
+            public void onBillingServiceDisconnected() { billingConnecting = false; }   // auto-reconnection handles the next call
+        });
+    }
+
+    private static List<String> strings(JSArray a) {
+        List<String> out = new ArrayList<>();
+        if (a == null) return out;
+        for (int i = 0; i < a.length(); i++) { String v = a.optString(i, null); if (v != null && !v.isEmpty()) out.add(v); }
+        return out;
+    }
+
+    private interface DetailsDone { void done(String error); }
+
+    /** Looks up products of one type and caches them (Play needs one query per product type). */
+    private void queryDetails(List<String> ids, String type, DetailsDone done) {
+        if (ids.isEmpty()) { done.done(null); return; }
+        List<QueryProductDetailsParams.Product> list = new ArrayList<>();
+        for (String id : ids) list.add(QueryProductDetailsParams.Product.newBuilder().setProductId(id).setProductType(type).build());
+        billing.queryProductDetailsAsync(QueryProductDetailsParams.newBuilder().setProductList(list).build(), (result, details) -> {
+            if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) { done.done(result.getDebugMessage()); return; }
+            for (ProductDetails d : details.getProductDetailsList()) productCache.put(d.getProductId(), d);
+            done.done(null);
+        });
+    }
+
+    /** The base plan of a subscription (the offer without an offer id), else the first offer. */
+    private static ProductDetails.SubscriptionOfferDetails basePlan(ProductDetails d) {
+        List<ProductDetails.SubscriptionOfferDetails> offers = d.getSubscriptionOfferDetails();
+        if (offers == null || offers.isEmpty()) return null;
+        for (ProductDetails.SubscriptionOfferDetails o : offers) if (o.getOfferId() == null) return o;
+        return offers.get(0);
+    }
+
+    private static JSObject describe(ProductDetails d) {
+        JSObject o = new JSObject();
+        o.put("id", d.getProductId());
+        o.put("type", d.getProductType());
+        o.put("title", d.getName());
+        if (BillingClient.ProductType.SUBS.equals(d.getProductType())) {
+            ProductDetails.SubscriptionOfferDetails plan = basePlan(d);
+            if (plan != null) {
+                List<ProductDetails.PricingPhase> phases = plan.getPricingPhases().getPricingPhaseList();
+                ProductDetails.PricingPhase p = phases.get(phases.size() - 1);   // the recurring price
+                o.put("price", p.getFormattedPrice());
+                o.put("currency", p.getPriceCurrencyCode());
+                o.put("micros", p.getPriceAmountMicros());
+            }
+        } else {
+            ProductDetails.OneTimePurchaseOfferDetails one = d.getOneTimePurchaseOfferDetails();
+            if (one != null) {
+                o.put("price", one.getFormattedPrice());
+                o.put("currency", one.getPriceCurrencyCode());
+                o.put("micros", one.getPriceAmountMicros());
+            }
+        }
+        return o;
+    }
+
+    /** Prices and names of Kept's products, as set in Play Console (local currency). */
+    @PluginMethod
+    public void billingProducts(PluginCall call) {
+        List<String> subs = strings(call.getArray("subs")), inapp = strings(call.getArray("inapp"));
+        withBilling(call, () -> {
+            AtomicInteger left = new AtomicInteger(2);
+            String[] err = {null};
+            DetailsDone each = e -> {
+                if (e != null) err[0] = e;
+                if (left.decrementAndGet() > 0) return;
+                JSArray out = new JSArray();
+                for (String id : subs) if (productCache.containsKey(id)) out.put(describe(productCache.get(id)));
+                for (String id : inapp) if (productCache.containsKey(id)) out.put(describe(productCache.get(id)));
+                if (out.length() == 0 && err[0] != null) { call.reject(err[0], "error"); return; }
+                JSObject r = new JSObject(); r.put("products", out); call.resolve(r);
+            };
+            queryDetails(subs, BillingClient.ProductType.SUBS, each);
+            queryDetails(inapp, BillingClient.ProductType.INAPP, each);
+        });
+    }
+
+    /** Opens Google Play's purchase sheet for one product. Resolves with the purchase token. */
+    @PluginMethod
+    public void billingBuy(PluginCall call) {
+        String id = call.getString("id"), type = call.getString("type", BillingClient.ProductType.SUBS);
+        if (id == null || id.isEmpty()) { call.reject("Missing product id", "error"); return; }
+        if (pendingBuy != null) { call.reject("A purchase is already in progress", "busy"); return; }
+        withBilling(call, () -> {
+            Runnable launch = () -> {
+                ProductDetails d = productCache.get(id);
+                if (d == null) { call.reject("This product isn't available yet", "unavailable"); return; }
+                BillingFlowParams.ProductDetailsParams.Builder pp = BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(d);
+                if (BillingClient.ProductType.SUBS.equals(d.getProductType())) {
+                    ProductDetails.SubscriptionOfferDetails plan = basePlan(d);
+                    if (plan == null) { call.reject("This subscription has no plan", "unavailable"); return; }
+                    pp.setOfferToken(plan.getOfferToken());
+                }
+                BillingFlowParams params = BillingFlowParams.newBuilder().setProductDetailsParamsList(Collections.singletonList(pp.build())).build();
+                getActivity().runOnUiThread(() -> {
+                    pendingBuy = call;
+                    BillingResult r = billing.launchBillingFlow(getActivity(), params);
+                    if (r.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                        pendingBuy = null;
+                        if (r.getResponseCode() == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) { JSObject o = new JSObject(); o.put("owned", true); call.resolve(o); }
+                        else call.reject(r.getDebugMessage().isEmpty() ? "Couldn't open Google Play" : r.getDebugMessage(), "error");
+                    }
+                });
+            };
+            if (productCache.containsKey(id)) launch.run();
+            else queryDetails(Collections.singletonList(id), type, e -> launch.run());
+        });
+    }
+
+    private void acknowledge(Purchase p) {
+        if (p.getPurchaseState() != Purchase.PurchaseState.PURCHASED || p.isAcknowledged()) return;
+        billing.acknowledgePurchase(AcknowledgePurchaseParams.newBuilder().setPurchaseToken(p.getPurchaseToken()).build(), r -> { });
+    }
+
+    private static JSObject describe(Purchase p) {
+        JSObject o = new JSObject();
+        o.put("id", p.getProducts().isEmpty() ? "" : p.getProducts().get(0));
+        o.put("token", p.getPurchaseToken());
+        o.put("pending", p.getPurchaseState() == Purchase.PurchaseState.PENDING);
+        o.put("autoRenewing", p.isAutoRenewing());
+        return o;
+    }
+
+    private void onPurchasesUpdated(@NonNull BillingResult result, List<Purchase> purchases) {
+        if (purchases != null) for (Purchase p : purchases) acknowledge(p);   // Google refunds purchases not acknowledged within 3 days
+        PluginCall call = pendingBuy;
+        pendingBuy = null;
+        if (call == null) return;
+        int code = result.getResponseCode();
+        if (code == BillingClient.BillingResponseCode.OK && purchases != null && !purchases.isEmpty()) call.resolve(describe(purchases.get(0)));
+        else if (code == BillingClient.BillingResponseCode.USER_CANCELED) call.reject("cancelled", "cancelled");
+        else if (code == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) { JSObject o = new JSObject(); o.put("owned", true); call.resolve(o); }
+        else call.reject(result.getDebugMessage().isEmpty() ? "The purchase didn't go through" : result.getDebugMessage(), "error");
+    }
+
+    /** Kept products this Google account owns right now (active subscriptions and the lifetime purchase). */
+    @PluginMethod
+    public void billingPurchases(PluginCall call) {
+        withBilling(call, () -> {
+            JSArray out = new JSArray();
+            AtomicInteger left = new AtomicInteger(2);
+            String[] err = {null};
+            for (String type : new String[]{BillingClient.ProductType.SUBS, BillingClient.ProductType.INAPP}) {
+                billing.queryPurchasesAsync(QueryPurchasesParams.newBuilder().setProductType(type).build(), (result, list) -> {
+                    synchronized (out) {
+                        if (result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                            for (Purchase p : list) {
+                                acknowledge(p);
+                                if (p.getPurchaseState() == Purchase.PurchaseState.PURCHASED) out.put(describe(p));
+                            }
+                        } else err[0] = result.getDebugMessage();
+                        if (left.decrementAndGet() > 0) return;
+                        if (out.length() == 0 && err[0] != null) { call.reject(err[0], "error"); return; }
+                        JSObject r = new JSObject(); r.put("purchases", out); call.resolve(r);
+                    }
+                });
+            }
+        });
     }
 }

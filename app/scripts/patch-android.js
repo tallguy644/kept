@@ -2,7 +2,7 @@
 // version, signing, native helper code, icons, splash and theme. Fails loudly if the template changed.
 const fs=require('fs'), path=require('path');
 const app=path.resolve(__dirname,'..'), and=path.join(app,'android'), mod=path.join(and,'app');
-const VERSION_CODE=7, VERSION_NAME='1.5.0', PKG='com.desertcircuitapps.kept';
+const VERSION_CODE=8, VERSION_NAME='1.6.0', PKG='com.desertcircuitapps.kept';
 const must=(cond,msg)=>{ if(!cond){ console.error('PATCH FAILED: '+msg); process.exit(1); } };
 
 // 1) app/build.gradle: version, signing (from environment), native dependencies
@@ -28,7 +28,8 @@ const DEPS=`
     implementation "androidx.biometric:biometric:1.1.0"
     implementation "androidx.credentials:credentials:1.5.0"
     implementation "androidx.credentials:credentials-play-services-auth:1.5.0"
-    implementation "com.google.android.libraries.identity.googleid:googleid:1.1.1"`;
+    implementation "com.google.android.libraries.identity.googleid:googleid:1.1.1"
+    implementation "com.android.billingclient:billing:8.3.0"`;
 must(/\ndependencies\s*\{/.test(g),'dependencies block not found');
 g=g.replace(/\ndependencies\s*\{/, m=>m+DEPS);
 fs.writeFileSync(bg,g);

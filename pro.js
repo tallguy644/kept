@@ -1,5 +1,5 @@
-/* Kept Pro: 7-day free trial, then Taxes, Google Drive auto-backup and Excel export need Pro.
-   Pro is bought only inside the store apps (Google Play, Microsoft Store) through the Digital Goods API, and is tied to
+/* Kept Pro: 7-day free trial, then the Taxes report, Compare and Trends, and Google Drive auto-backup need Pro.
+   Pro is bought only inside the store apps: Google Play (native Play Billing) and Microsoft Store (Digital Goods API). It is tied to
    the driver's Kept account: the Pro server (worker/) checks the purchase and marks the account Pro, so it unlocks on
    every device and on the website where they sign in. The free trial follows the account too.
    Free forever: logging days, totals, Lyft vs Uber, Customize, saving a backup file, and both Restore buttons
@@ -61,7 +61,7 @@ en:{soonT:'Kept Pro is coming soon',soonP:'The Taxes report, Compare and Trends,
   getPlay:'Get it on Google Play',getMs:'Get it from Microsoft',
   working:'Opening the store…',thanks:'Pro unlocked. Thanks!',cancelled:'Purchase cancelled.',failed:'The purchase didn\'t go through. Try again.',
   restored:'Pro restored.',none:'No Pro purchase found for this store account.',
-  needPro:'That\'s a Pro feature.',driveNeedsPro:'Google Drive backup is a Pro feature. Your days are still saved on this device.',stAcct:'Pro is active on your Kept account, on all your devices.',signInPro:'Bought Pro in the Kept app? Sign in with the same account to use it here.',signIn:'Sign in',linked:'Pro is now linked to your account, so it works on all your devices.',other:'This purchase is already linked to a different Kept account.',signInFirst:'Sign in first so Pro follows you to all your devices.'},
+  needPro:'That\'s a Pro feature.',pending:'Your purchase is pending. Pro unlocks as soon as the payment goes through.',driveNeedsPro:'Google Drive backup is a Pro feature. Your days are still saved on this device.',stAcct:'Pro is active on your Kept account, on all your devices.',signInPro:'Bought Pro in the Kept app? Sign in with the same account to use it here.',signIn:'Sign in',linked:'Pro is now linked to your account, so it works on all your devices.',other:'This purchase is already linked to a different Kept account.',signInFirst:'Sign in first so Pro follows you to all your devices.'},
 es:{soonT:'Kept Pro llegará pronto',soonP:'El informe de impuestos, Comparar y Tendencias, y el respaldo en Google Drive son parte de Kept Pro, que llegará pronto. Cuando se lance, cada conductor tendrá primero 7 días de prueba gratis. Registrar tus días, los totales, Lyft vs Uber, las copias de respaldo y la exportación a Excel siguen siendo gratis.',soonToast:'Kept Pro llegará pronto, con 7 días de prueba gratis.',pro:'Pro',goPro:'Hazte Pro',proOn:'Pro ✓',trialLeft:'Prueba gratis · quedan {n} días',trialLast:'Prueba gratis · último día',
   title:'Kept Pro',done:'Listo',
   stTrial:'A tu prueba gratis le quedan {n} días. Después, esto requiere Pro:',stTrialLast:'Tu prueba gratis termina hoy. Después, esto requiere Pro:',
@@ -178,7 +178,20 @@ let store=null, details={};
 const ALL={...PRO.skus,plus_monthly:PRO.plus.skus.monthly,plus_yearly:PRO.plus.skus.yearly};   // every product the app sells
 const skuList=Object.values(PRO.skus).concat(plusOn?plusSkus:[]);
 const planOf=sku=>Object.keys(ALL).find(k=>ALL[k]===sku);
+const isSub=sku=>sku!==PRO.skus.lifetime;   // everything except the lifetime purchase renews
+const NB=()=>window.keptNative&&window.keptNative.billing;   // Google Play app (Capacitor): native Play Billing
+async function listPurchases(){
+  if(store&&store.native) return (await NB().purchases()).map(p=>({itemId:p.id,purchaseToken:p.token}));
+  return store.svc.listPurchases();
+}
 async function connect(){
+  if(NB()){
+    try{
+      const list=await NB().products(skuList.filter(isSub),skuList.filter(s=>!isSub(s)));
+      list.forEach(d=>{ details[d.id]={itemId:d.id,formatted:d.price,price:d.currency?{currency:d.currency,value:String((d.micros||0)/1e6)}:null}; });
+      store={name:'play',native:true}; return store;
+    }catch(e){ return null; }
+  }
   if(!('getDigitalGoodsService' in window)) return null;
   for(const s of STORES){
     try{ const svc=await window.getDigitalGoodsService(s.method); if(svc){ store={...s,svc}; break; } }catch(e){}
@@ -189,11 +202,12 @@ async function connect(){
 }
 function priceOf(plan){
   const d=details[ALL[plan]];
+  if(d&&d.formatted) return d.formatted;   // Google Play's own formatted local price
   if(d&&d.price){ try{ return new Intl.NumberFormat(undefined,{style:'currency',currency:d.price.currency}).format(Number(d.price.value)); }catch(e){} }
   return PRO.prices[plan]||PRO.plus.prices[plan.replace('plus_','')];
 }
 async function ackPlay(p){   // purchase without an account: acknowledge it so Google doesn't refund it (Pro on this device)
-  if(store.name!=='play'||!PRO.workerUrl||(st.acked||[]).includes(p.purchaseToken)) return;
+  if(store.name!=='play'||store.native||!PRO.workerUrl||(st.acked||[]).includes(p.purchaseToken)) return;   // the native app acknowledges itself
   const plan=planOf(p.itemId);
   const r=await fetch(PRO.workerUrl.replace(/\/$/,'')+'/play/ack',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({sku:p.itemId,token:p.purchaseToken,type:plan==='lifetime'?'inapp':'sub'})});
@@ -213,7 +227,7 @@ async function claim(p){
 }
 async function claimAll(){
   if(!acct.user||!store) return;
-  let list; try{ list=await store.svc.listPurchases(); }catch(e){ return; }
+  let list; try{ list=await listPurchases(); }catch(e){ return; }
   for(const p of list.filter(x=>skuList.includes(x.itemId))){
     try{ const r=await claim(p); if(r==='linked') say(w('linked')); else if(r==='other') say(w('other')); }catch(e){}
   }
@@ -221,7 +235,7 @@ async function claimAll(){
 async function refresh(){
   if(!store) return false;
   let list;
-  try{ list=await store.svc.listPurchases(); }catch(e){ return owned(); }   // offline: keep what we knew (7-day grace)
+  try{ list=await listPurchases(); }catch(e){ return owned(); }   // offline: keep what we knew (7-day grace)
   const mine=list.filter(p=>skuList.includes(p.itemId));
   for(const p of mine){ try{ if(acct.user&&PRO.workerUrl) await claim(p); else await ackPlay(p); }catch(e){} }
   const best=mine.find(p=>plusSkus.includes(p.itemId))||mine.find(p=>p.itemId===PRO.skus.lifetime)||mine[0];   // Pro+ includes Pro
@@ -230,6 +244,19 @@ async function refresh(){
 }
 async function buy(plan){
   const sku=ALL[plan]; say(w('working'));
+  if(store.native){   // Google Play app: native purchase sheet
+    try{
+      const r=await NB().buy(sku,isSub(sku)?'subs':'inapp');
+      if(r&&r.pending){ say(w('pending')); return; }
+      const token=r&&r.token;
+      let linkMsg='';
+      if(token&&acct.user&&PRO.workerUrl) try{ const c=await claim({itemId:sku,purchaseToken:token}); if(c==='linked') linkMsg=w('linked'); else if(c==='other') linkMsg=w('other'); }catch(e){}
+      const ok=await refresh()||!!token||!!(r&&r.owned);
+      if(ok&&!st.ent){ st.ent={sku,checked:Date.now()}; saveSt(); }
+      update(); say(ok?(linkMsg||w('thanks'))+(acct.user?'':' '+w('signInFirst')):w('failed'));
+    }catch(e){ say(e&&e.name==='NotAllowedError'?w('cancelled'):w('failed')); }
+    return;
+  }
   try{
     const req=new PaymentRequest([{supportedMethods:store.method,data:{sku}}],{total:{label:'Total',amount:{currency:'USD',value:'0'}}});
     const res=await req.show();
