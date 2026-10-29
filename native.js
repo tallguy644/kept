@@ -33,6 +33,7 @@ if(App) App.addListener('backButton',()=>{
   if(document.getElementById('lockScreen')){ App.minimizeApp&&App.minimizeApp(); return; }
   const v=typeof cur!=='undefined'?cur:'home';
   if(v==='home'||v==='welcome'){ App.exitApp(); return; }
+  if(v==='car'&&typeof window.keptCarBack==='function'){ window.keptCarBack(); return; }
   if((v==='log'||v==='pro'||v==='cust')&&typeof window.keptBack==='function'){ window.keptBack(); return; }
   if(typeof window.keptGo==='function') window.keptGo('home');
 });
