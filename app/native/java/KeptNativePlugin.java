@@ -57,7 +57,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * Small native helpers for Kept (called from native.js):
  * share a backup/export file, print the tax report, fingerprint/face/screen-lock prompt, Google sign-in,
- * and Google Play Billing for Kept Pro.
+ * Google Play Billing for Kept Pro, and opening the Kept Offer Check companion app.
  */
 @CapacitorPlugin(name = "KeptNative")
 public class KeptNativePlugin extends Plugin {
@@ -88,6 +88,32 @@ public class KeptNativePlugin extends Plugin {
         } catch (Exception e) {
             call.reject(e.getMessage() == null ? "Couldn't share the file" : e.getMessage(), "error");
         }
+    }
+
+    /**
+     * Kept Offer Check (companion app): opens it with a one-time link code so it links to this Kept account.
+     * If it isn't installed, opens its Google Play page instead. Resolves { opened: "app" | "store" }.
+     */
+    @PluginMethod
+    public void openOfferCheck(PluginCall call) {
+        String code = call.getString("code", "").replaceAll("[^A-Za-z0-9]", "");
+        String pkg = "com.desertcircuitapps.keptoffercheck";
+        Intent open = new Intent(Intent.ACTION_VIEW, Uri.parse("keptoffercheck://link?code=" + code));
+        open.setPackage(pkg);
+        open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        JSObject r = new JSObject();
+        try {
+            getActivity().startActivity(open);
+            r.put("opened", "app");
+        } catch (android.content.ActivityNotFoundException notInstalled) {
+            try {
+                getActivity().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            } catch (android.content.ActivityNotFoundException noPlay) {
+                getActivity().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + pkg)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            }
+            r.put("opened", "store");
+        }
+        call.resolve(r);
     }
 
     /** Prints the page (the tax report's print styles apply), including "Save as PDF". */

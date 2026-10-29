@@ -111,6 +111,17 @@ function depPerMile(c){
   return miles>0&&loss>=0&&c.price>0?loss/miles:null;
 }
 window.keptCarDepPerMile=()=>depPerMile(car());   // used by the tests
+// Cost per mile over the last 90 days of logged days: gas + maintenance per mile, plus depreciation when the car is entered.
+// Used by Offer Check (offer.js) for the popup on Uber and Lyft ride offers.
+window.keptCarCostPerMile=function(){
+  const d=depPerMile(car());
+  let gas=0,maint=0,miles=0;
+  if(typeof totals==='function'&&typeof rangeAB==='function'&&typeof today0==='function'){
+    const t=today0(), T=totals(rangeAB(addD(t,-90),addD(t,1)));
+    miles=T.miles; if(miles>0){ gas=T.gas/miles; maint=T.maint/miles; }
+  }
+  return {gas,maint,dep:d||0,total:gas+maint+(d||0),car:d!=null,miles};
+};
 
 /* ---------- Styles ---------- */
 const css=document.createElement('style');
@@ -191,9 +202,10 @@ $('carSave').onclick=()=>{
   if(!(c.odoEnd>c.odoStart)) return void (msg.textContent=w('errOdo'));
   if(c.resale>c.price) return void (msg.textContent=w('errResale'));
   prefs.car={...c,updated:Date.now()}; savePrefs(); seen();
+  if(typeof window.keptOfferSync==='function') window.keptOfferSync();
   msg.textContent=''; say(w('saved')); refresh(); back();
 };
-$('carClear').onclick=()=>{ delete prefs.car; savePrefs(); say(w('cleared')); refresh(); back(); };
+$('carClear').onclick=()=>{ delete prefs.car; savePrefs(); if(typeof window.keptOfferSync==='function') window.keptOfferSync(); say(w('cleared')); refresh(); back(); };
 
 /* ---------- Row in More ---------- */
 const more=$('vMore'), dataList=more&&[...more.querySelectorAll('.list')].find(l=>l.querySelector('#exportBtn'));

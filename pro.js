@@ -25,6 +25,14 @@ const PRO={
     prices:{monthly:'$7.99',yearly:'$69.99'},   // shown until the store sends local prices
     sandbox:true,           // Argyle test mode (fake Uber/Lyft accounts). Set to false for real drivers.
     items:[]                // optional: Argyle item IDs for Uber and Lyft, so the sign-in screen goes straight to them
+  },
+  // Kept Offer Check = everything in Pro, plus the companion app that rates Uber and Lyft ride offers (Android only).
+  // Built and switched off; see OFFERCHECK.md. The screen is in offer.js.
+  offer:{
+    enabled:false,          // OFFER CHECK LAUNCH SWITCH: set to true once the products, the server and the companion app are live
+    skus:{monthly:'kept_offer_monthly',yearly:'kept_offer_yearly'},
+    prices:{monthly:'$9.99',yearly:'$79.99'},   // shown until Google Play sends local prices
+    appPackage:'com.desertcircuitapps.keptoffercheck'
   }
 };
 Object.assign(PRO,window.KEPT_PRO_SETTINGS||{});   // lets automated tests point at a stand-in server
@@ -38,12 +46,14 @@ const DAY=864e5, GRACE=7*DAY;
 
 /* Preview without launching: add ?pro=preview (trial running) or ?pro=expired (trial over) to the address. */
 const preview=new URLSearchParams(location.search).get('pro');
-const enabled=PRO.enabled||preview==='preview'||preview==='expired'||preview==='plus'||preview==='plusoffer';
+const enabled=PRO.enabled||preview==='preview'||preview==='expired'||preview==='plus'||preview==='plusoffer'||preview==='offer'||preview==='offeron';
 window.keptProEnabled=enabled;
 /* Pro+ preview: ?pro=plusoffer shows the Pro+ plans; ?pro=plus acts as if Pro+ is active (add &plus=demo for sample synced days). */
 const plusOn=enabled&&(!!(PRO.plus&&PRO.plus.enabled)||preview==='plus'||preview==='plusoffer');
 window.keptPlusEnabled=plusOn;
 window.keptPlusSettings={sandbox:PRO.plus.sandbox!==false,items:PRO.plus.items||[],workerUrl:PRO.workerUrl};
+/* Offer Check preview: ?pro=offer shows the Offer Check plans; ?pro=offeron acts as if Offer Check is active. */
+const offerOn=enabled&&(!!(PRO.offer&&PRO.offer.enabled)||preview==='offer'||preview==='offeron');
 const preLock=!enabled&&PRO.lockBeforeLaunch!==false;   // before launch: Pro features locked, "coming soon" note instead of plans   // account.js starts the account's trial clock only once Pro is live
 
 /* ---------- Words (English plus the app's six languages) ---------- */
@@ -164,19 +174,35 @@ function daysLeft(){ return Math.max(0,PRO.trialDays-Math.floor((Date.now()-tria
 function owned(){ return !!(st.ent&&Date.now()-st.ent.checked<GRACE); }
 function acctPro(){ const p=acct.user&&acct.pro; return !!(p&&p.active&&(p.expires==null||p.expires>Date.now())); }
 function trialOn(){ return daysLeft()>0; }
-function isPro(){ if(preview==='plus') return true; if(preLock) return owned()||acctPro(); return !enabled||owned()||acctPro()||trialOn(); }
+function isPro(){ if(preview==='plus'||preview==='offeron') return true; if(offerOwned()||acctOffer()) return true;   // Offer Check includes Pro
+  if(preLock) return owned()||acctPro(); return !enabled||owned()||acctPro()||trialOn(); }
 window.keptIsPro=isPro;
 const plusSkus=Object.values(PRO.plus.skus);
 function plusOwned(){ return owned()&&plusSkus.includes(st.ent.sku); }
 function acctPlus(){ return acctPro()&&acct.pro.tier==='plus'; }
 function isPlus(){ return plusOn&&(preview==='plus'||plusOwned()||acctPlus()); }
 window.keptIsPlus=isPlus;
+const offerSkus=Object.values(PRO.offer.skus);
+function offerOwned(){ return !!(st.offerEnt&&Date.now()-st.offerEnt.checked<GRACE); }
+function acctOffer(){ const p=acct.user&&acct.pro; return !!(p&&p.offer&&(p.offerExpires==null||p.offerExpires>Date.now())); }
+function isOffer(){ return offerOn&&(preview==='offeron'||offerOwned()||acctOffer()); }
 window.keptShowPro=(msg)=>show(true,msg);
+// Used by offer.js (Kept Offer Check screen). Offer Check is sold only in the Google Play app.
+window.keptOffer={
+  on:()=>offerOn, active:isOffer,
+  store:()=>!!(store&&store.name==='play'),
+  price:plan=>priceOf(plan),
+  buy:async(plan,cb)=>{ if(!store){ if(cb) cb(''); return; } await buy(plan); const m=document.getElementById('proMsg'); if(cb) cb(m?m.textContent:''); },
+  signedIn:()=>!!acct.user,
+  manageUrl:()=>'https://play.google.com/store/account/subscriptions'+(st.offerEnt?`?sku=${encodeURIComponent(st.offerEnt.sku)}&package=${encodeURIComponent(PRO.playPackage)}`:''),
+  owned:offerOwned,
+  workerUrl:PRO.workerUrl, appPackage:PRO.offer.appPackage
+};
 
 /* ---------- Store connection (only inside the Google Play / Microsoft Store apps) ---------- */
 let store=null, details={};
-const ALL={...PRO.skus,plus_monthly:PRO.plus.skus.monthly,plus_yearly:PRO.plus.skus.yearly};   // every product the app sells
-const skuList=Object.values(PRO.skus).concat(plusOn?plusSkus:[]);
+const ALL={...PRO.skus,plus_monthly:PRO.plus.skus.monthly,plus_yearly:PRO.plus.skus.yearly,offer_monthly:PRO.offer.skus.monthly,offer_yearly:PRO.offer.skus.yearly};   // every product the app sells
+const skuList=Object.values(PRO.skus).concat(plusOn?plusSkus:[]).concat(offerOn?offerSkus:[]);
 const planOf=sku=>Object.keys(ALL).find(k=>ALL[k]===sku);
 const isSub=sku=>sku!==PRO.skus.lifetime;   // everything except the lifetime purchase renews
 const NB=()=>window.keptNative&&window.keptNative.billing;   // Google Play app (Capacitor): native Play Billing
@@ -204,7 +230,7 @@ function priceOf(plan){
   const d=details[ALL[plan]];
   if(d&&d.formatted) return d.formatted;   // Google Play's own formatted local price
   if(d&&d.price){ try{ return new Intl.NumberFormat(undefined,{style:'currency',currency:d.price.currency}).format(Number(d.price.value)); }catch(e){} }
-  return PRO.prices[plan]||PRO.plus.prices[plan.replace('plus_','')];
+  return PRO.prices[plan]||(plan.startsWith('offer_')?PRO.offer.prices[plan.replace('offer_','')]:PRO.plus.prices[plan.replace('plus_','')]);
 }
 async function ackPlay(p){   // purchase without an account: acknowledge it so Google doesn't refund it (Pro on this device)
   if(store.name!=='play'||store.native||!PRO.workerUrl||(st.acked||[]).includes(p.purchaseToken)) return;   // the native app acknowledges itself
@@ -238,8 +264,10 @@ async function refresh(){
   try{ list=await listPurchases(); }catch(e){ return owned(); }   // offline: keep what we knew (7-day grace)
   const mine=list.filter(p=>skuList.includes(p.itemId));
   for(const p of mine){ try{ if(acct.user&&PRO.workerUrl) await claim(p); else await ackPlay(p); }catch(e){} }
-  const best=mine.find(p=>plusSkus.includes(p.itemId))||mine.find(p=>p.itemId===PRO.skus.lifetime)||mine[0];   // Pro+ includes Pro
-  st.ent=best?{sku:best.itemId,checked:Date.now()}:null; saveSt();
+  const best=mine.find(p=>plusSkus.includes(p.itemId))||mine.find(p=>p.itemId===PRO.skus.lifetime)||mine.find(p=>!offerSkus.includes(p.itemId))||mine[0];   // Pro+ and Offer Check include Pro
+  st.ent=best?{sku:best.itemId,checked:Date.now()}:null;
+  const off=mine.find(p=>offerSkus.includes(p.itemId));
+  st.offerEnt=off?{sku:off.itemId,checked:Date.now()}:null; saveSt();
   return !!best;
 }
 async function buy(plan){
@@ -253,6 +281,7 @@ async function buy(plan){
       if(token&&acct.user&&PRO.workerUrl) try{ const c=await claim({itemId:sku,purchaseToken:token}); if(c==='linked') linkMsg=w('linked'); else if(c==='other') linkMsg=w('other'); }catch(e){}
       const ok=await refresh()||!!token||!!(r&&r.owned);
       if(ok&&!st.ent){ st.ent={sku,checked:Date.now()}; saveSt(); }
+      if(ok&&offerSkus.includes(sku)&&!st.offerEnt){ st.offerEnt={sku,checked:Date.now()}; saveSt(); }
       update(); say(ok?(linkMsg||w('thanks'))+(acct.user?'':' '+w('signInFirst')):w('failed'));
     }catch(e){ say(e&&e.name==='NotAllowedError'?w('cancelled'):w('failed')); }
     return;
@@ -404,7 +433,7 @@ function update(){
   GATED.forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.toggle('pro-lock',locked); });
   if(locked&&typeof insTab!=='undefined'&&insTab!=='overview'&&typeof setIns==='function') setIns('overview');
   draw();   // keep the Pro screen current even while it's closed
-  window.dispatchEvent(new CustomEvent('kept-pro-change'));   // sync.js listens (Pro+)
+  window.dispatchEvent(new CustomEvent('kept-pro-change'));   // sync.js (Pro+) and offer.js (Offer Check) listen
 }
 
 if(bar){ bar.prepend(btn); }

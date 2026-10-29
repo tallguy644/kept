@@ -1,7 +1,6 @@
 package com.desertcircuitapps.keptoffercheck;
 
 import android.content.Context;
-import android.os.Build;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,7 +54,7 @@ final class Api {
     /** Trades the code from Kept for a device key. Returns the HTTP status (200 = linked). */
     static int link(Context c, String code) throws IOException {
         JSONObject b = new JSONObject();
-        try { b.put("code", code); b.put("device", Build.MANUFACTURER + " " + Build.MODEL); } catch (JSONException ignored) {}
+        try { b.put("code", code); } catch (JSONException ignored) {}
         Res r = post("/offer/link", b, null);
         if (r.status == 200) Store.saveStatus(c, r.json);
         return r.status;

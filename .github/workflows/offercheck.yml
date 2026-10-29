@@ -83,7 +83,8 @@ jobs:
           "$BT/apksigner" verify --print-certs out/Kept-Offer-Check-v1.apk > "$RUNNER_TEMP/certs.txt"
           grep -qi "8cceE546b8e0861f72a2a9d470c348c649b7b7b13287d89ab300fade151355a6" "$RUNNER_TEMP/certs.txt" || { echo "::error title=signing::APK is not signed with the Kept upload key"; exit 1; }
           "$BT/aapt2" dump badging out/Kept-Offer-Check-v1.apk | grep -q "package: name='com.desertcircuitapps.keptoffercheck' versionCode='1'" || { echo "::error title=identity::package name or versionCode is wrong"; exit 1; }
-          "$BT/aapt2" dump xmltree out/Kept-Offer-Check-v1.apk --file res/xml/offer_service.xml | grep -q "com.ubercab.driver,com.lyft.android.driver" || { echo "::error title=service::offer reader is not limited to Uber Driver and Lyft Driver"; exit 1; }
+          "$BT/aapt2" dump xmltree --file res/xml/offer_service.xml out/Kept-Offer-Check-v1.apk > "$RUNNER_TEMP/svc.txt" 2>&1 || true
+          grep -q "com.ubercab.driver,com.lyft.android.driver" "$RUNNER_TEMP/svc.txt" || { echo "::error title=service::offer reader is not limited to Uber Driver and Lyft Driver: $(head -c 1500 "$RUNNER_TEMP/svc.txt" | tr '\n' ' ')"; exit 1; }
 
       - uses: actions/upload-artifact@v5
         with:

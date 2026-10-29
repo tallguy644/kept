@@ -18,6 +18,8 @@ window.keptNative={
   print(title){ return K.printPage({title:title||'Kept'}); },
   async bioAvailable(){ try{ return !!(await K.biometricAvailable()).available; }catch(e){ return false; } },
   async bio(title,reason){ try{ await K.biometric({title,reason}); }catch(e){ throw errOf(e); } },
+  // Kept Offer Check (companion app): open it with a one-time link code, or its Google Play page if it isn't installed
+  async openOfferCheck(code){ try{ return (await K.openOfferCheck({code})).opened; }catch(e){ return 'failed'; } },
   async googleIdToken(){ try{ return (await K.googleSignIn({webClientId:WEB_CLIENT_ID})).idToken; }catch(e){ throw errOf(e); } },
   // Google Play Billing (Kept Pro / Pro+), used by pro.js
   billing:{
@@ -34,6 +36,7 @@ if(App) App.addListener('backButton',()=>{
   const v=typeof cur!=='undefined'?cur:'home';
   if(v==='home'||v==='welcome'){ App.exitApp(); return; }
   if(v==='car'&&typeof window.keptCarBack==='function'){ window.keptCarBack(); return; }
+  if(v==='offer'&&typeof window.keptOfferBack==='function'){ window.keptOfferBack(); return; }
   if((v==='log'||v==='pro'||v==='cust')&&typeof window.keptBack==='function'){ window.keptBack(); return; }
   if(typeof window.keptGo==='function') window.keptGo('home');
 });

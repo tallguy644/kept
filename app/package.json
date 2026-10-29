@@ -1,7 +1,7 @@
 {
   "name": "kept-android",
   "private": true,
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Google Play app for Kept for Gig Workers (Capacitor). The web app in the repo root is copied in at build time.",
   "scripts": {
     "www": "node scripts/build-www.js",
