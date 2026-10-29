@@ -17,12 +17,22 @@
 //   daily cron            also disconnects Argyle for anyone whose Pro+ ended more than 7 days ago, so it stops costing money
 // Only daily totals are stored (earnings, tips, bonus, rides, trip time, trip miles per app); no trip addresses or routes.
 //
+// Kept Offer Check (companion Android app that rates Uber and Lyft ride offers; switched off in the app until launch, see OFFERCHECK.md).
+// Sold inside Kept (kept_offer_monthly / kept_offer_yearly, includes Pro) and recorded on the account (meta/pro: offer, offerExpires).
+//   POST /offer/pair      (Offer Check driver) saves their cost per mile and profit goal, returns a one-time code (10 minutes)
+//   POST /offer/settings  (Offer Check driver) updates the cost per mile and profit goal
+//   POST /offer/link      (companion app) trades the one-time code for a device key
+//   POST /offer/status    (companion app, "Authorization: Device <key>") is Offer Check active, cost per mile, profit goal
+//   POST /offer/unlink    (companion app) removes its device key;  /offer/unlink-all (driver) removes every linked phone
+// The companion app never signs in itself and never sees the driver's Kept account; it only holds a device key.
+//
 // Settings (wrangler.toml): PACKAGE_NAME, FIREBASE_PROJECT_ID, ALLOWED_ORIGINS, ARGYLE_SANDBOX, PLUS_IMPORT_DAYS, DEFAULT_TZ
 // Secrets: GOOGLE_SA_JSON (Play Console access), FIREBASE_SA_JSON (Firestore access; defaults to GOOGLE_SA_JSON),
 //          ARGYLE_KEY_ID + ARGYLE_KEY_SECRET (Argyle API key), ARGYLE_WEBHOOK_SECRET (the secret set on the Argyle webhook)
 
-const SKUS = { kept_pro_monthly: 'sub', kept_pro_yearly: 'sub', kept_pro_lifetime: 'inapp', kept_plus_monthly: 'sub', kept_plus_yearly: 'sub' };
+const SKUS = { kept_pro_monthly: 'sub', kept_pro_yearly: 'sub', kept_pro_lifetime: 'inapp', kept_plus_monthly: 'sub', kept_plus_yearly: 'sub', kept_offer_monthly: 'sub', kept_offer_yearly: 'sub' };
 const PLUS_SKUS = ['kept_plus_monthly', 'kept_plus_yearly'];   // Pro+ includes everything in Pro
+const OFFER_SKUS = ['kept_offer_monthly', 'kept_offer_yearly'];   // Pro + Offer Check
 const PLAY = 'https://androidpublisher.googleapis.com/androidpublisher/v3/applications';
 const JWKS = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 
@@ -64,6 +74,11 @@ export default {
         return reply(404, { error: 'not found' });
       }
 
+      if (path.startsWith('/offer/')) {
+        const [status, out] = await offerRoute(env, req, path, body);
+        return reply(status, out);
+      }
+
       if (path === '/play/ack') {
         const { sku, token } = body;
         if (!SKUS[sku] || !okToken(token)) return reply(400, { error: 'unknown product or token' });
@@ -78,6 +93,8 @@ export default {
         for (const p of await listPurchases(env, uid)) if (p.uid === uid) await fs(env, 'DELETE', `proPurchases/${await sha256(`${p.store}:${p.token}`)}`);
         await fs(env, 'DELETE', `users/${uid}/meta/pro`);
         await fs(env, 'DELETE', `users/${uid}/meta/trial`);
+        await offerUnlinkAll(env, uid);
+        await fs(env, 'DELETE', `users/${uid}/meta/offer`);
         try { await plusDisconnect(env, uid); } catch (e) { console.error('plus cleanup', e); }
         return reply(200, { deleted: true });
       }
@@ -273,6 +290,67 @@ export function dailyTotals(gigs, defaultTz) {
   return out;
 }
 
+/* ---------- Kept Offer Check: link the companion app to the account ---------- */
+const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';   // no 0/O, 1/I/L, so a typed code is never misread
+const PAIR_MS = 10 * 60e3;
+async function offerRoute(env, req, path, body) {
+  const auth = req.headers.get('Authorization') || '';
+  if (path === '/offer/link') {
+    const code = String(body.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (code.length !== 8) return [400, { error: 'enter the 8-character code' }];
+    const pair = await getDoc(env, `offerPairs/${code}`);
+    if (!pair || !pair.uid) return [404, { error: 'code not found' }];
+    await fs(env, 'DELETE', `offerPairs/${code}`);   // one use only
+    if (Number(pair.exp) < Date.now()) return [410, { error: 'code expired' }];
+    const key = b64url(crypto.getRandomValues(new Uint8Array(32)));
+    const name = String(body.device || '').replace(/[^\w .()-]/g, '').slice(0, 60);
+    await fs(env, 'PATCH', `offerDevices/${await sha256(key)}`, { fields: { uid: { stringValue: pair.uid }, name: { stringValue: name }, created: { timestampValue: new Date().toISOString() } } });
+    return [200, { key, ...(await offerStatus(env, pair.uid)) }];
+  }
+  if (path === '/offer/status' || path === '/offer/unlink') {
+    const key = auth.replace(/^Device\s+/i, '');
+    if (!/^[A-Za-z0-9_-]{40,60}$/.test(key)) return [401, { error: 'not linked' }];
+    const id = await sha256(key), dev = await getDoc(env, `offerDevices/${id}`);
+    if (!dev || !dev.uid) return [401, { error: 'not linked' }];
+    if (path === '/offer/unlink') { await fs(env, 'DELETE', `offerDevices/${id}`); return [200, { unlinked: true }]; }
+    return [200, await offerStatus(env, dev.uid)];
+  }
+  const uid = await verifyIdToken(env, auth.replace(/^Bearer\s+/i, ''));
+  if (!uid) return [401, { error: 'sign in first' }];
+  if (path === '/offer/unlink-all') { await offerUnlinkAll(env, uid); return [200, { unlinked: true }]; }
+  if (path !== '/offer/pair' && path !== '/offer/settings') return [404, { error: 'not found' }];
+  if (!(await offerStatus(env, uid)).active) return [402, { error: 'Offer Check needed' }];
+  if (body.settings) await saveOfferSettings(env, uid, body.settings);
+  if (path === '/offer/settings') return [200, await offerStatus(env, uid)];
+  for (let tries = 0; tries < 5; tries++) {
+    const bytes = crypto.getRandomValues(new Uint8Array(8));
+    const code = [...bytes].map((b) => CODE_CHARS[b % CODE_CHARS.length]).join('');
+    const exp = Date.now() + PAIR_MS;
+    const r = await fs(env, 'POST', `offerPairs?documentId=${code}`, { fields: { uid: { stringValue: uid }, exp: { integerValue: String(exp) } } });
+    if (r.ok) return [200, { code, expires: exp }];
+    if (r.status !== 409) throw new Error('pair failed ' + r.status);
+  }
+  throw new Error('no free code');
+}
+const clamp = (v, lo, hi) => { const n = Number(v); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, Math.round(n * 1000) / 1000)) : null; };
+async function saveOfferSettings(env, uid, s) {
+  const cpm = clamp(s.cpm, 0, 5), target = clamp(s.target, -5, 5);
+  if (cpm === null || target === null) return;
+  await fs(env, 'PATCH', `users/${uid}/meta/offer`, { fields: { cpm: { doubleValue: cpm }, target: { doubleValue: target }, car: { booleanValue: s.car === true }, updated: { integerValue: String(Date.now()) } } });
+}
+async function offerStatus(env, uid) {
+  const p = await getDoc(env, `users/${uid}/meta/pro`) || {};
+  const s = await getDoc(env, `users/${uid}/meta/offer`) || {};
+  const expires = p.offerExpires == null ? null : Number(p.offerExpires);
+  const active = p.offer === true && (expires === null || expires > Date.now());
+  return { active, expires, cpm: Number(s.cpm) || 0, target: Number(s.target) || 0, car: s.car === true, updated: Number(s.updated) || 0 };
+}
+async function offerUnlinkAll(env, uid) {
+  const q = { structuredQuery: { from: [{ collectionId: 'offerDevices' }], where: { fieldFilter: { field: { fieldPath: 'uid' }, op: 'EQUAL', value: { stringValue: uid } } } } };
+  const rows = await (await fs(env, 'POST', ':runQuery', q, true)).json();
+  for (const r of Array.isArray(rows) ? rows : []) if (r.document) await fs(env, 'DELETE', `offerDevices/${r.document.name.split('/').pop()}`);
+}
+
 /* ---------- Google Play ---------- */
 async function checkPlay(env, sku, token, acknowledge) {
   const type = SKUS[sku];
@@ -306,12 +384,13 @@ async function linkPurchase(env, uid, p) {
 }
 async function recompute(env, uid) {
   const mine = (await listPurchases(env, uid)).filter((p) => p.uid === uid);
-  let active = false, expires = 0, sku = '', store = '', plusUntil = 0;
+  let active = false, expires = 0, sku = '', store = '', plusUntil = 0, offerUntil = 0;
   for (const p of mine) {
     const r = p.store === 'play' ? await checkPlay(env, p.sku, p.token, false) : { valid: false };
     if (!r.valid) continue;
     active = true;
     if (PLUS_SKUS.includes(p.sku)) plusUntil = Math.max(plusUntil, r.expires || 0);
+    if (OFFER_SKUS.includes(p.sku)) offerUntil = Math.max(offerUntil, r.expires || 0);
     if (r.expires === null) { expires = null; sku = p.sku; store = p.store; break; }   // lifetime wins
     if (r.expires > expires) { expires = r.expires; sku = p.sku; store = p.store; }
   }
@@ -321,6 +400,11 @@ async function recompute(env, uid) {
   const gift = old.gift === true, giftUntil = old.giftUntil != null ? Number(old.giftUntil) : null;
   const giftPlus = gift && old.giftTier === 'plus' && (giftUntil === null || giftUntil > Date.now());   // gift Pro+ with giftTier = "plus"
   const tier = active && plusUntil > Date.now() || giftPlus ? 'plus' : '';
+  // Offer Check: bought, or gifted with giftOffer = true (same giftUntil).
+  const giftOffer = gift && old.giftOffer === true && (giftUntil === null || giftUntil > Date.now());
+  let offerExpires = offerUntil > Date.now() ? offerUntil : 0;
+  if (giftOffer) offerExpires = giftUntil === null ? null : Math.max(offerExpires, giftUntil);
+  const offer = offerExpires === null || offerExpires > Date.now();
   if (gift && (giftUntil === null || giftUntil > Date.now()) && expires !== null) {
     active = true;
     if (giftUntil === null) { expires = null; sku = sku || 'gift'; store = store || 'gift'; }
@@ -329,13 +413,15 @@ async function recompute(env, uid) {
   const fields = {
     ...(gift ? { gift: { booleanValue: true }, giftUntil: giftUntil === null ? { nullValue: null } : { integerValue: String(giftUntil) } } : {}),
     ...(gift && old.giftTier ? { giftTier: { stringValue: String(old.giftTier) } } : {}),
+    ...(gift && old.giftOffer === true ? { giftOffer: { booleanValue: true } } : {}),
+    offer: { booleanValue: offer }, offerExpires: offerExpires === null ? { nullValue: null } : { integerValue: String(offerExpires || 0) },
     active: { booleanValue: active }, tier: { stringValue: tier }, sku: { stringValue: sku }, store: { stringValue: store },
     expires: expires === null ? { nullValue: null } : { integerValue: String(expires || 0) },
     updated: { timestampValue: new Date().toISOString() },
   };
   const w = await fs(env, 'PATCH', `users/${uid}/meta/pro`, { fields });
   if (!w.ok) throw new Error('write failed ' + w.status);
-  return { active, sku, store, expires, tier };
+  return { active, sku, store, expires, tier, offer, offerExpires };
 }
 async function listPurchases(env, uid) {
   const out = [];

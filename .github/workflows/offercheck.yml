@@ -1,0 +1,100 @@
+name: Build Kept Offer Check (companion app)
+
+# Builds the Kept Offer Check Android app in offercheck/ (plain Android, no libraries).
+# Signed with the same upload key as Kept when the KEPT_* signing secrets are set (Google Play allows one upload key
+# for several apps); otherwise a debug APK so the build itself can be checked.
+# The Pro server address is taken from workerUrl in pro.js, so it only has to be set in one place.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'offercheck/**'
+      - 'pro.js'
+      - '.github/workflows/offercheck.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      HAS_KEY: ${{ secrets.KEPT_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Test the offer reader
+        run: |
+          D=offercheck/app/src/main/java/com/desertcircuitapps/keptoffercheck
+          javac -d "$RUNNER_TEMP/oc" $D/OfferParser.java $D/Verdict.java offercheck/test/ParserTest.java
+          java -cp "$RUNNER_TEMP/oc" com.desertcircuitapps.keptoffercheck.ParserTest
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+
+      - name: Server address from pro.js
+        run: |
+          URL=$(node -e "const s=require('fs').readFileSync('pro.js','utf8');const m=s.match(/workerUrl:'([^']*)'/);process.stdout.write(m?m[1]:'')")
+          echo "KEPT_SERVER=$URL" >> "$GITHUB_ENV"
+          echo "::notice title=Offer Check server::${URL:-not set yet (the app shows 'coming soon')}"
+
+      - name: Restore the signing key
+        if: env.HAS_KEY == 'true'
+        run: |
+          echo "${{ secrets.KEPT_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/kept.keystore"
+          echo "KEPT_KEYSTORE=$RUNNER_TEMP/kept.keystore" >> "$GITHUB_ENV"
+
+      - name: Build signed APK and AAB
+        if: env.HAS_KEY == 'true'
+        working-directory: offercheck
+        env:
+          KEPT_STORE_PASSWORD: ${{ secrets.KEPT_STORE_PASSWORD }}
+          KEPT_KEY_ALIAS: ${{ secrets.KEPT_KEY_ALIAS }}
+          KEPT_KEY_PASSWORD: ${{ secrets.KEPT_KEY_PASSWORD }}
+        run: |
+          "$GITHUB_WORKSPACE/.github/scripts/logged.sh" offercheck-release gradle --no-daemon -PkeptServer="$KEPT_SERVER" assembleRelease bundleRelease
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/out/Kept-Offer-Check-v1.apk"
+          cp app/build/outputs/bundle/release/app-release.aab "$GITHUB_WORKSPACE/out/Kept-Offer-Check-v1.aab"
+
+      - name: Build debug APK (no signing key set)
+        if: env.HAS_KEY != 'true'
+        working-directory: offercheck
+        run: |
+          "$GITHUB_WORKSPACE/.github/scripts/logged.sh" offercheck-debug gradle --no-daemon -PkeptServer="$KEPT_SERVER" assembleDebug
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/out/Kept-Offer-Check-debug.apk"
+
+      - name: Check the signed files
+        if: env.HAS_KEY == 'true'
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/aapt2" dump badging out/Kept-Offer-Check-v1.apk | head -3
+          "$BT/apksigner" verify --print-certs out/Kept-Offer-Check-v1.apk > "$RUNNER_TEMP/certs.txt"
+          grep -qi "8cceE546b8e0861f72a2a9d470c348c649b7b7b13287d89ab300fade151355a6" "$RUNNER_TEMP/certs.txt" || { echo "::error title=signing::APK is not signed with the Kept upload key"; exit 1; }
+          "$BT/aapt2" dump badging out/Kept-Offer-Check-v1.apk | grep -q "package: name='com.desertcircuitapps.keptoffercheck' versionCode='1'" || { echo "::error title=identity::package name or versionCode is wrong"; exit 1; }
+          "$BT/aapt2" dump xmltree out/Kept-Offer-Check-v1.apk --file res/xml/offer_service.xml | grep -q "com.ubercab.driver,com.lyft.android.driver" || { echo "::error title=service::offer reader is not limited to Uber Driver and Lyft Driver"; exit 1; }
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: kept-offer-check
+          path: out/
+
+      - name: Attach to a GitHub release
+        if: env.HAS_KEY == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="offercheck-v1-${{ github.run_number }}"
+          gh release create "$TAG" out/* --title "Kept Offer Check v1 (build ${{ github.run_number }})" \
+            --notes "Companion app for Kept (Offer Check). Install the .apk to test; upload the .aab to its own Google Play listing." --prerelease

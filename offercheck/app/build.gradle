@@ -1,0 +1,42 @@
+// Kept Offer Check: companion app for Kept for Gig Workers. No libraries; plain Android.
+// The Pro server address is passed in at build time (-PkeptServer=...), taken from workerUrl in Kept's pro.js.
+plugins { id 'com.android.application' }
+
+def server = (project.findProperty('keptServer') ?: '').toString()
+
+android {
+    namespace 'com.desertcircuitapps.keptoffercheck'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'com.desertcircuitapps.keptoffercheck'
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName '1.0.0'
+        buildConfigField 'String', 'SERVER', "\"${server}\""
+    }
+    buildFeatures { buildConfig true }
+
+    signingConfigs {
+        release {
+            if (System.getenv('KEPT_KEYSTORE')) {
+                storeFile file(System.getenv('KEPT_KEYSTORE'))
+                storePassword System.getenv('KEPT_STORE_PASSWORD')
+                keyAlias System.getenv('KEPT_KEY_ALIAS')
+                keyPassword System.getenv('KEPT_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (System.getenv('KEPT_KEYSTORE')) signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint { abortOnError false }
+}

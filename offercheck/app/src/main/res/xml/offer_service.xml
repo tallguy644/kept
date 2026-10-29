@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only the Uber Driver and Lyft Driver apps. Read-only: no gestures, no typing. -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/service_desc"
+    android:summary="@string/service_summary"
+    android:packageNames="com.ubercab.driver,com.lyft.android.driver"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows"
+    android:canRetrieveWindowContent="true"
+    android:canPerformGestures="false"
+    android:notificationTimeout="200"
+    android:isAccessibilityTool="false"
+    android:settingsActivity="com.desertcircuitapps.keptoffercheck.MainActivity" />

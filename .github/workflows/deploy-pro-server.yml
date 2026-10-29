@@ -32,7 +32,7 @@ jobs:
           node-version: 22
 
       - name: Test the server
-        run: node worker/test/plus.test.mjs
+        run: node worker/test/plus.test.mjs && node worker/test/offer.test.mjs
 
       - name: No Cloudflare token yet
         if: env.HAS_TOKEN != 'true'
