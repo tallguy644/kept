@@ -2,9 +2,11 @@
    The driver enters their car once (what they paid, odometer then, expected resale and odometer at sale). Kept combines
    that depreciation with the gas and maintenance they already log to show what each mile really costs, next to what they
    earn per mile. Car details live in prefs.car, so they are saved with the other settings and included in backup files.
-   Free for every driver. */
+   Free, Android app only (Google Play). */
 (function(){
 'use strict';
+// Android only (Google Play app). Hidden on the website and in the Microsoft Store app; preview on the web with ?car=preview.
+if(!window.keptNative&&new URLSearchParams(location.search).get('car')!=='preview') return;
 
 /* ---------- Words ---------- */
 const T={
