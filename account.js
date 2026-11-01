@@ -31,7 +31,7 @@ if(!cfg) return;
 const T={
 en:{row:'Sign in or create account',rowSub:'Keep your days safe on all your devices',title:'Your account',
   pitch:'Sign in to keep your days safe and use Kept on all your devices. Your days are private to your account.',
-  google:'Continue with Google',or:'or',email:'Email',password:'Password',signIn:'Sign in',create:'Create account',
+  google:'Continue with Google',or:'or',email:'Email',password:'Password',showPw:'Show password',hidePw:'Hide password',signIn:'Sign in',create:'Create account',
   toCreate:'New here? Create an account',toSignIn:'Have an account? Sign in',forgot:'Forgot password?',
   signedAs:'Signed in as',signOut:'Sign out',del:'Delete account',delSure:'Tap again to delete your account and all its days',
   reauth:'For your security, sign out, sign in again with Google, then delete your account.',delPw:'Enter your password to confirm',delConfirm:'Delete my account',deleted:'Your account and its days were deleted.',
@@ -45,7 +45,7 @@ en:{row:'Sign in or create account',rowSub:'Keep your days safe on all your devi
   e_many:'Too many tries. Wait a minute and try again.',e_load:'Accounts aren\'t available right now. Check your connection.',e_other:'Something went wrong. Try again.'},
 es:{row:'Inicia sesión o crea una cuenta',rowSub:'Protege tus días en todos tus dispositivos',title:'Tu cuenta',
   pitch:'Inicia sesión para proteger tus días y usar Kept en todos tus dispositivos. Tus días son privados de tu cuenta.',
-  google:'Continuar con Google',or:'o',email:'Correo',password:'Contraseña',signIn:'Iniciar sesión',create:'Crear cuenta',
+  google:'Continuar con Google',or:'o',email:'Correo',password:'Contraseña',showPw:'Mostrar contraseña',hidePw:'Ocultar contraseña',signIn:'Iniciar sesión',create:'Crear cuenta',
   toCreate:'¿Eres nuevo? Crea una cuenta',toSignIn:'¿Ya tienes cuenta? Inicia sesión',forgot:'¿Olvidaste tu contraseña?',
   signedAs:'Sesión iniciada como',signOut:'Cerrar sesión',del:'Eliminar cuenta',delSure:'Toca otra vez para eliminar tu cuenta y todos sus días',
   reauth:'Por seguridad, cierra sesión, vuelve a entrar con Google y luego elimina tu cuenta.',delPw:'Escribe tu contraseña para confirmar',delConfirm:'Eliminar mi cuenta',deleted:'Se eliminaron tu cuenta y sus días.',
@@ -59,7 +59,7 @@ es:{row:'Inicia sesión o crea una cuenta',rowSub:'Protege tus días en todos tu
   e_many:'Demasiados intentos. Espera un minuto e inténtalo de nuevo.',e_load:'Las cuentas no están disponibles ahora. Revisa tu conexión.',e_other:'Algo salió mal. Inténtalo de nuevo.'},
 pt:{row:'Entre ou crie uma conta',rowSub:'Proteja seus dias em todos os aparelhos',title:'Sua conta',
   pitch:'Entre para proteger seus dias e usar o Kept em todos os seus aparelhos. Seus dias são privados da sua conta.',
-  google:'Continuar com o Google',or:'ou',email:'E-mail',password:'Senha',signIn:'Entrar',create:'Criar conta',
+  google:'Continuar com o Google',or:'ou',email:'E-mail',password:'Senha',showPw:'Mostrar senha',hidePw:'Ocultar senha',signIn:'Entrar',create:'Criar conta',
   toCreate:'É novo aqui? Crie uma conta',toSignIn:'Já tem conta? Entre',forgot:'Esqueceu a senha?',
   signedAs:'Conectado como',signOut:'Sair',del:'Excluir conta',delSure:'Toque de novo para excluir sua conta e todos os dias',
   reauth:'Por segurança, saia, entre de novo com o Google e depois exclua sua conta.',delPw:'Digite sua senha para confirmar',delConfirm:'Excluir minha conta',deleted:'Sua conta e seus dias foram excluídos.',
@@ -73,7 +73,7 @@ pt:{row:'Entre ou crie uma conta',rowSub:'Proteja seus dias em todos os aparelho
   e_many:'Muitas tentativas. Espere um minuto e tente de novo.',e_load:'As contas não estão disponíveis agora. Verifique sua conexão.',e_other:'Algo deu errado. Tente de novo.'},
 fr:{row:'Se connecter ou créer un compte',rowSub:'Protégez vos journées sur tous vos appareils',title:'Votre compte',
   pitch:'Connectez-vous pour protéger vos journées et utiliser Kept sur tous vos appareils. Vos journées restent privées dans votre compte.',
-  google:'Continuer avec Google',or:'ou',email:'E-mail',password:'Mot de passe',signIn:'Se connecter',create:'Créer un compte',
+  google:'Continuer avec Google',or:'ou',email:'E-mail',password:'Mot de passe',showPw:'Afficher le mot de passe',hidePw:'Masquer le mot de passe',signIn:'Se connecter',create:'Créer un compte',
   toCreate:'Nouveau ? Créez un compte',toSignIn:'Déjà un compte ? Connectez-vous',forgot:'Mot de passe oublié ?',
   signedAs:'Connecté en tant que',signOut:'Se déconnecter',del:'Supprimer le compte',delSure:'Touchez encore pour supprimer votre compte et toutes ses journées',
   reauth:'Par sécurité, déconnectez-vous, reconnectez-vous avec Google, puis supprimez votre compte.',delPw:'Saisissez votre mot de passe pour confirmer',delConfirm:'Supprimer mon compte',deleted:'Votre compte et ses journées ont été supprimés.',
@@ -87,7 +87,7 @@ fr:{row:'Se connecter ou créer un compte',rowSub:'Protégez vos journées sur t
   e_many:'Trop de tentatives. Attendez une minute et réessayez.',e_load:'Les comptes ne sont pas disponibles pour le moment. Vérifiez votre connexion.',e_other:'Un problème est survenu. Réessayez.'},
 ru:{row:'Войти или создать аккаунт',rowSub:'Ваши дни в безопасности на всех устройствах',title:'Ваш аккаунт',
   pitch:'Войдите, чтобы сохранить свои дни и пользоваться Kept на всех устройствах. Ваши дни видны только вам.',
-  google:'Продолжить с Google',or:'или',email:'Эл. почта',password:'Пароль',signIn:'Войти',create:'Создать аккаунт',
+  google:'Продолжить с Google',or:'или',email:'Эл. почта',password:'Пароль',showPw:'Показать пароль',hidePw:'Скрыть пароль',signIn:'Войти',create:'Создать аккаунт',
   toCreate:'Впервые здесь? Создайте аккаунт',toSignIn:'Уже есть аккаунт? Войдите',forgot:'Забыли пароль?',
   signedAs:'Вы вошли как',signOut:'Выйти',del:'Удалить аккаунт',delSure:'Нажмите ещё раз, чтобы удалить аккаунт и все дни',
   reauth:'В целях безопасности выйдите, снова войдите через Google, а затем удалите аккаунт.',delPw:'Введите пароль для подтверждения',delConfirm:'Удалить мой аккаунт',deleted:'Ваш аккаунт и его дни удалены.',
@@ -101,7 +101,7 @@ ru:{row:'Войти или создать аккаунт',rowSub:'Ваши дн�
   e_many:'Слишком много попыток. Подождите минуту и попробуйте снова.',e_load:'Аккаунты сейчас недоступны. Проверьте подключение.',e_other:'Что-то пошло не так. Попробуйте ещё раз.'},
 zh:{row:'登录或创建账户',rowSub:'在所有设备上安全保存你的记录',title:'你的账户',
   pitch:'登录后，你的记录会安全保存，并可在所有设备上使用 Kept。你的记录仅你本人可见。',
-  google:'使用 Google 继续',or:'或',email:'邮箱',password:'密码',signIn:'登录',create:'创建账户',
+  google:'使用 Google 继续',or:'或',email:'邮箱',password:'密码',showPw:'显示密码',hidePw:'隐藏密码',signIn:'登录',create:'创建账户',
   toCreate:'新用户？创建账户',toSignIn:'已有账户？登录',forgot:'忘记密码？',
   signedAs:'已登录：',signOut:'退出登录',del:'删除账户',delSure:'再点一次将删除你的账户及所有记录',
   reauth:'为了安全，请先退出，再用 Google 重新登录，然后删除账户。',delPw:'输入密码以确认',delConfirm:'删除我的账户',deleted:'你的账户及记录已删除。',
@@ -115,7 +115,7 @@ zh:{row:'登录或创建账户',rowSub:'在所有设备上安全保存你的记�
   e_many:'尝试次数过多，请稍等一分钟再试。',e_load:'账户功能暂时不可用，请检查网络连接。',e_other:'出了点问题，请重试。'},
 vi:{row:'Đăng nhập hoặc tạo tài khoản',rowSub:'Giữ dữ liệu an toàn trên mọi thiết bị',title:'Tài khoản của bạn',
   pitch:'Đăng nhập để giữ dữ liệu an toàn và dùng Kept trên mọi thiết bị. Dữ liệu chỉ riêng tài khoản của bạn xem được.',
-  google:'Tiếp tục với Google',or:'hoặc',email:'Email',password:'Mật khẩu',signIn:'Đăng nhập',create:'Tạo tài khoản',
+  google:'Tiếp tục với Google',or:'hoặc',email:'Email',password:'Mật khẩu',showPw:'Hiện mật khẩu',hidePw:'Ẩn mật khẩu',signIn:'Đăng nhập',create:'Tạo tài khoản',
   toCreate:'Mới dùng? Tạo tài khoản',toSignIn:'Đã có tài khoản? Đăng nhập',forgot:'Quên mật khẩu?',
   signedAs:'Đã đăng nhập:',signOut:'Đăng xuất',del:'Xóa tài khoản',delSure:'Chạm lần nữa để xóa tài khoản và mọi dữ liệu',
   reauth:'Để bảo mật, hãy đăng xuất, đăng nhập lại bằng Google rồi xóa tài khoản.',delPw:'Nhập mật khẩu để xác nhận',delConfirm:'Xóa tài khoản của tôi',deleted:'Đã xóa tài khoản và dữ liệu của bạn.',
@@ -184,6 +184,26 @@ rowList.innerHTML=`<button type="button" id="acctRow">${USER_ICON}<span class="t
 more.insertBefore(rowList,more.querySelector('.top').nextSibling);
 // Account page
 const sec=document.createElement('section'); sec.className='view'; sec.id='acctSec'; sec.hidden=true;
+
+/* Show/hide button on every password field (sign in, create account, delete account) */
+const EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10.6 10.6 0 0112 5c6.4 0 10 7 10 7a17.6 17.6 0 01-3.2 4.2M6.6 6.6C3.9 8.3 2 12 2 12s3.6 7 10 7a9.9 9.9 0 005.4-1.6M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
+const eyeCss=document.createElement('style');
+eyeCss.textContent='.fld.has-eye{position:relative}.fld.has-eye input{padding-right:46px}.pw-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:42px;height:42px;border:0;background:none;color:var(--muted);display:flex;align-items:center;justify-content:center;border-radius:10px;cursor:pointer}.pw-eye:hover,.pw-eye:focus-visible{color:var(--fg);background:var(--surface-2)}.pw-eye svg{width:22px;height:22px}';
+document.head.appendChild(eyeCss);
+function addEyes(){
+  sec.querySelectorAll('input[type="password"]:not([data-eye])').forEach(inp=>{
+    inp.dataset.eye='1';
+    const b=document.createElement('button'); b.type='button'; b.className='pw-eye'; b.innerHTML=EYE;
+    b.setAttribute('aria-label',w('showPw')); b.setAttribute('aria-pressed','false'); b.setAttribute('aria-controls',inp.id);
+    b.onclick=()=>{ const show=inp.type==='password'; inp.type=show?'text':'password'; b.innerHTML=show?EYE_OFF:EYE;
+      b.setAttribute('aria-label',w(show?'hidePw':'showPw')); b.setAttribute('aria-pressed',String(show));
+      const end=inp.value.length; inp.focus(); try{ inp.setSelectionRange(end,end); }catch(e){} };
+    inp.insertAdjacentElement('afterend',b);
+    const f=inp.closest('.fld'); if(f) f.classList.add('has-eye');
+  });
+}
+new MutationObserver(addEyes).observe(sec,{childList:true,subtree:true});
 ($('shell')||document.body).appendChild(sec);
 if(typeof VIEWS!=='undefined'){ VIEWS.acct='acctSec'; NAVOF.acct='more'; }
 const open=()=>{ draw(); if(window.keptGo) window.keptGo('acct'); };
