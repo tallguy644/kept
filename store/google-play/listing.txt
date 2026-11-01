@@ -1,45 +1,58 @@
-APP NAME (30 max)
-Kept for Gig Workers
+GOOGLE PLAY STORE LISTING (ASO version, Nov 2026). Why each choice was made: store/ASO.md
+Paste into Play Console › Grow users › Store presence › Main store listing.
+Translations for the other 6 languages: store/google-play/listing-translations.txt
 
-SHORT DESCRIPTION (80 max)
-Track Lyft & Uber earnings, gas, miles and what you really kept.
+APP NAME (30 max) — 28
+Kept: Rideshare Earnings Log
+
+SHORT DESCRIPTION (80 max) — 78
+Track Uber & Lyft earnings, miles and gas. See what you really keep each week.
 
 FULL DESCRIPTION (4000 max)
-Kept is a simple daily tracker made for rideshare drivers. Log your Lyft and Uber day in under a minute, and see what you really earned after gas and costs.
+Kept is the simple earnings tracker for rideshare drivers. Log your Uber and Lyft day in about a minute and see what you really kept after gas, miles and car costs. No GPS tracking draining your battery, no ads, and no bank login.
 
-LOG YOUR DAY, NOT EVERY TRIP
-• One quick entry per day for Lyft and Uber: earnings, tips, rides and hours
-• Add gas, miles, tolls and parking, and bonuses
+LOG YOUR DRIVING DAY IN A MINUTE
+• One quick entry per day for Uber and Lyft: earnings, tips, rides and hours
+• Add gas, miles driven, tolls, parking, repairs and bonuses
+• A short tour shows you around the first time you open the app
 • Edit or delete any day whenever you need to
 
-SEE WHAT YOU REALLY KEPT
-• Totals by day, week, month and year
-• Lyft vs Uber side by side: which app pays more per hour, per ride and per mile
-• Earnings trends and simple insights, compared with last week or last month
+SEE WHAT YOU REALLY KEEP
+• Totals by day, week, month and year: what you earned, what you spent and what you kept
+• Uber vs Lyft side by side: which app pays more per hour, per ride and per mile
+• Earnings trends and simple insights compared with last week or last month
 
-TAX-TIME TOTALS
-• A yearly summary of your income, business miles and IRS standard mileage deduction
+YOUR REAL COST PER MILE
+• Enter your car once and Kept adds depreciation to your gas and repairs
+• See what each mile really costs you, what you earn per mile, and your profit per mile
+• Compare your real costs with the IRS mileage rate
+
+MILEAGE LOG AND TAX-TIME TOTALS
+• A yearly summary of income, business miles and the IRS standard mileage deduction
 • Estimated self-employment tax and quarterly estimates with due dates
 • A mileage log you can export or print for your records
 (Estimates to help you file, not tax advice.)
 
-YOUR DATA STAYS YOURS
+FREE BACKUP AND SYNC
 • Works without an account, and your days are saved on your phone
-• Optional free account (email or Google) keeps your days backed up and synced on all your devices and at keptforgigworkers.com
+• Free Google Drive backup, with a Google Sheet of your days kept up to date
+• Optional free account (email or Google) syncs your days to all your devices and keptforgigworkers.com
+• Export to Excel or Google Sheets anytime
 • Lock the app with your fingerprint or face
-• Save a backup file anytime and restore it on any device
 • No ads. Your data is never sold or shared.
 
 KEPT PRO
-Try everything free for 7 days. Kept Pro unlocks the Taxes report and the Compare and Trends tabs. Google Drive backup and Excel export are free. Monthly, yearly or one-time lifetime options.
+Try Pro free for 7 days. Kept Pro adds the full Taxes report and the Compare and Trends tabs. Logging, totals, cost per mile, Google Drive backup and Excel export stay free. Monthly, yearly or one-time lifetime options.
 
-Available in English, Español, Português, Français, Русский, 中文 and Tiếng Việt.
+MADE FOR GIG DRIVERS
+Built for full-time and part-time rideshare drivers who want clear numbers without spreadsheets. Light and dark mode, and available in English, Español, Português, Français, Русский, 中文 and Tiếng Việt.
 
-Kept is an independent app and is not affiliated with, endorsed by, or sponsored by Lyft or Uber.
+Kept is an independent app and is not affiliated with, endorsed by, or sponsored by Uber or Lyft.
 
-Questions or ideas? support@keptforgigworkers.com
+Questions or ideas? Use Send feedback in the app or email support@keptforgigworkers.com
 
 CATEGORY: Finance
+TAGS (Play Console › Store settings › App tags): pick up to 5 of the closest matches, for example budgeting, expense tracking, personal finance, taxes
 CONTACT EMAIL: support@keptforgigworkers.com
 WEBSITE: https://keptforgigworkers.com
 PRIVACY POLICY: https://keptforgigworkers.com/privacy.html

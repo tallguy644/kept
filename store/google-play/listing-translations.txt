@@ -1,0 +1,62 @@
+GOOGLE PLAY TRANSLATED LISTINGS (Play Console › Store presence › Main store listing › Manage translations › Add your own translations)
+Title max 30, short description max 80. Kept's app itself is in all of these languages, so translated listings rank in local searches (for example Spanish-speaking drivers in the US).
+
+== Español (es-419 and es-US) ==
+APP NAME (25): Kept: Ganancias Rideshare
+SHORT DESCRIPTION (79): Registra tus ganancias de Uber y Lyft, millas y gasolina. Mira lo que te queda.
+
+== Português (pt-BR) ==
+APP NAME (25): Kept: Ganhos de Motorista
+SHORT DESCRIPTION (76): Anote ganhos da Uber e Lyft, milhas e gasolina. Veja quanto realmente sobra.
+
+== Français (fr-FR, fr-CA) ==
+APP NAME (29): Kept : Gains de Chauffeur VTC
+SHORT DESCRIPTION (74): Notez vos gains Uber et Lyft, miles et carburant. Voyez ce qui vous reste.
+
+== Русский (ru-RU) ==
+APP NAME (26): Kept: доход водителя такси
+SHORT DESCRIPTION (77): Учёт заработка в Uber и Lyft, миль и бензина. Сколько остаётся на самом деле.
+
+== 中文 (zh-CN) ==
+APP NAME (14): Kept：网约车司机收入记账
+SHORT DESCRIPTION (35): 记录 Uber 和 Lyft 收入、里程和油费，看清每周真正到手多少。
+
+== Tiếng Việt (vi) ==
+APP NAME (24): Kept: Thu nhập tài xế xe
+SHORT DESCRIPTION (77): Ghi thu nhập Uber và Lyft, số dặm và tiền xăng. Biết mình thực giữ bao nhiêu.
+
+== Español: FULL DESCRIPTION ==
+Kept es el registro de ganancias sencillo para conductores de rideshare. Anota tu día de Uber y Lyft en un minuto y mira lo que realmente te quedó después de gasolina, millas y costos del auto. Sin rastreo GPS que gaste tu batería, sin anuncios y sin conectar tu banco.
+
+REGISTRA TU DÍA EN UN MINUTO
+• Una entrada al día para Uber y Lyft: ganancias, propinas, viajes y horas
+• Agrega gasolina, millas, peajes, estacionamiento, reparaciones y bonos
+• Un recorrido corto te muestra la app la primera vez que la abres
+
+MIRA LO QUE REALMENTE TE QUEDA
+• Totales por día, semana, mes y año: lo que ganaste, lo que gastaste y lo que te quedó
+• Uber vs Lyft lado a lado: cuál paga más por hora, por viaje y por milla
+• Tendencias de ganancias comparadas con la semana o el mes pasado
+
+TU COSTO REAL POR MILLA
+• Ingresa tu auto una vez y Kept suma la depreciación a tu gasolina y reparaciones
+• Mira cuánto te cuesta cada milla, cuánto ganas por milla y tu ganancia por milla
+
+REGISTRO DE MILLAS E IMPUESTOS
+• Resumen anual de ingresos, millas de trabajo y la deducción estándar por millaje del IRS
+• Impuesto de trabajo por cuenta propia estimado y pagos trimestrales con fechas
+(Estimaciones para ayudarte a declarar, no asesoría fiscal.)
+
+RESPALDO GRATIS
+• Funciona sin cuenta; tus días se guardan en tu teléfono
+• Respaldo gratis en Google Drive, con una hoja de Google siempre al día
+• Cuenta gratis opcional para sincronizar en todos tus dispositivos
+• Exporta a Excel o Google Sheets cuando quieras
+• Sin anuncios. Tus datos nunca se venden ni se comparten.
+
+KEPT PRO
+Prueba Pro gratis por 7 días: informe completo de impuestos y las pestañas Comparar y Tendencias. Registrar, totales, costo por milla, respaldo en Drive y exportar a Excel siguen gratis.
+
+Kept es una app independiente y no está afiliada, respaldada ni patrocinada por Uber o Lyft.
+
+¿Preguntas o ideas? Usa Enviar comentarios en la app o escribe a support@keptforgigworkers.com

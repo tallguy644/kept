@@ -1,0 +1,62 @@
+MICROSOFT STORE LISTING (ASO version, Nov 2026). Why: store/ASO.md
+Paste into Partner Center › Kept for Gig Workers › Start update › Store listings › English (United States).
+
+PRODUCT NAME
+Kept for Gig Workers   (keep the reserved name; search relies on the fields below)
+
+SHORT DESCRIPTION (keep under 270 so it shows in full)
+Rideshare earnings tracker for Uber and Lyft drivers. Log your day in a minute and see what you really keep after gas, miles and costs, with mileage and tax totals. Free, no ads.
+
+DESCRIPTION
+Kept is the simple earnings tracker for rideshare drivers. Log your Uber and Lyft day in about a minute and see what you really kept after gas, miles and car costs. It works on your PC, your phone and at keptforgigworkers.com, with your days synced between them.
+
+LOG YOUR DRIVING DAY IN A MINUTE
+• One quick entry per day for Uber and Lyft: earnings, tips, rides and hours
+• Add gas, miles driven, tolls, parking, repairs and bonuses
+• A short tour shows you around the first time you open the app
+
+SEE WHAT YOU REALLY KEEP
+• Totals by day, week, month and year: what you earned, spent and kept
+• Uber vs Lyft side by side: which app pays more per hour, per ride and per mile
+• Earnings trends compared with last week or last month
+
+MILEAGE LOG AND TAX-TIME TOTALS
+• A yearly summary of income, business miles and the IRS standard mileage deduction
+• Estimated self-employment tax and quarterly estimates with due dates
+• A mileage log you can export or print
+(Estimates to help you file, not tax advice.)
+
+FREE BACKUP AND SYNC
+• Free Google Drive backup with a Google Sheet of your days
+• Optional free account syncs your days across your PC, phone and the web
+• Export to Excel anytime
+• No ads. Your data is never sold or shared.
+
+KEPT PRO
+Try Pro free for 7 days: the full Taxes report and the Compare and Trends tabs. Logging, totals, Google Drive backup and Excel export stay free.
+
+Available in English, Español, Português, Français, Русский, 中文 and Tiếng Việt, in light or dark mode.
+
+Kept is an independent app and is not affiliated with, endorsed by, or sponsored by Uber or Lyft.
+
+PRODUCT FEATURES (one per line; the Store adds the bullets)
+Log your Uber and Lyft day in about a minute
+See what you really keep after gas and costs
+Uber vs Lyft pay per hour, per ride and per mile
+Daily, weekly, monthly and yearly earnings totals
+Mileage log with the IRS standard mileage deduction
+Self-employment tax and quarterly estimates
+Free Google Drive backup and Google Sheet
+Sync between your PC, phone and the web
+Export to Excel
+Light and dark mode, 7 languages
+No ads, your data is never sold
+
+KEYWORDS (Store listing › Keywords; up to 7)
+rideshare earnings tracker
+uber driver
+lyft driver
+gig driver
+mileage log
+driver expense tracker
+gig worker taxes
