@@ -91,11 +91,12 @@ mod imp {
     pub fn products(h: isize, ids: Vec<String>) -> Result<Vec<Product>, String> {
         let run = || -> windows::core::Result<Vec<Product>> {
             let c = ctx(h)?;
-            let kinds: IIterable<HSTRING> = IIterable::from(vec![
+            let kinds: IIterable<HSTRING> = vec![
                 HSTRING::from("Durable"),
                 HSTRING::from("Consumable"),
                 HSTRING::from("UnmanagedConsumable"),
-            ]);
+            ]
+            .try_into()?;
             let res = c.GetAssociatedStoreProductsAsync(&kinds)?.get()?;
             let map = res.Products()?;
             let (mut out, mut skus) = (Vec::new(), Vec::new());
