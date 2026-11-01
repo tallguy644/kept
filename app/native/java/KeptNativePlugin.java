@@ -116,6 +116,21 @@ public class KeptNativePlugin extends Plugin {
         call.resolve(r);
     }
 
+    /** Opens Android's share sheet with a short text (Share Kept on the More page). */
+    @PluginMethod
+    public void shareText(PluginCall call) {
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("text/plain");
+        send.putExtra(Intent.EXTRA_TEXT, call.getString("text", ""));
+        send.putExtra(Intent.EXTRA_SUBJECT, call.getString("title", "Kept for Gig Workers"));
+        try {
+            getActivity().startActivity(Intent.createChooser(send, call.getString("title", "Kept for Gig Workers")));
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Couldn't open sharing", "error");
+        }
+    }
+
     /** Prints the page (the tax report's print styles apply), including "Save as PDF". */
     @PluginMethod
     public void printPage(PluginCall call) {

@@ -481,6 +481,10 @@ table.cmp{width:100%;border-collapse:collapse}
 <section class="view" id="vMore" hidden>
   <div class="top"><h1 class="title">More</h1></div>
   <div class="list" id="proSlot"></div>
+  <h2 class="sh" id="modeH">Appearance</h2>
+  <div class="seg" role="group" aria-labelledby="modeH" id="modeSeg">
+    <button type="button" data-mode="system">Match phone</button><button type="button" data-mode="light">Light</button><button type="button" data-mode="dark">Dark</button>
+  </div>
   <h2 class="sh">Backup &amp; sync</h2>
   <div class="list">
     <div class="status"><span id="syncText"></span></div>
@@ -508,12 +512,6 @@ table.cmp{width:100%;border-collapse:collapse}
     <h1 id="custTitle">Customize</h1><span></span>
   </div>
   <div class="card cust">
-    <div class="cust-grp">
-      <span class="lbl">Appearance</span>
-      <div class="seg" role="group" aria-label="Appearance" id="modeSeg">
-        <button type="button" data-mode="system">Match phone</button><button type="button" data-mode="light">Light</button><button type="button" data-mode="dark">Dark</button>
-      </div>
-    </div>
     <div class="cust-grp"><label class="lbl" for="langSel">Language</label><select id="langSel"></select></div>
     <div class="cust-grp"><span class="lbl">Main color</span><div class="swatches" id="swatches"></div></div>
     <div class="cust-grp two">
@@ -1105,6 +1103,7 @@ function drawCust(){
 }
 function rgbish(v){ v=String(v||'').trim(); return /^#[0-9a-f]{6}$/i.test(v)?v:''; }
 document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{ prefs.mode=b.dataset.mode; savePrefs(); applyPrefs(); drawCust(); });
+document.querySelectorAll('#modeSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===prefs.mode));   // Appearance is on the More page
 $('lyftColor').oninput=e=>{ prefs.lyft=e.target.value; savePrefs(); applyPrefs(); };
 $('uberColor').oninput=e=>{ prefs.uber=e.target.value; savePrefs(); applyPrefs(); };
 $('custBtn').onclick=()=>{ drawCust(); go('cust'); };
@@ -1520,5 +1519,6 @@ catch(e){ setSync('This browser is blocking storage, so entries won\'t be kept. 
 <script src="sync.js"></script>
 <script src="car.js"></script>
 <script src="offer.js"></script>
+<script src="feedback.js"></script>
 <script>if('serviceWorker' in navigator&&!window.keptNative) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </body></html>

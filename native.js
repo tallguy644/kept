@@ -15,6 +15,7 @@ const WEB_CLIENT_ID='957643145067-qvoj60s3qrjdtmi41qacjs7rsoefko8l.apps.googleus
 const errOf=e=>{ const x=new Error((e&&e.message)||'failed'); x.name=(e&&(e.code==='cancelled'||/cancel/i.test(e.message||'')))?'NotAllowedError':'Error'; return x; };
 window.keptNative={
   async share(name,text,type){ await K.shareFile({name,type,text}); return 'shared'; },
+  shareText(text,title){ return K.shareText({text,title}); },   // Share Kept (feedback.js)
   print(title){ return K.printPage({title:title||'Kept'}); },
   async bioAvailable(){ try{ return !!(await K.biometricAvailable()).available; }catch(e){ return false; } },
   async bio(title,reason){ try{ await K.biometric({title,reason}); }catch(e){ throw errOf(e); } },
@@ -37,6 +38,7 @@ if(App) App.addListener('backButton',()=>{
   if(v==='home'||v==='welcome'){ App.exitApp(); return; }
   if(v==='car'&&typeof window.keptCarBack==='function'){ window.keptCarBack(); return; }
   if(v==='offer'&&typeof window.keptOfferBack==='function'){ window.keptOfferBack(); return; }
+  if(v==='feedback'&&typeof window.keptFeedbackBack==='function'){ window.keptFeedbackBack(); return; }
   if((v==='log'||v==='pro'||v==='cust')&&typeof window.keptBack==='function'){ window.keptBack(); return; }
   if(typeof window.keptGo==='function') window.keptGo('home');
 });
