@@ -1,0 +1,72 @@
+Release notes for Kept v12 (2.0.0). Paste the whole block into Play Console › Release › Release notes (each language must be 500 characters or fewer; all are).
+
+<en-US>
+New in Kept 2.0
+• Free GPS mileage tracker: tap Start driving and your miles are added to the day
+• See your real cost per mile with My car
+• Google Drive backup is now free
+• A quick app tour for new drivers
+• Dark mode right on the More page
+• Share Kept and send feedback from More
+• Show or hide your password when signing in
+</en-US>
+<es-419>
+Novedades de Kept 2.0
+• Rastreo de millas con GPS gratis: toca Iniciar manejo y tus millas se suman al día
+• Tu costo real por milla con Mi auto
+• El respaldo en Google Drive ahora es gratis
+• Un recorrido rápido por la app
+• Modo oscuro en la página Más
+• Comparte Kept y envía comentarios desde Más
+• Muestra u oculta tu contraseña al iniciar sesión
+</es-419>
+<pt-BR>
+Novidades do Kept 2.0
+• Registro de milhas com GPS grátis: toque em Começar a dirigir e as milhas vão para o dia
+• Seu custo real por milha com Meu carro
+• O backup no Google Drive agora é grátis
+• Um tour rápido pelo app
+• Modo escuro na página Mais
+• Compartilhe o Kept e envie feedback em Mais
+• Mostre ou oculte a senha ao entrar
+</pt-BR>
+<fr-FR>
+Nouveautés de Kept 2.0
+• Suivi des miles par GPS gratuit : touchez Démarrer la conduite et vos miles s'ajoutent à la journée
+• Votre vrai coût par mile avec Ma voiture
+• La sauvegarde Google Drive est désormais gratuite
+• Une visite rapide de l'appli
+• Mode sombre dans la page Plus
+• Partagez Kept et envoyez un avis depuis Plus
+• Affichez ou masquez votre mot de passe
+</fr-FR>
+<ru-RU>
+Новое в Kept 2.0
+• Бесплатный учёт пробега по GPS: нажмите «Начать поездку», и мили добавятся к дню
+• Реальная стоимость мили в разделе «Мой автомобиль»
+• Резервная копия в Google Диске теперь бесплатна
+• Краткий обзор приложения
+• Тёмная тема прямо на странице «Ещё»
+• Поделиться Kept и отправить отзыв из «Ещё»
+• Показать или скрыть пароль при входе
+</ru-RU>
+<zh-CN>
+Kept 2.0 新功能
+• 免费 GPS 里程记录：点按“开始开车”，里程自动加到当天
+• 通过“我的车”查看每英里真实成本
+• Google 云端硬盘备份现已免费
+• 新用户应用导览
+• “更多”页面直接切换深色模式
+• 在“更多”中分享 Kept 和发送反馈
+• 登录时可显示或隐藏密码
+</zh-CN>
+<vi>
+Có gì mới trong Kept 2.0
+• Đếm số dặm bằng GPS miễn phí: nhấn Bắt đầu chạy và số dặm được cộng vào ngày
+• Chi phí thật mỗi dặm với Xe của tôi
+• Sao lưu Google Drive nay miễn phí
+• Hướng dẫn nhanh cho người mới
+• Chế độ tối ngay trên trang Thêm
+• Chia sẻ Kept và gửi góp ý từ Thêm
+• Hiện hoặc ẩn mật khẩu khi đăng nhập
+</vi>

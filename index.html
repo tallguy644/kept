@@ -92,6 +92,7 @@ h2.sh{margin:6px 2px -4px;font-size:.78rem;font-weight:700;letter-spacing:.08em;
 .tile b{display:block;font-size:1.35rem;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tile small{display:block;font-size:.85rem;color:var(--muted)}
 .tile>div{min-width:0}
+@media (max-width:420px){.tile{padding:14px 12px;gap:10px}.tile svg{width:22px;height:22px}.tile b{font-size:min(1.35rem,5vw)}}   /* fit $1,234.56 on 360px phones */
 .tile.hl{background:var(--chip)}
 .tile.hl svg,.tile.hl b{color:var(--chip-fg)}
 .card-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
