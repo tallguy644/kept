@@ -2,31 +2,37 @@ GOOGLE PLAY TRANSLATED LISTINGS (Play Console › Store presence › Main store 
 Title max 30, short description max 80. Kept's app itself is in all of these languages, so translated listings rank in local searches (for example Spanish-speaking drivers in the US).
 
 == Español (es-419 and es-US) ==
-APP NAME (25): Kept: Ganancias Rideshare
-SHORT DESCRIPTION (79): Registra tus ganancias de Uber y Lyft, millas y gasolina. Mira lo que te queda.
+APP NAME (24): Kept: Millas y Ganancias
+SHORT DESCRIPTION (77): Registra millas con GPS y tus ganancias de Uber y Lyft. Mira lo que te queda.
 
 == Português (pt-BR) ==
-APP NAME (25): Kept: Ganhos de Motorista
-SHORT DESCRIPTION (76): Anote ganhos da Uber e Lyft, milhas e gasolina. Veja quanto realmente sobra.
+APP NAME (21): Kept: Milhas e Ganhos
+SHORT DESCRIPTION (77): Registre milhas com GPS e ganhos da Uber e Lyft. Veja quanto realmente sobra.
 
 == Français (fr-FR, fr-CA) ==
-APP NAME (29): Kept : Gains de Chauffeur VTC
-SHORT DESCRIPTION (74): Notez vos gains Uber et Lyft, miles et carburant. Voyez ce qui vous reste.
+APP NAME (25): Kept : Miles et Gains VTC
+SHORT DESCRIPTION (76): Suivez vos miles par GPS et vos gains Uber et Lyft. Voyez ce qui vous reste.
 
 == Русский (ru-RU) ==
-APP NAME (26): Kept: доход водителя такси
-SHORT DESCRIPTION (77): Учёт заработка в Uber и Lyft, миль и бензина. Сколько остаётся на самом деле.
+APP NAME (20): Kept: пробег и доход
+SHORT DESCRIPTION (72): Пробег по GPS и заработок в Uber и Lyft. Сколько остаётся на самом деле.
 
 == 中文 (zh-CN) ==
-APP NAME (14): Kept：网约车司机收入记账
-SHORT DESCRIPTION (35): 记录 Uber 和 Lyft 收入、里程和油费，看清每周真正到手多少。
+APP NAME (12): Kept：里程与收入记账
+SHORT DESCRIPTION (38): GPS 记录里程，记录 Uber 和 Lyft 收入，看清每周真正到手多少。
 
 == Tiếng Việt (vi) ==
-APP NAME (24): Kept: Thu nhập tài xế xe
-SHORT DESCRIPTION (77): Ghi thu nhập Uber và Lyft, số dặm và tiền xăng. Biết mình thực giữ bao nhiêu.
+APP NAME (24): Kept: Số dặm và thu nhập
+SHORT DESCRIPTION (77): Đếm số dặm bằng GPS, ghi thu nhập Uber và Lyft. Biết mình thực giữ bao nhiêu.
 
 == Español: FULL DESCRIPTION ==
-Kept es el registro de ganancias sencillo para conductores de rideshare. Anota tu día de Uber y Lyft en un minuto y mira lo que realmente te quedó después de gasolina, millas y costos del auto. Sin rastreo GPS que gaste tu batería, sin anuncios y sin conectar tu banco.
+Kept es el rastreador de millas y registro de ganancias sencillo para conductores de rideshare. Cuenta tus millas con GPS, anota tu día de Uber y Lyft en un minuto y mira lo que realmente te quedó después de gasolina y costos del auto. Sin anuncios y sin conectar tu banco.
+
+RASTREO DE MILLAS CON GPS GRATIS
+• Toca Iniciar manejo y Kept cuenta tus millas con GPS mientras manejas
+• Sigue contando en segundo plano mientras usas Uber o Lyft
+• Toca Terminar manejo y las millas se suman a ese día
+• Solo se guardan tus millas, nunca tu ruta
 
 REGISTRA TU DÍA EN UN MINUTO
 • Una entrada al día para Uber y Lyft: ganancias, propinas, viajes y horas

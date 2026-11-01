@@ -2,7 +2,7 @@
 // version, signing, native helper code, icons, splash and theme. Fails loudly if the template changed.
 const fs=require('fs'), path=require('path');
 const app=path.resolve(__dirname,'..'), and=path.join(app,'android'), mod=path.join(and,'app');
-const VERSION_CODE=11, VERSION_NAME='1.9.0', PKG='com.desertcircuitapps.kept';
+const VERSION_CODE=12, VERSION_NAME='2.0.0', PKG='com.desertcircuitapps.kept';
 const must=(cond,msg)=>{ if(!cond){ console.error('PATCH FAILED: '+msg); process.exit(1); } };
 
 // 1) app/build.gradle: version, signing (from environment), native dependencies
@@ -38,7 +38,7 @@ fs.writeFileSync(bg,g);
 const jdir=path.join(mod,'src','main','java',...PKG.split('.'));
 must(fs.existsSync(path.join(jdir,'MainActivity.java'))||fs.existsSync(path.join(jdir,'MainActivity.kt')),'MainActivity not found in '+jdir);
 for(const f of ['MainActivity.kt']) fs.rmSync(path.join(jdir,f),{force:true});
-for(const f of ['MainActivity.java','KeptNativePlugin.java']) fs.copyFileSync(path.join(app,'native','java',f),path.join(jdir,f));
+for(const f of ['MainActivity.java','KeptNativePlugin.java','MileageService.java']) fs.copyFileSync(path.join(app,'native','java',f),path.join(jdir,f));
 
 // 3) Resources: icons, theme/splash, file sharing paths (overwrites template files of the same name)
 const res=path.join(mod,'src','main','res'); must(fs.existsSync(res),'res folder missing');
@@ -46,8 +46,17 @@ for(const d of fs.readdirSync(res)) if(/^mipmap-/.test(d)) fs.rmSync(path.join(r
 fs.rmSync(path.join(res,'values','ic_launcher_background.xml'),{force:true});   // our kept_colors.xml defines this colour
 fs.cpSync(path.join(app,'native','res'),res,{recursive:true});
 
-// 4) Manifest sanity: still the same package, launch theme, file provider
-const man=fs.readFileSync(path.join(mod,'src','main','AndroidManifest.xml'),'utf8');
+// 4) Manifest: GPS mileage tracking (foreground service, location type; only while the driver has started a drive)
+const manPath=path.join(mod,'src','main','AndroidManifest.xml');
+let man=fs.readFileSync(manPath,'utf8');
+must(/<application/.test(man)&&/<\/application>/.test(man),'manifest application tag not found');
+const PERMS=['android.permission.ACCESS_FINE_LOCATION','android.permission.ACCESS_COARSE_LOCATION','android.permission.FOREGROUND_SERVICE','android.permission.FOREGROUND_SERVICE_LOCATION','android.permission.POST_NOTIFICATIONS'];
+const permXml=PERMS.filter(p=>!man.includes(`"${p}"`)).map(p=>`    <uses-permission android:name="${p}" />\n`).join('')+'    <uses-feature android:name="android.hardware.location.gps" android:required="false" />\n';
+man=man.replace(/(\s*)<application/,`\n${permXml}$1<application`);
+man=man.replace('</application>','    <service android:name=".MileageService" android:exported="false" android:foregroundServiceType="location" />\n    </application>');
+must(!/ACCESS_BACKGROUND_LOCATION/.test(man),'background location must not be requested');
+fs.writeFileSync(manPath,man);
+// Manifest sanity: still the same package, launch theme, file provider
 must(/AppTheme\.NoActionBarLaunch/.test(man),'launch theme not referenced in manifest');
 must(/\.fileprovider/.test(man),'FileProvider missing from manifest');
 must(!/androidbrowserhelper|TrustedWebActivity|LauncherActivity/.test(man+g),'TWA code found');

@@ -47,6 +47,13 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.PermissionState;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
+import android.Manifest;
+import android.content.SharedPreferences;
+import android.os.Build;
+import org.json.JSONException;
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 
@@ -59,7 +66,13 @@ import java.nio.charset.StandardCharsets;
  * share a backup/export file, print the tax report, fingerprint/face/screen-lock prompt, Google sign-in,
  * Google Play Billing for Kept Pro, and opening the Kept Offer Check companion app.
  */
-@CapacitorPlugin(name = "KeptNative")
+@CapacitorPlugin(
+    name = "KeptNative",
+    permissions = {
+        @Permission(alias = "location", strings = { Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION }),
+        @Permission(alias = "notifications", strings = { Manifest.permission.POST_NOTIFICATIONS })
+    }
+)
 public class KeptNativePlugin extends Plugin {
 
     /** Writes the text to a temporary file and opens Android's share sheet (Drive, Files, Gmail...). */
@@ -129,6 +142,70 @@ public class KeptNativePlugin extends Plugin {
         } catch (Exception e) {
             call.reject("Couldn't open sharing", "error");
         }
+    }
+
+    /* ---------- GPS mileage tracking ("Start driving", MileageService) ---------- */
+
+    /** { active, miles, start, permission } */
+    @PluginMethod
+    public void mileageStatus(PluginCall call) {
+        JSObject r = new JSObject();
+        r.put("active", MileageService.active(getContext()));
+        r.put("miles", Math.round(MileageService.miles(getContext()) * 10) / 10.0);
+        r.put("start", MileageService.prefs(getContext()).getLong("start", 0));
+        r.put("permission", getPermissionState("location").toString().toLowerCase());
+        call.resolve(r);
+    }
+
+    /** Asks for location (and, on Android 13+, notifications) the first time, then starts tracking. */
+    @PluginMethod
+    public void mileageStart(PluginCall call) {
+        if (getPermissionState("location") != PermissionState.GRANTED) { requestPermissionForAlias("location", call, "mileageLocationResult"); return; }
+        mileageAskNotes(call);
+    }
+
+    @PermissionCallback
+    private void mileageLocationResult(PluginCall call) {
+        if (getPermissionState("location") != PermissionState.GRANTED) { call.reject("Precise location is needed to track miles", "denied"); return; }
+        mileageAskNotes(call);
+    }
+
+    private void mileageAskNotes(PluginCall call) {
+        if (Build.VERSION.SDK_INT >= 33 && getPermissionState("notifications") != PermissionState.GRANTED) { requestPermissionForAlias("notifications", call, "mileageNotesResult"); return; }
+        mileageBegin(call);
+    }
+
+    @PermissionCallback
+    private void mileageNotesResult(PluginCall call) { mileageBegin(call); }   // tracking works even if notifications are declined
+
+    private void mileageBegin(PluginCall call) {
+        try {
+            ContextCompat.startForegroundService(getContext(), new Intent(getContext(), MileageService.class));
+            JSObject r = new JSObject();
+            r.put("active", true);
+            call.resolve(r);
+        } catch (Exception e) {
+            call.reject("Couldn't start tracking", "error");
+        }
+    }
+
+    /** Ends the drive. The finished drive is then collected with mileageTake. */
+    @PluginMethod
+    public void mileageStop(PluginCall call) {
+        MileageService.finish(getContext());
+        getContext().stopService(new Intent(getContext(), MileageService.class));
+        call.resolve();
+    }
+
+    /** Finished drives not yet added to a day: { drives: [{start, end, miles}] }. Clears them. */
+    @PluginMethod
+    public void mileageTake(PluginCall call) {
+        SharedPreferences p = MileageService.prefs(getContext());
+        String json = p.getString("pending", "[]");
+        p.edit().remove("pending").apply();
+        JSObject r = new JSObject();
+        try { r.put("drives", new JSArray(json)); } catch (JSONException e) { r.put("drives", new JSArray()); }
+        call.resolve(r);
     }
 
     /** Prints the page (the tax report's print styles apply), including "Save as PDF". */

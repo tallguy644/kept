@@ -3,13 +3,19 @@ Paste into Play Console › Grow users › Store presence › Main store listing
 Translations for the other 6 languages: store/google-play/listing-translations.txt
 
 APP NAME (30 max) — 28
-Kept: Rideshare Earnings Log
+Kept: Mileage & Earnings Log
 
 SHORT DESCRIPTION (80 max) — 78
-Track Uber & Lyft earnings, miles and gas. See what you really keep each week.
+Rideshare mileage tracker and earnings log for Uber & Lyft. See what you keep.
 
 FULL DESCRIPTION (4000 max)
-Kept is the simple earnings tracker for rideshare drivers. Log your Uber and Lyft day in about a minute and see what you really kept after gas, miles and car costs. No GPS tracking draining your battery, no ads, and no bank login.
+Kept is the simple mileage tracker and earnings log for rideshare drivers. Track your miles with GPS, log your Uber and Lyft day in about a minute, and see what you really kept after gas, miles and car costs. No ads and no bank login.
+
+FREE GPS MILEAGE TRACKER
+• Tap Start driving and Kept counts your miles with GPS while you drive
+• Keeps counting in the background while you use Uber or Lyft, with a notification showing your miles
+• Tap End driving and the miles are added to that day automatically
+• Only your miles are saved, never your route
 
 LOG YOUR DRIVING DAY IN A MINUTE
 • One quick entry per day for Uber and Lyft: earnings, tips, rides and hours
@@ -42,7 +48,7 @@ FREE BACKUP AND SYNC
 • No ads. Your data is never sold or shared.
 
 KEPT PRO
-Try Pro free for 7 days. Kept Pro adds the full Taxes report and the Compare and Trends tabs. Logging, totals, cost per mile, Google Drive backup and Excel export stay free. Monthly, yearly or one-time lifetime options.
+Try Pro free for 7 days. Kept Pro adds the full Taxes report and the Compare and Trends tabs. GPS mileage tracking, logging, totals, cost per mile, Google Drive backup and Excel export stay free. Monthly, yearly or one-time lifetime options.
 
 MADE FOR GIG DRIVERS
 Built for full-time and part-time rideshare drivers who want clear numbers without spreadsheets. Light and dark mode, and available in English, Español, Português, Français, Русский, 中文 and Tiếng Việt.

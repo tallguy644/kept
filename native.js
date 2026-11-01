@@ -22,6 +22,13 @@ window.keptNative={
   // Kept Offer Check (companion app): open it with a one-time link code, or its Google Play page if it isn't installed
   async openOfferCheck(code){ try{ return (await K.openOfferCheck({code})).opened; }catch(e){ return 'failed'; } },
   async googleIdToken(){ try{ return (await K.googleSignIn({webClientId:WEB_CLIENT_ID})).idToken; }catch(e){ throw errOf(e); } },
+  // GPS mileage tracking (mileage.js): "Start driving" runs a foreground service with a notification
+  mileage:{
+    status:()=>K.mileageStatus(),
+    async start(){ try{ return await K.mileageStart(); }catch(e){ const x=new Error((e&&e.message)||'failed'); x.code=e&&e.code; throw x; } },
+    stop:()=>K.mileageStop(),
+    async take(){ return (await K.mileageTake()).drives||[]; }
+  },
   // Google Play Billing (Kept Pro / Pro+), used by pro.js
   billing:{
     async products(subs,inapp){ return (await K.billingProducts({subs,inapp})).products||[]; },

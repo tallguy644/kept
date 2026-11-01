@@ -11,17 +11,18 @@ Ready-to-paste listings:
 ## Keywords drivers use, and where they go
 | Search phrase | Title | Short desc. | Description headings / body |
 |---|---|---|---|
-| rideshare (driver, earnings, tracker) | ✓ "Rideshare" | | ✓ first sentence, "Made for gig drivers" |
+| rideshare (driver, earnings, tracker) | | ✓ "Rideshare" | ✓ first sentence, "Made for gig drivers" |
 | earnings tracker / earnings log | ✓ "Earnings Log" | ✓ "earnings" | ✓ first sentence |
 | Uber driver, Lyft driver | | ✓ | ✓ throughout (with the "not affiliated" line) |
-| mileage log, miles | | ✓ "miles" | ✓ "Mileage log and tax-time totals" |
+| mileage tracker, mileage log, GPS miles | ✓ "Mileage" | ✓ "mileage tracker" | ✓ "Free GPS mileage tracker", "Mileage log and tax-time totals" |
 | gas, expenses, car costs | | ✓ "gas" | ✓ |
 | cost per mile | | | ✓ own section (Android only, so Play only) |
 | gig worker taxes, IRS mileage deduction, quarterly estimates | | | ✓ |
 | what you keep / profit | | ✓ | ✓ (Kept's own hook) |
 
+**Mileage tracker is now in.** Kept v12 adds real GPS mileage tracking, so "mileage tracker" is in the title and short description. It's one of the most-searched terms for driver apps.
+
 **Left out on purpose:**
-- "Mileage tracker" in the title. Searchers expect automatic GPS tracking, which Kept doesn't do, and those installs end in 1-star reviews. "Mileage log" is honest and still matches.
 - DoorDash, Instacart and similar. Kept is built for Uber and Lyft, and naming others would mislead.
 - "Best", "#1" and "free" in the title. Google Play doesn't allow ranking claims in titles, and "free" in the title adds nothing.
 - Uber and Lyft in the title. Brand names in the title are the most likely thing to get a listing rejected. They're used descriptively in the short description and description, with the not-affiliated line.
@@ -29,13 +30,13 @@ Ready-to-paste listings:
 **These keywords come from competitor listings and driver wording, not measured search volumes.** No ASO keyword tool was used. After 4 weeks live, check **Play Console › Grow users › Store performance** to see which searches bring installs, and adjust.
 
 ## Title change
-"Kept for Gig Workers" becomes **"Kept: Rideshare Earnings Log"** on Google Play. Few people search for "gig workers". Drivers search for "rideshare", "earnings" and "driver". Kept stays the brand: the icon, the app's home screen and the website don't change.
+"Kept for Gig Workers" becomes **"Kept: Mileage & Earnings Log"** on Google Play. Since v12 it covers the two biggest searches, "mileage" and "earnings", and "rideshare" leads the short description. Few people search for "gig workers". Kept stays the brand: the icon, the app's home screen and the website don't change.
 
 Alternatives (all 30 characters or fewer):
-- "Kept: Gig Driver Earnings Log"
-- "Kept: Rideshare Driver Tracker"
+- "Kept: Rideshare Earnings Log"
+- "Kept: Rideshare Mileage & Pay"
 
-The Microsoft Store keeps its reserved name, because changing it means reserving a new name, so its keywords do that job instead.
+The Microsoft Store keeps its reserved name, because changing it means reserving a new name. GPS mileage is Android only, so the Windows listing doesn't mention it.
 
 ## Translated listings (big, easy win)
 Kept itself is in 7 languages, but the Play listing was English only. Translated titles and short descriptions (`listing-translations.txt`) let Kept show up when drivers search in Spanish, Portuguese and so on. Spanish also has a full description, since there are many Spanish-speaking rideshare drivers in the US.
