@@ -7,7 +7,7 @@
 const KEYL=(typeof KEY!=='undefined'?KEY:'kept')+'-lock';
 // App lock is for the installed app only (Google Play, Microsoft Store or home-screen app), never the website in a browser tab.
 const isApp=['standalone','fullscreen','minimal-ui','window-controls-overlay'].some(m=>matchMedia(`(display-mode: ${m})`).matches)
-  ||navigator.standalone===true||document.referrer.startsWith('android-app://')||!!window.keptNative;
+  ||navigator.standalone===true||document.referrer.startsWith('android-app://')||!!window.keptNative||!!window.__TAURI__;
 const N=window.keptNative;   // Google Play app: Android's own fingerprint / face / screen-lock prompt instead of a passkey
 if(!isApp){ document.documentElement.classList.remove('kept-locked'); window.keptLock={lockNow:()=>{},isOn:()=>false}; return; }
 const AWAY=60*1000;   // relock after this long in the background

@@ -61,7 +61,7 @@ const say=t=>{ if(typeof toast==='function') toast(t); };
 /* ---------- Where Kept is running ---------- */
 const native=!!window.keptNative;
 const standalone=matchMedia('(display-mode: standalone)').matches;
-const msStore=!native&&standalone&&/Windows/i.test(navigator.userAgent);
+const msStore=!native&&(!!window.__TAURI__||standalone&&/Windows/i.test(navigator.userAgent));   // __TAURI__: the Windows app
 const where=native?'Android app':msStore?'Microsoft Store app':standalone?'Installed web app':'Website';
 let version='';
 try{ const App=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App; if(native&&App&&App.getInfo) App.getInfo().then(i=>{ version=i.version+' ('+i.build+')'; }).catch(()=>{}); }catch(e){}

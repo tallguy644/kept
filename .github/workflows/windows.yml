@@ -1,0 +1,73 @@
+name: Build Windows app (Microsoft Store)
+
+# Builds the standalone Windows app in windows/ (Tauri: its own window on the WebView2 engine built into Windows,
+# showing keptforgigworkers.com; no Edge browser needed) and packages it as an MSIX for the existing
+# Microsoft Store listing (product 9NX6GPZ2SG6K, identity from Partner Center). The Store signs the package.
+# Also attaches Kept.exe so the app can be tried on a PC before it goes to the Store.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'windows/**'
+      - '.github/workflows/windows.yml'
+
+permissions:
+  contents: write
+
+env:
+  MSIX_VERSION: '1.1.0.0'   # must be higher than the version live in the Store (was 1.0.2.0)
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Rust cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            windows/src-tauri/target
+          key: tauri-${{ hashFiles('windows/src-tauri/Cargo.toml') }}
+
+      - name: Build the app
+        working-directory: windows
+        run: |
+          & "$env:GITHUB_WORKSPACE/.github/scripts/logged.ps1" tauri-build npx --yes @tauri-apps/cli@2 build --no-bundle
+
+      - name: Package MSIX
+        run: |
+          $makeappx = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\10.*\x64\makeappx.exe" | Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $makeappx) { Write-Output "::error title=msix::makeappx.exe not found"; exit 1 }
+          New-Item -ItemType Directory -Force out\layout\Assets | Out-Null
+          Copy-Item windows\src-tauri\target\release\kept-windows.exe out\layout\Kept.exe
+          Copy-Item windows\msix\Assets\* out\layout\Assets\
+          (Get-Content windows\msix\AppxManifest.xml -Raw).Replace('__VERSION__', $env:MSIX_VERSION) | Set-Content -Encoding utf8 out\layout\AppxManifest.xml
+          & $makeappx.FullName pack /d out\layout /p "out\Kept-for-Gig-Workers-$env:MSIX_VERSION-x64.msix" /o
+          if ($LASTEXITCODE -ne 0) { Write-Output "::error title=msix::makeappx failed"; exit 1 }
+          Copy-Item out\layout\Kept.exe out\Kept-for-Gig-Workers-Windows.exe
+          Remove-Item -Recurse out\layout
+          Get-ChildItem out | Format-Table Name, Length
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: kept-windows
+          path: out/
+
+      - name: Attach to a GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "windows-v$env:MSIX_VERSION-${{ github.run_number }}"
+          gh release create $tag (Get-ChildItem out\*).FullName --title "Kept Windows app $env:MSIX_VERSION (build ${{ github.run_number }})" `
+            --notes "Standalone Windows app (Tauri). Upload the .msix to the Kept listing in Partner Center. Kept-for-Gig-Workers-Windows.exe runs on its own for testing (Store purchases only work in the Store install)." --prerelease

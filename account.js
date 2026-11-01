@@ -23,7 +23,7 @@ const cfg={...(window.KEPT_FIREBASE_CONFIG||FIREBASE_CONFIG)};
 // This keeps sign-in working in installed apps (Microsoft Store) and browsers that block third-party storage.
 if(['keptforgigworkers.com','kept-b85c0.web.app','kept-b85c0.firebaseapp.com'].includes(location.hostname)) cfg.authDomain=location.hostname;
 // Installed app window (Microsoft Store, installed PWA): popups can't report back there, so sign in by redirect instead.
-const installedApp=()=>['standalone','fullscreen','minimal-ui','window-controls-overlay'].some(m=>matchMedia('(display-mode: '+m+')').matches)||navigator.standalone===true;
+const installedApp=()=>['standalone','fullscreen','minimal-ui','window-controls-overlay'].some(m=>matchMedia('(display-mode: '+m+')').matches)||navigator.standalone===true||!!window.__TAURI__;   // __TAURI__: the Windows app
 const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,bad)=>setTimeout(()=>bad(Object.assign(new Error('timeout'),{code:'kept/timeout'})),ms))]);
 if(!cfg) return;
 

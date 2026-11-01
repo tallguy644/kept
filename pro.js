@@ -205,7 +205,7 @@ const ALL={...PRO.skus,plus_monthly:PRO.plus.skus.monthly,plus_yearly:PRO.plus.s
 const skuList=Object.values(PRO.skus).concat(plusOn?plusSkus:[]).concat(offerOn?offerSkus:[]);
 const planOf=sku=>Object.keys(ALL).find(k=>ALL[k]===sku);
 const isSub=sku=>sku!==PRO.skus.lifetime;   // everything except the lifetime purchase renews
-const NB=()=>window.keptNative&&window.keptNative.billing;   // Google Play app (Capacitor): native Play Billing
+const NB=()=>(window.keptNative&&window.keptNative.billing)||(window.keptWindows&&window.keptWindows.billing);   // Google Play app (Capacitor) or Windows app (Tauri): native store billing
 async function listPurchases(){
   if(store&&store.native) return (await NB().purchases()).map(p=>({itemId:p.id,purchaseToken:p.token}));
   return store.svc.listPurchases();
@@ -215,7 +215,7 @@ async function connect(){
     try{
       const list=await NB().products(skuList.filter(isSub),skuList.filter(s=>!isSub(s)));
       list.forEach(d=>{ details[d.id]={itemId:d.id,formatted:d.price,price:d.currency?{currency:d.currency,value:String((d.micros||0)/1e6)}:null}; });
-      store={name:'play',native:true}; return store;
+      store={name:window.keptWindows?'microsoft':'play',native:true}; return store;
     }catch(e){ return null; }
   }
   if(!('getDigitalGoodsService' in window)) return null;

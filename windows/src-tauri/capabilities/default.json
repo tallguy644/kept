@@ -1,0 +1,9 @@
+{
+  "identifier": "default",
+  "description": "The Kept window: keptforgigworkers.com may call the app's Microsoft Store and open-link commands.",
+  "windows": ["main"],
+  "remote": {
+    "urls": ["https://keptforgigworkers.com/*", "https://www.keptforgigworkers.com/*"]
+  },
+  "permissions": ["core:default"]
+}
