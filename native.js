@@ -33,6 +33,7 @@ window.keptNative={
 // Android back button: step back inside Kept, and only leave the app from the Home screen.
 if(App) App.addListener('backButton',()=>{
   const offer=document.getElementById('lockOffer'); if(offer){ offer.remove(); return; }
+  if(typeof window.keptShareClose==='function'&&window.keptShareClose()) return;   // Share menu open
   if(document.getElementById('lockScreen')){ App.minimizeApp&&App.minimizeApp(); return; }
   const v=typeof cur!=='undefined'?cur:'home';
   if(v==='home'||v==='welcome'){ App.exitApp(); return; }

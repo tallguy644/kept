@@ -1,7 +1,7 @@
 /* Kept: "Help us improve" on the More page — Send feedback, Rate Kept, Share Kept.
    Feedback is written in Kept, then handed to the driver's email app addressed to support, with optional app details
    (version, device type, language; never earnings). Rate opens the store review page (Google Play app, Microsoft Store app).
-   Share uses the phone's share sheet (native in the Android app, Web Share elsewhere) or copies the link. */
+   Share opens a menu: text message, email, WhatsApp, Facebook, X, copy link, or the phone's own share sheet (More apps). */
 (function(){
 'use strict';
 const SUPPORT='support@keptforgigworkers.com', SITE='https://keptforgigworkers.com';
@@ -9,43 +9,43 @@ const PLAY='https://play.google.com/store/apps/details?id=com.desertcircuitapps.
 
 /* ---------- Words ---------- */
 const T={
-en:{sh:'Help us improve',fb:'Send feedback',fbSub:'Ideas, problems, questions',rate:'Rate Kept',rateSubPlay:'Leave a review on Google Play',rateSubMs:'Leave a review in the Microsoft Store',share:'Share Kept',shareSub:'Tell another driver about it',
+en:{shareTitle:'Share Kept',sms:'Text message',email:'Email',whatsapp:'WhatsApp',facebook:'Facebook',x:'X (Twitter)',copyLink:'Copy link',moreApps:'More apps',close:'Close',mailSubj:'An app for Lyft and Uber drivers',sh:'Help us improve',fb:'Send feedback',fbSub:'Ideas, problems, questions',rate:'Rate Kept',rateSubPlay:'Leave a review on Google Play',rateSubMs:'Leave a review in the Microsoft Store',share:'Share Kept',shareSub:'Tell another driver about it',
   title:'Send feedback',intro:'Tell us what to fix or what you\'d like Kept to do next. Every message is read by the developer.',
   kind:'What is it about?',idea:'Idea',problem:'Problem',question:'Question',praise:'Something I like',msgL:'Your message',msgPh:'Type here…',
   details:'Include app details (version, device type, language). Never your earnings.',send:'Send',empty:'Type a message first.',
   sent:'Your email app should open with your message ready to send. If it didn\'t, email us at {e}.',copy:'Copy message',copied:'Message copied.',
   subj:'Kept feedback: {k}',shareText:'I track my Lyft and Uber earnings with Kept for Gig Workers. It shows what you really keep after gas. Free, no ads:',linkCopied:'Link copied. Paste it in a text or post.'},
-es:{sh:'Ayúdanos a mejorar',fb:'Enviar comentarios',fbSub:'Ideas, problemas, preguntas',rate:'Calificar Kept',rateSubPlay:'Deja una reseña en Google Play',rateSubMs:'Deja una reseña en Microsoft Store',share:'Compartir Kept',shareSub:'Cuéntale a otro conductor',
+es:{shareTitle:'Compartir Kept',sms:'Mensaje de texto',email:'Correo',whatsapp:'WhatsApp',facebook:'Facebook',x:'X (Twitter)',copyLink:'Copiar enlace',moreApps:'Más apps',close:'Cerrar',mailSubj:'Una app para conductores de Lyft y Uber',sh:'Ayúdanos a mejorar',fb:'Enviar comentarios',fbSub:'Ideas, problemas, preguntas',rate:'Calificar Kept',rateSubPlay:'Deja una reseña en Google Play',rateSubMs:'Deja una reseña en Microsoft Store',share:'Compartir Kept',shareSub:'Cuéntale a otro conductor',
   title:'Enviar comentarios',intro:'Dinos qué arreglar o qué te gustaría que Kept hiciera. El desarrollador lee cada mensaje.',
   kind:'¿De qué se trata?',idea:'Idea',problem:'Problema',question:'Pregunta',praise:'Algo que me gusta',msgL:'Tu mensaje',msgPh:'Escribe aquí…',
   details:'Incluir datos de la app (versión, tipo de dispositivo, idioma). Nunca tus ganancias.',send:'Enviar',empty:'Escribe un mensaje primero.',
   sent:'Tu app de correo debería abrirse con tu mensaje listo para enviar. Si no se abrió, escríbenos a {e}.',copy:'Copiar mensaje',copied:'Mensaje copiado.',
   subj:'Comentarios de Kept: {k}',shareText:'Llevo mis ganancias de Lyft y Uber con Kept for Gig Workers. Muestra lo que realmente te queda después de la gasolina. Gratis y sin anuncios:',linkCopied:'Enlace copiado. Pégalo en un mensaje o publicación.'},
-pt:{sh:'Ajude a melhorar',fb:'Enviar feedback',fbSub:'Ideias, problemas, perguntas',rate:'Avaliar o Kept',rateSubPlay:'Deixe uma avaliação no Google Play',rateSubMs:'Deixe uma avaliação na Microsoft Store',share:'Compartilhar o Kept',shareSub:'Conte para outro motorista',
+pt:{shareTitle:'Compartilhar o Kept',sms:'Mensagem de texto',email:'E-mail',whatsapp:'WhatsApp',facebook:'Facebook',x:'X (Twitter)',copyLink:'Copiar link',moreApps:'Mais apps',close:'Fechar',mailSubj:'Um app para motoristas da Lyft e da Uber',sh:'Ajude a melhorar',fb:'Enviar feedback',fbSub:'Ideias, problemas, perguntas',rate:'Avaliar o Kept',rateSubPlay:'Deixe uma avaliação no Google Play',rateSubMs:'Deixe uma avaliação na Microsoft Store',share:'Compartilhar o Kept',shareSub:'Conte para outro motorista',
   title:'Enviar feedback',intro:'Diga o que corrigir ou o que você gostaria que o Kept fizesse. O desenvolvedor lê cada mensagem.',
   kind:'Sobre o que é?',idea:'Ideia',problem:'Problema',question:'Pergunta',praise:'Algo que eu gosto',msgL:'Sua mensagem',msgPh:'Digite aqui…',
   details:'Incluir dados do app (versão, tipo de aparelho, idioma). Nunca seus ganhos.',send:'Enviar',empty:'Digite uma mensagem primeiro.',
   sent:'Seu app de e-mail deve abrir com a mensagem pronta para enviar. Se não abriu, escreva para {e}.',copy:'Copiar mensagem',copied:'Mensagem copiada.',
   subj:'Feedback do Kept: {k}',shareText:'Eu acompanho meus ganhos da Lyft e da Uber com o Kept for Gig Workers. Ele mostra quanto realmente sobra depois da gasolina. Grátis e sem anúncios:',linkCopied:'Link copiado. Cole em uma mensagem ou post.'},
-fr:{sh:'Aidez-nous à améliorer',fb:'Envoyer un avis',fbSub:'Idées, problèmes, questions',rate:'Noter Kept',rateSubPlay:'Laissez un avis sur Google Play',rateSubMs:'Laissez un avis sur le Microsoft Store',share:'Partager Kept',shareSub:'Parlez-en à un autre chauffeur',
+fr:{shareTitle:'Partager Kept',sms:'SMS',email:'E-mail',whatsapp:'WhatsApp',facebook:'Facebook',x:'X (Twitter)',copyLink:'Copier le lien',moreApps:'Autres applis',close:'Fermer',mailSubj:'Une appli pour les chauffeurs Lyft et Uber',sh:'Aidez-nous à améliorer',fb:'Envoyer un avis',fbSub:'Idées, problèmes, questions',rate:'Noter Kept',rateSubPlay:'Laissez un avis sur Google Play',rateSubMs:'Laissez un avis sur le Microsoft Store',share:'Partager Kept',shareSub:'Parlez-en à un autre chauffeur',
   title:'Envoyer un avis',intro:'Dites-nous quoi corriger ou ce que vous aimeriez que Kept fasse. Chaque message est lu par le développeur.',
   kind:'C\'est à quel sujet ?',idea:'Idée',problem:'Problème',question:'Question',praise:'Quelque chose que j\'aime',msgL:'Votre message',msgPh:'Écrivez ici…',
   details:'Inclure les infos de l\'appli (version, type d\'appareil, langue). Jamais vos gains.',send:'Envoyer',empty:'Écrivez d\'abord un message.',
   sent:'Votre appli e-mail devrait s\'ouvrir avec votre message prêt à envoyer. Sinon, écrivez-nous à {e}.',copy:'Copier le message',copied:'Message copié.',
   subj:'Avis sur Kept : {k}',shareText:'Je suis mes gains Lyft et Uber avec Kept for Gig Workers. Il montre ce qui vous reste vraiment après le carburant. Gratuit, sans pub :',linkCopied:'Lien copié. Collez-le dans un message ou une publication.'},
-ru:{sh:'Помогите улучшить',fb:'Отправить отзыв',fbSub:'Идеи, проблемы, вопросы',rate:'Оценить Kept',rateSubPlay:'Оставьте отзыв в Google Play',rateSubMs:'Оставьте отзыв в Microsoft Store',share:'Поделиться Kept',shareSub:'Расскажите другому водителю',
+ru:{shareTitle:'Поделиться Kept',sms:'SMS',email:'Почта',whatsapp:'WhatsApp',facebook:'Facebook',x:'X (Twitter)',copyLink:'Копировать ссылку',moreApps:'Другие приложения',close:'Закрыть',mailSubj:'Приложение для водителей Lyft и Uber',sh:'Помогите улучшить',fb:'Отправить отзыв',fbSub:'Идеи, проблемы, вопросы',rate:'Оценить Kept',rateSubPlay:'Оставьте отзыв в Google Play',rateSubMs:'Оставьте отзыв в Microsoft Store',share:'Поделиться Kept',shareSub:'Расскажите другому водителю',
   title:'Отправить отзыв',intro:'Расскажите, что исправить или что бы вы хотели видеть в Kept. Разработчик читает каждое сообщение.',
   kind:'О чём сообщение?',idea:'Идея',problem:'Проблема',question:'Вопрос',praise:'Мне нравится',msgL:'Ваше сообщение',msgPh:'Пишите здесь…',
   details:'Добавить данные приложения (версия, тип устройства, язык). Без ваших заработков.',send:'Отправить',empty:'Сначала напишите сообщение.',
   sent:'Должно открыться почтовое приложение с готовым сообщением. Если нет, напишите нам на {e}.',copy:'Скопировать сообщение',copied:'Сообщение скопировано.',
   subj:'Отзыв о Kept: {k}',shareText:'Я веду заработок в Lyft и Uber в Kept for Gig Workers. Он показывает, сколько реально остаётся после бензина. Бесплатно, без рекламы:',linkCopied:'Ссылка скопирована. Вставьте её в сообщение или пост.'},
-zh:{sh:'帮助我们改进',fb:'发送反馈',fbSub:'想法、问题、疑问',rate:'给 Kept 评分',rateSubPlay:'在 Google Play 上留下评价',rateSubMs:'在 Microsoft Store 中留下评价',share:'分享 Kept',shareSub:'推荐给其他司机',
+zh:{shareTitle:'分享 Kept',sms:'短信',email:'电子邮件',whatsapp:'WhatsApp',facebook:'Facebook',x:'X (Twitter)',copyLink:'复制链接',moreApps:'更多应用',close:'关闭',mailSubj:'一款给 Lyft 和 Uber 司机的应用',sh:'帮助我们改进',fb:'发送反馈',fbSub:'想法、问题、疑问',rate:'给 Kept 评分',rateSubPlay:'在 Google Play 上留下评价',rateSubMs:'在 Microsoft Store 中留下评价',share:'分享 Kept',shareSub:'推荐给其他司机',
   title:'发送反馈',intro:'告诉我们需要修复什么，或你希望 Kept 增加什么功能。开发者会阅读每一条消息。',
   kind:'反馈类型',idea:'建议',problem:'问题',question:'疑问',praise:'我喜欢的地方',msgL:'你的消息',msgPh:'在此输入…',
   details:'附上应用信息（版本、设备类型、语言）。绝不包含你的收入。',send:'发送',empty:'请先输入消息。',
   sent:'你的邮件应用应已打开，消息已准备好发送。如果没有打开，请发邮件至 {e}。',copy:'复制消息',copied:'消息已复制。',
   subj:'Kept 反馈：{k}',shareText:'我用 Kept for Gig Workers 记录 Lyft 和 Uber 收入，它能显示扣除油费后真正到手多少。免费、无广告：',linkCopied:'链接已复制，可粘贴到短信或帖子中。'},
-vi:{sh:'Giúp chúng tôi cải thiện',fb:'Gửi góp ý',fbSub:'Ý tưởng, sự cố, câu hỏi',rate:'Đánh giá Kept',rateSubPlay:'Viết đánh giá trên Google Play',rateSubMs:'Viết đánh giá trên Microsoft Store',share:'Chia sẻ Kept',shareSub:'Giới thiệu cho tài xế khác',
+vi:{shareTitle:'Chia sẻ Kept',sms:'Tin nhắn',email:'Email',whatsapp:'WhatsApp',facebook:'Facebook',x:'X (Twitter)',copyLink:'Sao chép liên kết',moreApps:'Ứng dụng khác',close:'Đóng',mailSubj:'Ứng dụng cho tài xế Lyft và Uber',sh:'Giúp chúng tôi cải thiện',fb:'Gửi góp ý',fbSub:'Ý tưởng, sự cố, câu hỏi',rate:'Đánh giá Kept',rateSubPlay:'Viết đánh giá trên Google Play',rateSubMs:'Viết đánh giá trên Microsoft Store',share:'Chia sẻ Kept',shareSub:'Giới thiệu cho tài xế khác',
   title:'Gửi góp ý',intro:'Hãy cho chúng tôi biết cần sửa gì hoặc bạn muốn Kept làm thêm gì. Nhà phát triển đọc mọi tin nhắn.',
   kind:'Góp ý về điều gì?',idea:'Ý tưởng',problem:'Sự cố',question:'Câu hỏi',praise:'Điều tôi thích',msgL:'Tin nhắn của bạn',msgPh:'Nhập tại đây…',
   details:'Kèm thông tin ứng dụng (phiên bản, loại thiết bị, ngôn ngữ). Không bao giờ kèm thu nhập.',send:'Gửi',empty:'Hãy nhập tin nhắn trước.',
@@ -110,15 +110,57 @@ if(more){
   more.insertBefore(h,foot||null); more.insertBefore(list,foot||null);
 }
 
-/* ---------- Share ---------- */
-async function share(){
-  const text=w('shareText');
+/* ---------- Share: a menu of ways to send Kept to someone ---------- */
+const shareMsg=()=>w('shareText')+' '+SITE;
+async function moreApps(){   // the phone's own share sheet (every installed app)
   try{
-    if(native&&window.keptNative.shareText){ await window.keptNative.shareText(text+' '+SITE,'Kept for Gig Workers'); return; }
-    if(navigator.share){ await navigator.share({title:'Kept for Gig Workers',text,url:SITE}); return; }
-  }catch(e){ if(e&&e.name==='AbortError') return; }
-  try{ await navigator.clipboard.writeText(text+' '+SITE); say(w('linkCopied')); }catch(e){ prompt('',text+' '+SITE); }
+    if(native&&window.keptNative.shareText){ await window.keptNative.shareText(shareMsg(),'Kept for Gig Workers'); return true; }
+    if(navigator.share){ await navigator.share({title:'Kept for Gig Workers',text:w('shareText'),url:SITE}); return true; }
+  }catch(e){ return true; }   // cancelled
+  return false;
 }
+async function copyLink(){ try{ await navigator.clipboard.writeText(shareMsg()); say(w('linkCopied')); }catch(e){ prompt('',shareMsg()); } }
+const SHARE_ICON={
+  sms:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg>',
+  email:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg>',
+  whatsapp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.3-4A8 8 0 1112 20a8 8 0 01-4-1.1z"/><path d="M9 9c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 1c-1-.4-1.9-1.3-2.3-2.3l1-1-1-2z"/></svg>',
+  facebook:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M13.5 21v-7h2.5l.4-3h-2.9V9.3c0-.9.3-1.4 1.5-1.4h1.5V5.3a19 19 0 00-2.2-.1c-2.2 0-3.6 1.3-3.6 3.7V11H8.4v3h2.3v7"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4l14 16M19 4L5 20"/></svg>',
+  copyLink:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></svg>',
+  moreApps:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18" cy="12" r="1.8"/></svg>'
+};
+const SHARE_WAYS=[
+  ['sms',()=>openLink('sms:?body='+encodeURIComponent(shareMsg()))],
+  ['email',()=>openLink('mailto:?subject='+encodeURIComponent(w('mailSubj'))+'&body='+encodeURIComponent(shareMsg()))],
+  ['whatsapp',()=>openLink('https://wa.me/?text='+encodeURIComponent(shareMsg()))],
+  ['facebook',()=>openLink('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(SITE))],
+  ['x',()=>openLink('https://x.com/intent/post?text='+encodeURIComponent(w('shareText'))+'&url='+encodeURIComponent(SITE))],
+  ['copyLink',copyLink],
+  ['moreApps',async()=>{ if(!(await moreApps())) copyLink(); }]
+];
+const css2=document.createElement('style');
+css2.textContent=`
+#shareDlg{border:0;padding:0;background:transparent;max-width:none;width:100%;margin:auto auto 0;color:var(--fg)}
+#shareDlg::backdrop{background:rgba(0,0,0,.45)}
+#shareDlg .sheet{background:var(--surface);border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto;box-shadow:0 -8px 30px rgba(0,0,0,.2)}
+#shareDlg h2{margin:0 0 4px;font-size:1.15rem;text-align:center}
+#shareDlg .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:14px 0 10px}
+#shareDlg .grid button{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;background:none;color:var(--fg);padding:8px 2px;border-radius:14px;font-size:.78rem;font-weight:600;line-height:1.2;text-align:center}
+#shareDlg .grid button:hover,#shareDlg .grid button:focus-visible{background:var(--surface-2)}
+#shareDlg .grid i{display:flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:50%;background:var(--surface-2)}
+#shareDlg .grid svg{width:24px;height:24px}
+#shareDlg .close{width:100%;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);border-radius:14px;padding:12px;font-weight:600}
+@media (min-width:700px){#shareDlg{margin:auto}#shareDlg .sheet{border-radius:22px}}`;
+document.head.appendChild(css2);
+const dlg=document.createElement('dialog'); dlg.id='shareDlg'; dlg.setAttribute('aria-labelledby','shareDlgT');
+const phone=native||/Android|iPhone|iPad/i.test(navigator.userAgent);   // text messages only from a phone
+dlg.innerHTML=`<div class="sheet"><h2 id="shareDlgT">${esc(w('shareTitle'))}</h2><div class="grid">${SHARE_WAYS.filter(([k])=>k!=='sms'||phone).map(([k])=>`<button type="button" data-way="${k}"><i>${SHARE_ICON[k]}</i>${esc(w(k))}</button>`).join('')}</div><button type="button" class="close" id="shareClose">${esc(w('close'))}</button></div>`;
+document.body.appendChild(dlg);
+dlg.querySelectorAll('[data-way]').forEach(b=>b.onclick=()=>{ const f=SHARE_WAYS.find(x=>x[0]===b.dataset.way)[1]; dlg.close(); f(); });
+dlg.querySelector('#shareClose').onclick=()=>dlg.close();
+dlg.addEventListener('click',e=>{ if(e.target===dlg) dlg.close(); });   // tap outside the sheet
+function share(){ if(typeof dlg.showModal==='function') dlg.showModal(); else moreApps().then(ok=>{ if(!ok) copyLink(); }); }
+window.keptShareClose=()=>{ if(dlg.open){ dlg.close(); return true; } return false; };
 
 /* ---------- Feedback screen ---------- */
 const sec=document.createElement('section'); sec.className='view'; sec.id='fbSec'; sec.hidden=true; sec.setAttribute('aria-labelledby','fbTitle');
