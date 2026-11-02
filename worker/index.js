@@ -49,8 +49,9 @@ export default {
     const reply = (status, body) =>
       new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
     if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
-    if (req.method !== 'POST') return reply(404, { error: 'not found' });
     const path = new URL(req.url).pathname;
+    if (req.method === 'GET' && path === '/health') return reply(200, await health(env));
+    if (req.method !== 'POST') return reply(404, { error: 'not found' });
 
     try {
       const raw = await req.text();
@@ -448,6 +449,20 @@ async function fs(env, method, path, body, root) {
     method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
   });
+}
+
+/* ---------- Health check (GET /health): yes/no for each connection, never any secret or data ---------- */
+async function health(env) {
+  const out = { server: true, googleKey: false, firestore: false, play: false };
+  if (!env.GOOGLE_SA_JSON) return out;
+  try { await googleToken(env.GOOGLE_SA_JSON, 'https://www.googleapis.com/auth/androidpublisher'); out.googleKey = true; } catch { return out; }
+  try { const r = await fs(env, 'GET', 'meta/health-check'); out.firestore = r.ok || r.status === 404; } catch {}   // 404 = allowed in, document just doesn't exist
+  try {
+    const t = await googleToken(env.GOOGLE_SA_JSON, 'https://www.googleapis.com/auth/androidpublisher');
+    const r = await fetch(`${PLAY}/${encodeURIComponent(env.PACKAGE_NAME)}/subscriptions?pageSize=1`, { headers: { Authorization: `Bearer ${t}` } });
+    out.play = r.ok;
+  } catch {}
+  return out;
 }
 
 /* ---------- Firebase sign-in check (ID token, RS256) ---------- */
