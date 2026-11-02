@@ -1,5 +1,6 @@
 name = "kept-pro"
 main = "index.js"
+account_id = "edb15117c5013f74095e8335c44ae174"   # the "Kept Pro" Cloudflare account (not the earrings one)
 compatibility_date = "2026-06-01"
 
 [vars]
