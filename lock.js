@@ -5,11 +5,13 @@
 (function(){
 'use strict';
 const KEYL=(typeof KEY!=='undefined'?KEY:'kept')+'-lock';
-// App lock is for the installed app only (Google Play, Microsoft Store or home-screen app), never the website in a browser tab.
+// App lock is for the installed phone app only (Google Play or home-screen app), never the website in a browser tab or on Windows.
 const isApp=['standalone','fullscreen','minimal-ui','window-controls-overlay'].some(m=>matchMedia(`(display-mode: ${m})`).matches)
   ||navigator.standalone===true||document.referrer.startsWith('android-app://')||!!window.keptNative||!!window.__TAURI__;
 const N=window.keptNative;   // Google Play app: Android's own fingerprint / face / screen-lock prompt instead of a passkey
-if(!isApp){ document.documentElement.classList.remove('kept-locked'); window.keptLock={lockNow:()=>{},isOn:()=>false}; return; }
+// Not on Windows (the Microsoft Store app, or Kept installed from the website on a PC): no fingerprint / Windows Hello prompts there.
+const onWindows=!!window.__TAURI__||(!window.keptNative&&/Windows/i.test(navigator.userAgent));
+if(!isApp||onWindows){ document.documentElement.classList.remove('kept-locked'); window.keptLock={lockNow:()=>{},isOn:()=>false}; return; }
 const AWAY=60*1000;   // relock after this long in the background
 let cfg=null; try{ cfg=JSON.parse(localStorage.getItem(KEYL)||'null'); }catch(e){}
 const save=()=>{ try{ cfg?localStorage.setItem(KEYL,JSON.stringify(cfg)):localStorage.removeItem(KEYL); }catch(e){} };

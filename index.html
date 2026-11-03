@@ -337,7 +337,7 @@ table.cmp{width:100%;border-collapse:collapse}
   .card{box-shadow:none;padding:0}
 }
 </style>
-<script>try{var _app=["standalone","fullscreen","minimal-ui","window-controls-overlay"].some(function(m){return matchMedia("(display-mode: "+m+")").matches})||navigator.standalone===true||!!window.__TAURI__||document.referrer.indexOf("android-app://")===0||!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());if(_app&&localStorage.getItem("shift-ledger-v1-lock"))document.documentElement.classList.add("kept-locked")}catch(e){}</script>
+<script>try{var _app=["standalone","fullscreen","minimal-ui","window-controls-overlay"].some(function(m){return matchMedia("(display-mode: "+m+")").matches})||navigator.standalone===true||!!window.__TAURI__||document.referrer.indexOf("android-app://")===0||!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());if(_app&&!window.__TAURI__&&!/Windows/i.test(navigator.userAgent)&&localStorage.getItem("shift-ledger-v1-lock"))document.documentElement.classList.add("kept-locked")}catch(e){}</script>
 <style>html.kept-locked .shell,html.kept-locked .nav{visibility:hidden}</style>
 <script src="native.js"></script>
 <script src="windows.js"></script>
