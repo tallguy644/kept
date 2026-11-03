@@ -55,6 +55,12 @@ jobs:
           (Get-Content windows\msix\AppxManifest.xml -Raw).Replace('__VERSION__', $env:MSIX_VERSION) | Set-Content -Encoding utf8 out\layout\AppxManifest.xml
           & $makeappx.FullName pack /d out\layout /p "out\Kept-for-Gig-Workers-$env:MSIX_VERSION-x64.msix" /o
           if ($LASTEXITCODE -ne 0) { Write-Output "::error title=msix::makeappx failed"; exit 1 }
+          # The Store listing started with a bundle, so every update must be a .msixbundle too (upload this one).
+          New-Item -ItemType Directory -Force out\bundle | Out-Null
+          Copy-Item "out\Kept-for-Gig-Workers-$env:MSIX_VERSION-x64.msix" out\bundle\
+          & $makeappx.FullName bundle /d out\bundle /p "out\Kept-for-Gig-Workers-$env:MSIX_VERSION.msixbundle" /bv $env:MSIX_VERSION /o
+          if ($LASTEXITCODE -ne 0) { Write-Output "::error title=msix::makeappx bundle failed"; exit 1 }
+          Remove-Item -Recurse out\bundle
           Copy-Item out\layout\Kept.exe out\Kept-for-Gig-Workers-Windows.exe
           Remove-Item -Recurse out\layout
           Get-ChildItem out | Format-Table Name, Length
@@ -70,4 +76,4 @@ jobs:
         run: |
           $tag = "windows-v$env:MSIX_VERSION-${{ github.run_number }}"
           gh release create $tag (Get-ChildItem out\*).FullName --title "Kept Windows app $env:MSIX_VERSION (build ${{ github.run_number }})" `
-            --notes "Standalone Windows app (Tauri). Upload the .msix to the Kept listing in Partner Center. Kept-for-Gig-Workers-Windows.exe runs on its own for testing (Store purchases only work in the Store install)." --prerelease
+            --notes "Standalone Windows app (Tauri). Upload the .msixbundle to the Kept listing in Partner Center. Kept-for-Gig-Workers-Windows.exe runs on its own for testing (Store purchases only work in the Store install)." --prerelease
