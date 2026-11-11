@@ -9,14 +9,14 @@
 
 /* ---------- Settings ---------- */
 const PRO={
-  enabled:false,            // LAUNCH SWITCH: set to true once the Pro products are live in both stores
+  enabled:true,             // LAUNCH SWITCH: set to true once the Pro products are live in both stores
   lockBeforeLaunch:true,    // until launch, Pro features stay locked for everyone (no trial yet); gifted Pro still unlocks
   trialDays:7,
   skus:{monthly:'kept_pro_monthly',yearly:'kept_pro_yearly',lifetime:'kept_pro_lifetime'},
   prices:{monthly:'$1.99',yearly:'$14.99',lifetime:'$24.99'},   // shown until the store sends local prices
   workerUrl:'https://kept-pro.kept-pro.workers.dev',           // Pro server (Cloudflare Worker in worker/): checks purchases, links them to accounts. Required before launch.
-  playUrl:'',               // Google Play listing, e.g. https://play.google.com/store/apps/details?id=...
-  msStoreUrl:'',            // Microsoft Store listing, e.g. https://apps.microsoft.com/detail/9N...
+  playUrl:'https://play.google.com/store/apps/details?id=com.desertcircuitapps.kept',               // Google Play listing, e.g. https://play.google.com/store/apps/details?id=...
+  msStoreUrl:'https://apps.microsoft.com/detail/9NX6GPZ2SG6K',            // Microsoft Store listing, e.g. https://apps.microsoft.com/detail/9N...
   playPackage:'com.desertcircuitapps.kept',  // Android package name, for the "Manage subscription" link
   // Kept Pro+ = everything in Pro, plus automatic Uber and Lyft sync (through Argyle). Built and switched off; see PLUS.md.
   plus:{
