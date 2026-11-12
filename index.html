@@ -274,7 +274,7 @@ table.cmp{width:100%;border-collapse:collapse}
 .welcome-on .nav{display:none}
 
 /* ---------- desktop (website on a computer): sidebar instead of the bottom bar, wider content ---------- */
-.nav-brand,.nav-wide{display:none}
+.nav-brand,.nav-wide,.nav-get{display:none}
 @media (min-width:960px){
   :root{--side:248px}
   .nav{top:0;bottom:0;right:auto;width:var(--side);border-top:0;border-right:1px solid var(--line);padding:0}
@@ -287,6 +287,11 @@ table.cmp{width:100%;border-collapse:collapse}
   .nav .plus:hover{background:var(--accent);color:var(--accent-fg);filter:brightness(1.08)}
   .nav .plus svg{width:22px;height:22px}
   .nav .plus .nav-wide{display:inline}
+  .nav-get:not([hidden]){display:flex;flex-direction:column;gap:2px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+  .nav-get-h{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 14px 6px}
+  .nav-get a{display:flex;align-items:center;gap:14px;padding:10px 14px;border-radius:12px;color:var(--muted);text-decoration:none;font-size:.95rem}
+  .nav-get a:hover{background:var(--surface-2);color:var(--fg)}
+  .nav-get svg{width:20px;height:20px;color:var(--accent)}
   .shell{max-width:none;margin:0 0 0 var(--side);padding:30px 48px 56px}
   .shell>.view{width:100%;max-width:1080px;margin:0 auto}
   .welcome-on .shell{margin-left:0}
@@ -544,6 +549,7 @@ table.cmp{width:100%;border-collapse:collapse}
     <button type="button" class="plus" data-go="log" aria-label="Log a day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="nav-wide" aria-hidden="true">Log a day</span></button>
     <button type="button" data-go="insights"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="12" width="4" height="8" rx="1"/><rect x="10" y="8" width="4" height="12" rx="1"/><rect x="16" y="4" width="4" height="16" rx="1"/></svg><span>Insights</span></button>
     <button type="button" data-go="more"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg><span>More</span></button>
+    <div class="nav-get" id="navGet" hidden><span class="nav-get-h">Get the app</span><a href="https://play.google.com/store/apps/details?id=com.desertcircuitapps.kept" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 2.8v18.4c0 .5.5.8.9.6l16-9.2c.4-.2.4-.9 0-1.1l-16-9.3c-.4-.2-.9.1-.9.6z"/></svg><span>Google Play</span></a><a href="https://apps.microsoft.com/detail/9NX6GPZ2SG6K" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 3h8.5v8.5H3zM12.5 3H21v8.5h-8.5zM3 12.5h8.5V21H3zM12.5 12.5H21V21h-8.5z"/></svg><span>Microsoft Store</span></a></div>
   </div>
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
@@ -1525,7 +1531,7 @@ if(L){
 load(); resetForm(); render();
 // Store links only on the website in a browser (not in the Android app, the Windows app or an installed web app)
 try{ const inApp=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())||!!window.__TAURI__||navigator.standalone===true||['standalone','fullscreen','minimal-ui','window-controls-overlay'].some(m=>matchMedia('(display-mode: '+m+')').matches)||document.referrer.startsWith('android-app://');
-  if(!inApp){ $('getApp').hidden=false; $('getAppW').hidden=false; } }catch(e){}
+  if(!inApp){ $('getApp').hidden=false; $('getAppW').hidden=false; $('navGet').hidden=false; } }catch(e){}
 let welcomed=false; try{ welcomed=!!localStorage.getItem(KEY+'-welcomed'); }catch(e){}
 if(!data.shifts.length&&!welcomed){ drawWelcome(); go('welcome'); } else go('home');
 try{ localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t');
