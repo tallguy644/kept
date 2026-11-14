@@ -1,0 +1,21 @@
+<en-US>
+Track more apps: DoorDash, Instacart, Amazon Flex, Spark Driver, Roadie, GoShare, Gopuff and Postmates, alongside Uber and Lyft. Pick your apps in More › Your apps, and Compare now ranks every app by pay per hour.
+</en-US>
+<es-US>
+Registra más apps: DoorDash, Instacart, Amazon Flex, Spark Driver, Roadie, GoShare, Gopuff y Postmates, además de Uber y Lyft. Elige tus apps en Más › Tus apps, y Comparar ahora ordena todas por pago por hora.
+</es-US>
+<pt-BR>
+Registre mais apps: DoorDash, Instacart, Amazon Flex, Spark Driver, Roadie, GoShare, Gopuff e Postmates, além de Uber e Lyft. Escolha seus apps em Mais › Seus apps, e Comparar agora ordena todos pelo ganho por hora.
+</pt-BR>
+<fr-FR>
+Suivez plus d'applis : DoorDash, Instacart, Amazon Flex, Spark Driver, Roadie, GoShare, Gopuff et Postmates, en plus d'Uber et Lyft. Choisissez vos applis dans Plus › Vos applis ; Comparer classe désormais chaque appli par gain horaire.
+</fr-FR>
+<ru-RU>
+Больше приложений: DoorDash, Instacart, Amazon Flex, Spark Driver, Roadie, GoShare, Gopuff и Postmates вместе с Uber и Lyft. Выберите их в «Ещё › Ваши приложения»; «Сравнение» теперь ранжирует все по оплате в час.
+</ru-RU>
+<zh-CN>
+支持更多平台：DoorDash、Instacart、Amazon Flex、Spark Driver、Roadie、GoShare、Gopuff 和 Postmates，以及 Uber 和 Lyft。在“更多 › 我的平台”中选择，“对比”现按时薪为所有平台排名。
+</zh-CN>
+<vi>
+Theo dõi thêm ứng dụng: DoorDash, Instacart, Amazon Flex, Spark Driver, Roadie, GoShare, Gopuff và Postmates, cùng Uber và Lyft. Chọn trong Thêm › Ứng dụng của bạn; So sánh giờ xếp hạng mọi ứng dụng theo thu nhập mỗi giờ.
+</vi>
