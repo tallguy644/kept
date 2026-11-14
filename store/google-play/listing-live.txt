@@ -1,0 +1,12 @@
+GOOGLE PLAY LISTING AS SUBMITTED (Nov 14, 2026, with Android v14 / 2.2.0)
+This is the text in Play Console now (rewritten in Play Console after the ASO version in listing.txt, then updated for the new apps).
+
+APP NAME: Kept: Mileage Tracker & Log
+SHORT DESCRIPTION: Manage your earnings and expenses with Kept, your effortless mileage tracker.
+
+Changed for v14:
+- "Log your daily earnings..." bullet now: Log your daily earnings, tips, hours and trips for Uber, Lyft, DoorDash, Instacart, Amazon Flex, Spark Driver, Roadie, GoShare, Gopuff and Postmates in one quick entry.
+- "Compare performance across different rideshare services..." bullet now: Compare all your apps side by side, ranked by pay per hour and pay per trip, to see which one is really worth your time.
+- Added at the end: Kept is an independent app and is not affiliated with, endorsed by, or sponsored by Uber, Lyft, DoorDash, Instacart, Amazon, Walmart, Roadie, GoShare, Gopuff or Postmates.
+
+Translations in Play Console: English (en-US) and Hindi (hi-IN). The Hindi listing was not changed.
