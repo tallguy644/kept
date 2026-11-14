@@ -1,0 +1,29 @@
+# Publishes a private test copy of the website for any branch other than main, at a temporary
+# Firebase preview link (expires after 14 days). Drivers never see it; keptforgigworkers.com only changes from main.
+name: Preview link (Firebase)
+on:
+  push:
+    branches-ignore: [main, store-uploads]
+  workflow_dispatch:
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    env:
+      HAS_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        if: env.HAS_KEY == 'true'
+      - id: deploy
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        if: env.HAS_KEY == 'true'
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: kept-b85c0
+          channelId: ${{ github.ref_name }}
+          expires: 14d
+      - name: Show the preview link
+        if: env.HAS_KEY == 'true'
+        run: |
+          echo "::notice title=Preview link::${{ steps.deploy.outputs.details_url }}"
+          echo "PREVIEW_URL=${{ steps.deploy.outputs.details_url }}"
