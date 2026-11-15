@@ -332,7 +332,8 @@ async function watchMeta(u){
   metaUnsub.push(F.onSnapshot(trialRef,d=>{ const v=d.exists()&&d.data().start; trialStart=v&&v.toMillis?v.toMillis():null; if(trialStart) emit(); },()=>{}));
 }
 const OWNER=KEY+'-owner';
-const strip=s=>{ const o={...s}; delete o.u; return JSON.stringify(o,Object.keys(o).sort()); };
+const canon=v=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canon(v[k])])):v;
+const strip=s=>{ const o={...s}; delete o.u; return JSON.stringify(canon(o)); };   // deep: other apps live in s.x
 const daysCol=()=>F.collection(db,'users',user.uid,'days');
 const origSave=save;
 save=function(){ origSave.apply(this,arguments); if(user&&!applying) push(); };

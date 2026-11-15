@@ -748,6 +748,7 @@ const VS={day:['vs. yesterday','vs. previous day'],week:['vs. last week','vs. pr
 // Earnings by app under the big total: up to 3 apps, then "Other apps"
 function heroSplit(T){
   let list=T.apps.map(a=>({n:a.name,v:T.A[a.id].pay}));
+  if(list.length>3){ const nz=list.filter(x=>x.v); if(nz.length) list=nz; }
   if(list.length>3){ list.sort((x,y)=>y.v-x.v); const rest=list.slice(2).reduce((m,x)=>m+x.v,0); list=list.slice(0,2).concat([{n:'Other apps',v:rest}]); }
   const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   return `<div class="split${list.length>2?' many':list.length===1?' one':''}">${list.map(x=>`<div><b>${money(x.v)}</b><small>${esc(x.n)}</small></div>`).join('')}</div>`;
@@ -799,7 +800,7 @@ function renderDays(){
     const pl=a=>{ const p=pv(s,a); if(!(p.e||p.t||p.n||p.h)) return '';
       return `<b class="ptag" style="--pc:${appColor(a)}">${a.name}</b> ${money(p.e)}${p.t?` + ${money(p.t)} tips`:''}${p.n?` · ${p.n} ${UNITS[a.unit][0].toLowerCase()}`:''}${p.h?` · ${p.h} hr`:''}`; };
     m1.innerHTML=APPS.map(pl).filter(Boolean).join('<br>')||'No platform earnings';
-    m2.textContent=[money(s.gas)+' gas', s.miles+' mi', s.bonus?money(s.bonus)+' bonus':'', s.tolls?money(s.tolls)+' tolls':'', s.maint?money(s.maint)+' maintenance':''].filter(Boolean).join(' · ');
+    m2.textContent=[money(Number(s.gas)||0)+' gas', (Number(s.miles)||0)+' mi', s.bonus?money(s.bonus)+' bonus':'', s.tolls?money(s.tolls)+' tolls':'', s.maint?money(s.maint)+' maintenance':''].filter(Boolean).join(' · ');
     const deps=APPS.filter(a=>pv(s,a).d);
     if(deps.length){ const m3=document.createElement('div'); m3.className='meta num'; m3.textContent='Deposited '+deps.map(a=>a.name+' '+money(pv(s,a).d)).join(' · ')+(s.dtype?' ('+s.dtype+')':'')+(s.ddate&&s.ddate!==s.date?' on '+fmtDate(s.ddate):''); m2.after(m3); }
     r.querySelector('[data-a=edit]').onclick=()=>startEdit(s);
@@ -855,16 +856,17 @@ function renderIns(){
     const rows=T.apps.map(a=>({a,z:T.A[a.id]})).filter(x=>x.z.pay||x.z.h||x.z.n)
       .map(x=>({...x,ph:x.z.h?x.z.pay/x.z.h:null,pt:x.z.n?x.z.pay/x.z.n:null}))
       .sort((x,y)=>(y.ph??-1)-(x.ph??-1)||y.z.pay-x.z.pay);
-    const best=rows.find(x=>x.ph!=null), U=unitOf(rows.map(x=>x.a));
+    const best=rows.find(x=>x.ph!=null), U=unitOf(rows.map(x=>x.a)), deps=T.apps.filter(a=>T.A[a.id].d);
     const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    $('insCompare').innerHTML=!rows.length?`<div class="empty card">${ICON.cal}Log a few days this month to compare your apps.</div>`:`
+    const depLine=deps.length?`<p class="cmp-note num">${'Deposited '+deps.map(a=>esc(a.name)+' '+money(T.A[a.id].d)).join(' · ')}</p>`:'';
+    $('insCompare').innerHTML=!rows.length?`<div class="empty card">${ICON.cal}Log a few days this month to compare your apps.${depLine}</div>`:`
       <div class="vs num">
         <div class="mini"><div><small>Best pay per hour</small><b class="ptag" style="--pc:${best?appColor(best.a):'var(--fg)'}">${best?per(best.z.pay,best.z.h):'—'}</b><small>${best?esc(best.a.name):'Log hours for each app to compare them.'}</small></div></div>
         <div class="mini"><div><small>Total earnings</small><b>${money(rows.reduce((m,x)=>m+x.z.pay,0))}</b><small>Apps this month: ${rows.length}</small></div></div>
       </div>
       <div class="card"><ol class="rank num">${
         rows.map((x,i)=>`<li class="${x===best?'top':''}"><span class="rk">${i+1}</span><div class="rn"><b class="ptag" style="--pc:${appColor(x.a)}">${esc(x.a.name)}</b><small>${[money(x.z.pay)+' earned', x.z.h?n1(x.z.h)+' hr':'', x.z.n?x.z.n.toLocaleString(LOC)+' '+UNITS[x.a.unit][0].toLowerCase():'', x.pt==null?'':money(x.pt)+'/'+UNITS[x.a.unit][1]].filter(Boolean).join(' · ')}</small></div><div class="rv"><b>${x.ph==null?'—':money(x.ph)}</b><small>Pay per hour</small></div></li>`).join('')}</ol>
-        <p class="cmp-note">Ranked by pay per hour this month. Earned includes tips.</p>${rows.some(x=>x.z.d)?`<p class="cmp-note num">${'Deposited '+rows.filter(x=>x.z.d).map(x=>esc(x.a.name)+' '+money(x.z.d)).join(' · ')}</p>`:''}</div>`;
+        <p class="cmp-note">Ranked by pay per hour this month. Earned includes tips.</p>${depLine}</div>`;
   }else if(insTab==='trends'){
     const months=[]; for(let i=5;i>=0;i--){ const s=new Date(ms.getFullYear(),ms.getMonth()-i,1), e=new Date(s.getFullYear(),s.getMonth()+1,1); months.push({s,T:totals(rangeAB(s,e))}); }
     $('insTrends').innerHTML=`
@@ -901,8 +903,9 @@ function drawApps(){
     appsPick=appsPick.includes(id)?appsPick.filter(x=>x!==id):APPS.map(a=>a.id).filter(x=>x===id||appsPick.includes(x));
     b.setAttribute('aria-pressed',appsPick.includes(id)); $('appsMsg').textContent=''; });
 }
+function appsInData(){ const f=APPS.filter(a=>data.shifts.some(s=>used(s,a))).map(a=>a.id); return f.length?f:['l','u']; }
 function openApps(first){
-  appsFirst=!!first; appsPick=(Array.isArray(prefs.apps)&&prefs.apps.length?prefs.apps:(first==='existing'?['l','u']:[])).slice();
+  appsFirst=!!first; appsPick=(Array.isArray(prefs.apps)&&prefs.apps.length?prefs.apps:(first==='existing'?appsInData():[])).slice();
   if(first===true&&!appsPick.length) appsPick=[];
   $('appsTop').hidden=!!first; $('appsDone').textContent=first?'Continue':'Done'; $('appsMsg').textContent='';
   drawApps(); go('apps');
@@ -910,9 +913,10 @@ function openApps(first){
 function appsSummary(){ $('appsRowSub').textContent=myApps().map(a=>a.name).join(', '); }
 $('appsDone').onclick=()=>{
   if(!appsPick.length){ alertMsg($('appsMsg'),'Pick at least one app.'); return; }
+  const changed=(prefs.apps||[]).join()!==appsPick.join();
   prefs.apps=appsPick.slice(); savePrefs(); appsSummary();
   const wasFirst=appsFirst; appsFirst=false;
-  if(!editing) resetForm(); render();
+  if(!editing&&(changed||wasFirst)) resetForm(); render();
   if(wasFirst){ go('home');
     setTimeout(()=>{ let seen=false; try{ seen=!!localStorage.getItem(KEY+'-toured'); }catch(e){} if(!seen&&cur==='home'&&typeof window.keptTour==='function') window.keptTour(); },350); }
   else go('more');
@@ -1114,7 +1118,7 @@ $('driveBtn').onclick=async()=>{
 $('importFile').onchange=async e=>{
   const f=e.target.files[0]; if(!f) return;
   try{ const d=JSON.parse(await f.text()); if(!Array.isArray(d.shifts)) throw 0;
-    const m=new Map(data.shifts.map(x=>[x.id,x])); d.shifts.forEach(x=>m.set(x.id,x)); if(d.prefs&&typeof applyPrefs==='function'){ prefs={...DEF,...d.prefs}; savePrefs(); applyPrefs(); }
+    const m=new Map(data.shifts.map(x=>[x.id,x])); d.shifts.forEach(x=>m.set(x.id,x)); if(d.prefs&&typeof applyPrefs==='function'){ prefs={...DEF,...d.prefs,apps:Array.isArray(d.prefs.apps)&&d.prefs.apps.length?d.prefs.apps:prefs.apps}; savePrefs(); applyPrefs(); appsSummary(); if(!editing) resetForm(); }
     data.shifts=[...m.values()]; save(); render();
     setSync('Backup restored: '+d.shifts.length+' day'+(d.shifts.length===1?'':'s')+'.','');
   }catch(err){ setSync('That file isn\'t a Kept backup. Pick the .json file from "Back up to Google Drive".','warn'); }
@@ -1184,7 +1188,7 @@ $('gdRestore').onclick=()=>{
   if(!gdState.fileId){ setSync('No Drive backup found yet.','off'); return; }
   gdToken(false).then(async()=>{
     const d=await (await gdFetch('https://www.googleapis.com/drive/v3/files/'+gdState.fileId+'?alt=media')).json();
-    const m=new Map(data.shifts.map(x=>[x.id,x])); (d.shifts||[]).forEach(x=>m.set(x.id,x)); if(d.prefs){ prefs={...DEF,...d.prefs}; savePrefs(); applyPrefs(); }
+    const m=new Map(data.shifts.map(x=>[x.id,x])); (d.shifts||[]).forEach(x=>m.set(x.id,x)); if(d.prefs){ prefs={...DEF,...d.prefs,apps:Array.isArray(d.prefs.apps)&&d.prefs.apps.length?d.prefs.apps:prefs.apps}; savePrefs(); applyPrefs(); appsSummary(); if(!editing) resetForm(); }
     data.shifts=[...m.values()]; save(); render(); setSync('Restored '+(d.shifts||[]).length+' days from Google Drive.','');
   }).catch(gdFail);
 };

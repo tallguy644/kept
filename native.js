@@ -48,6 +48,7 @@ if(App) App.addListener('backButton',()=>{
   if(v==='offer'&&typeof window.keptOfferBack==='function'){ window.keptOfferBack(); return; }
   if(v==='feedback'&&typeof window.keptFeedbackBack==='function'){ window.keptFeedbackBack(); return; }
   if((v==='log'||v==='pro'||v==='cust')&&typeof window.keptBack==='function'){ window.keptBack(); return; }
+  if(v==='apps'){ if(typeof appsFirst!=='undefined'&&appsFirst) return; if(typeof window.keptGo==='function') window.keptGo('more'); return; }   // first-run picker needs an answer
   if(typeof window.keptGo==='function') window.keptGo('home');
 });
 
