@@ -96,6 +96,7 @@ jobs:
         with:
           name: kept-android
           path: out/
+          retention-days: 5
 
       - name: Attach to a GitHub release
         if: env.HAS_KEY == 'true'

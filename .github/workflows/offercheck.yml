@@ -92,6 +92,7 @@ jobs:
         with:
           name: kept-offer-check
           path: out/
+          retention-days: 5
 
       - name: Attach to a GitHub release
         if: env.HAS_KEY == 'true'
